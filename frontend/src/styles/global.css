@@ -203,3 +203,5 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .ear-bar { height: 5px; background: var(--bg); border-radius: 4px; overflow: hidden; display: block; }
 .ear-bar span { display: block; height: 100%; border-radius: 4px; }
 .btn.primary .kbd { color: #1a1408; border-color: rgba(26, 20, 8, 0.35); }
+.read-stage { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
+.read-paper { background: var(--bg-2); border: 1px solid var(--line-soft); border-radius: 14px; padding: 8px 6px; }
