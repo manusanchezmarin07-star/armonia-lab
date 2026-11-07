@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from .chords import ParsedChord, identify, parse_progression
 from .keys import Key, analyze_chord_in_key, negative_midi, negative_pc
-from .modulation import Step, _drop_for_voicing, realize
-from .pitch import FLAT_NAMES, SHARP_NAMES, letter_up, parse_note, spell_pc
+from .pitch import FLAT_NAMES, SHARP_NAMES, letter_up, parse_note, pc_name, spell_pc
+from .voicing import Step, realize
 
 # Costes del algoritmo de Viterbi. Cambiar de tonalidad cuesta más que explicar
 # un acorde cromático dentro de la misma: así no se "inventan" modulaciones por
@@ -74,7 +74,7 @@ def analyze_progression(text: str, key_text: str | None = None) -> dict:
         path.append(back[i][path[-1]])
     path.reverse()
 
-    steps = [Step(c.symbol, _drop_for_voicing(c), c.bass_pc) for c in chords]
+    steps = [Step.from_chord(c) for c in chords]
     voiced = realize(steps)
     out_chords = []
     modulations = []
@@ -98,7 +98,7 @@ def negative_progression(text: str, key_text: str) -> dict:
     key = Key.parse(key_text)
     tonic = key.tonic.pc
     chords = parse_progression(text)
-    steps = [Step(c.symbol, _drop_for_voicing(c), c.bass_pc) for c in chords]
+    steps = [Step.from_chord(c) for c in chords]
     original = realize(steps)
     pairs = []
     for c, v in zip(chords, original):
@@ -116,7 +116,10 @@ def negative_progression(text: str, key_text: str) -> dict:
             root_pos += [r for r in identify(neg_pcs, bass=b, is_midi=False, limit=8) if r.bass_pc == r.root_pc]
         root_pos.sort(key=lambda r: r.score)
         names = list(dict.fromkeys(r.symbol for r in root_pos))
-        name = names[0] if names else (mirrored[0].symbol if mirrored else "?")
+        # Algunos reflejos (p. ej. de C7b9) no tienen nombre estándar: se muestran
+        # como conjunto de notas entre llaves en lugar de inventar un cifrado.
+        name = names[0] if names else (mirrored[0].symbol if mirrored else
+                                       "{" + " ".join(pc_name(p, key.accidental_preference) for p in neg_pcs) + "}")
         alt = names[1:3]
         root_name = mirrored[0].symbol if mirrored else None
         pairs.append({
