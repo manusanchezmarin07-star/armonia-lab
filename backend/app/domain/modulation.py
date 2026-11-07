@@ -14,7 +14,7 @@ from .chords import TONES, ParsedChord, identify, parse_symbol
 from .keys import Key, negative_pc
 from .pitch import interval_name, letter_up, pc_name, spell_pc
 
-UPPER_LOW, UPPER_HIGH = 53, 81  # Fa3..La5: registro cómodo de la mano derecha
+UPPER_LOW, UPPER_HIGH = 50, 81  # Re3..La5: registro de la mano derecha (y algo de la izquierda)
 BASS_LOW, BASS_HIGH = 36, 55     # Do2..Sol3
 
 
@@ -50,7 +50,10 @@ def _movement(a: list[int], b: list[int]) -> int:
     óptimo en 1D es ordenar ambos; si difieren, cada nota busca su más cercana."""
     if len(a) == len(b):
         return sum(abs(x - y) for x, y in zip(sorted(a), sorted(b)))
-    return sum(min(abs(x - y) for y in b) for x in a) + sum(min(abs(x - y) for x in a) for y in b)
+    # Con distinto número de voces, cada voz del conjunto mayor sale (o llega) de
+    # la nota más cercana del menor: una voz que se divide en dos no cuenta doble.
+    big, small = (a, b) if len(a) > len(b) else (b, a)
+    return sum(min(abs(x - y) for y in small) for x in big)
 
 
 def voice_lead(prev: list[int] | None, pcs: list[int]) -> list[int]:
