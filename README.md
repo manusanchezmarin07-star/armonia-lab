@@ -23,8 +23,11 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 | **Puentes y modulaciones** | De una tonalidad a otra por 7 caminos (pivote, ii–V–I, bisagra disminuida, sustituto tritonal, cadena de dominantes, dominante negativa, nota común), ordenados por suavidad, con conducción de voces animada. |
 | **Escalas y simetría** | Modos de la mayor y de la menor melódica, menor armónica, frigio dominante, pentatónicas, tonos enteros, disminuida, aumentada y los 7 modos de Messiaen, con el reloj de 12 notas que revela la simetría. |
 | **Armonía negativa** | Refleja cualquier progresión sobre el eje de la tónica, en espejo nota a nota, y explica por qué conserva la función. |
-| **Analizador** | Grados romanos, funciones, dominantes secundarias, sustitutos tritonales, préstamos modales y detección de modulaciones. |
+| **Rearmonizar** | Sustitutos para cualquier acorde (tritono, backdoor, negativa, disminuidos, mediantes, preparaciones) ordenados por suavidad, todos los acordes posibles bajo una nota de la melodía y estilos de rearmonización (jazz, Collier/negativa, góspel). |
+| **Analizador** | Grados romanos, funciones, dominantes secundarias, sustitutos tritonales, préstamos modales y detección de modulaciones. Transporta a cualquier tonalidad con deletreo correcto, practica en bucle con metrónomo y exporta a `.mid`. |
 | **Compás y palos** | Soleá, alegrías, bulería, seguiriya, tangos, sevillanas y compases de amalgama, en reloj y en línea, con metrónomo de palmas. |
+| **Oído** | Intervalos, tipos de acorde, grados con cadencia y progresiones. Respondes con botones, números o **tocando en el MIDI**; lo que más fallas sale más. |
+| **Lectura** | Entrenador de lectura por niveles: clave de Sol, de Fa, líneas adicionales, alteraciones, tríadas y armaduras. Tocas la nota que ves. |
 | **Mi biblioteca** | Tus transcripciones por artista (Jacob Collier, Bach, Vicente Marín Trío, Emily Bear...). Se guardan en `data/`. |
 | **Pistas y acordes** | Sube una canción: Demucs separa voz, bajo, piano, guitarra y batería en tu GPU; se detectan pulso, tonalidad y acordes en una línea de tiempo. Aísla una pista, ralentízala sin cambiar el tono, repite un acorde en bucle y corrígelo tocándolo en tu MIDI. |
 | **Corales de Bach** | Los corales del corpus de music21 con su partitura, voces silenciables y análisis acorde a acorde (con music21 como segunda opinión). |
@@ -37,14 +40,35 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 - La base de conocimiento son ficheros Markdown en `backend/knowledge/`. Puedes añadir los tuyos (por ejemplo, apuntes
   sobre Vicente Marín Trío) con el mismo formato: cabecera `title` y `sources`, y secciones `## `.
 
+## Atajos
+
+| Atajo | Qué hace |
+|---|---|
+| `A W S E D F T G Y H U J K O L P Ñ` | Tocar notas con el teclado del ordenador |
+| `Z` / `X` | Bajar / subir octava |
+| `Ctrl` + `K` | Buscador rápido de pantallas |
+| `Espacio`, `1`–`9` | En Oído y Lectura: siguiente / responder |
+
 ## Fiabilidad
 
 La teoría no la "adivina" una IA: está programada en `backend/app/domain` y verificada con tests automáticos que
 comparan cada resultado con **music21** (librería académica del MIT). Las explicaciones de ritmo y escalas citan
-sus fuentes. Ejecuta los tests con:
+sus fuentes. Hay tres capas de tests:
+
+- **Unitarios** contrastados con music21.
+- **De propiedades** (Hypothesis): invariantes musicales comprobadas sobre cientos de casos aleatorios. Por ejemplo, que
+  reflejar dos veces en armonía negativa devuelva el original o que transportar conserve la forma de cada acorde.
+  Encontraron dos bugs reales que ya están corregidos.
+- **End-to-end** (Playwright): recorren la app en un navegador real, en escritorio y en móvil.
+
+El CI de GitHub Actions los ejecuta en cada push. En local:
 
 ```bash
 .venv\Scripts\python -m pytest backend/tests
+```
+
+```bash
+cd frontend && npm run e2e
 ```
 
 ## Arquitectura
