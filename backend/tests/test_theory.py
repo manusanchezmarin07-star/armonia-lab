@@ -2,7 +2,8 @@
 "segunda opinión" independiente: si nuestro cálculo y el suyo discrepan, falla."""
 import pytest
 from music21 import chord as m21chord
-from music21 import harmony, roman, scale as m21scale
+from music21 import harmony, roman
+from music21 import scale as m21scale
 
 from app.domain.analysis import analyze_progression, negative_progression
 from app.domain.chords import identify, parse_symbol
@@ -157,3 +158,10 @@ def test_transition_relations():
 
 def test_parse_note_variants():
     assert parse_note("E♭").pc == 3 and parse_note("Cb").pc == 11 and parse_note("B#").pc == 0
+
+
+def test_major_seventh_tension_is_spelled_maj7():
+    r = identify([60, 61, 64, 67, 70])  # C7(b9): una lectura alternativa es Dbdim7 con 7ª mayor
+    assert all("(7)" not in x.symbol for x in identify([61, 64, 67, 70, 72], limit=8))
+    assert parse_symbol("Dbdim7(maj7)/C").pcs == parse_symbol("Dbdim7(7)/C").pcs
+    assert r[0].symbol == "C7(b9)"

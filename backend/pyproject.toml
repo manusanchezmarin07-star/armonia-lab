@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 165
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I", "UP"]
+# B008: FastAPI usa File()/Form() en los parámetros por diseño.
+# B905: zip sin strict es intencionado donde las longitudes ya coinciden.
+# E741: 'l' se usa como nombre de etiqueta de tensión (convención musical).
+ignore = ["B008", "B905", "E741"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

@@ -8,12 +8,15 @@ import '@fontsource/fraunces/500-italic.css'
 import './styles/global.css'
 import App from './App'
 import { InputProvider } from './lib/input'
+import { ToastProvider } from './components/Toast'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <InputProvider>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </InputProvider>
     </BrowserRouter>
   </StrictMode>,

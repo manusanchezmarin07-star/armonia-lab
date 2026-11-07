@@ -1,66 +1,60 @@
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
-import * as I from './components/Icons'
+import { useEffect, useState } from 'react'
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import Palette from './components/Palette'
+import { IconHome } from './components/Icons'
 import { useInput } from './lib/input'
-import Lab from './pages/Lab'
-import Bridges from './pages/Bridges'
-import Scales from './pages/Scales'
-import Negative from './pages/Negative'
-import Analyzer from './pages/Analyzer'
-import Rhythm from './pages/Rhythm'
-import Library from './pages/Library'
-import { EXTRA_ROUTES } from './pages/extra'
-
-const NAV = [
-  { section: 'Armonía' },
-  { to: '/laboratorio', label: 'Laboratorio', icon: I.IconLab },
-  { to: '/puentes', label: 'Puentes y modulaciones', icon: I.IconBridge },
-  { to: '/escalas', label: 'Escalas y simetría', icon: I.IconScale },
-  { to: '/negativa', label: 'Armonía negativa', icon: I.IconMirror },
-  { to: '/analizador', label: 'Analizador', icon: I.IconAnalyze },
-  { section: 'Ritmo' },
-  { to: '/ritmo', label: 'Compás y palos', icon: I.IconRhythm },
-  { section: 'Estudio' },
-  { to: '/biblioteca', label: 'Mi biblioteca', icon: I.IconBook },
-  ...EXTRA_ROUTES.map((r) => ({ to: r.path, label: r.label, icon: r.icon })),
-] as const
+import Home from './pages/Home'
+import { MODULES } from './routes'
 
 export default function App() {
   const { midi, octave } = useInput()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+  const sections = [...new Set(MODULES.map((m) => m.section))]
+  // En móvil/tablet el menú es un cajón: se cierra al navegar.
+  useEffect(() => setMenuOpen(false), [location.pathname])
+
   return (
     <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
+      <header className="topbar">
+        <button className="btn ghost sm" aria-label="Menú" onClick={() => setMenuOpen((o) => !o)}>☰</button>
+        <NavLink to="/" className="brand-name" style={{ color: 'inherit' }}>Armonía <em>Lab</em></NavLink>
+        <span className="dot" style={{ background: midi.devices.length ? 'var(--teal)' : 'var(--muted)', marginLeft: 'auto' }} />
+      </header>
+      <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
+        <NavLink to="/" className="brand" style={{ color: 'inherit' }}>
           <img className="brand-mark" src="/favicon.svg" alt="" />
           <div className="brand-name">Armonía <em>Lab</em></div>
-        </div>
-        {NAV.map((n, i) =>
-          'section' in n ? <div key={i} className="nav-section">{n.section}</div> : (
-            <NavLink key={n.to} to={n.to} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              <n.icon /> {n.label}
-            </NavLink>
-          ))}
+        </NavLink>
+        <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}><IconHome /> Inicio</NavLink>
+        {sections.map((s) => (
+          <div key={s}>
+            <div className="nav-section">{s}</div>
+            {MODULES.filter((m) => m.section === s).map((m) => (
+              <NavLink key={m.path} to={m.path} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+                <m.icon /> {m.label}
+              </NavLink>
+            ))}
+          </div>
+        ))}
         <div className="sidebar-foot stack small">
           <div className="row">
             <span className="dot" style={{ background: midi.devices.length ? 'var(--teal)' : 'var(--muted)' }} />
             <span className="text-2">{midi.devices.length ? midi.devices.join(', ') : 'Sin teclado MIDI'}</span>
           </div>
           <div className="muted">Teclado del PC: <span className="kbd">A</span>–<span className="kbd">Ñ</span> · octava {octave} (<span className="kbd">Z</span>/<span className="kbd">X</span>)</div>
+          <div className="muted">Buscar pantalla: <span className="kbd">Ctrl</span>+<span className="kbd">K</span></div>
         </div>
       </aside>
+      {menuOpen && <div className="drawer-backdrop" onClick={() => setMenuOpen(false)} />}
       <main className="main">
         <Routes>
-          <Route path="/" element={<Navigate to="/laboratorio" replace />} />
-          <Route path="/laboratorio" element={<Lab />} />
-          <Route path="/puentes" element={<Bridges />} />
-          <Route path="/escalas" element={<Scales />} />
-          <Route path="/negativa" element={<Negative />} />
-          <Route path="/analizador" element={<Analyzer />} />
-          <Route path="/ritmo" element={<Rhythm />} />
-          <Route path="/biblioteca" element={<Library />} />
-          {EXTRA_ROUTES.map((r) => <Route key={r.path} path={r.path} element={<r.element />} />)}
-          <Route path="*" element={<Navigate to="/laboratorio" replace />} />
+          <Route path="/" element={<Home />} />
+          {MODULES.map((m) => <Route key={m.path} path={m.path} element={<m.element />} />)}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Palette />
     </div>
   )
 }

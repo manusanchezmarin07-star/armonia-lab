@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Piano, { type Mark } from '../components/Piano'
 import PcCircle from '../components/PcCircle'
 import { IconPlay } from '../components/Icons'
@@ -10,8 +11,9 @@ const STEP_NAME: Record<number, string> = { 1: 'S', 2: 'T', 3: 'T½', 4: '2T' }
 
 export default function Scales() {
   const [catalog, setCatalog] = useState<ScaleSummary[]>([])
-  const [id, setId] = useState('dorian')
-  const [tonic, setTonic] = useState('D')
+  const [params] = useSearchParams()
+  const [id, setId] = useState(params.get('id') ?? 'dorian')
+  const [tonic, setTonic] = useState(params.get('tonic') ?? 'D')
   const [info, setInfo] = useState<ScaleInfo | null>(null)
 
   useEffect(() => { api.get<ScaleSummary[]>('/api/scales').then(setCatalog) }, [])

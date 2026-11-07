@@ -115,3 +115,6 @@ export async function click(accent: boolean, time?: number) {
 }
 
 export { Tone }
+
+/** Un voicing del backend ({bass, upper}) como lista de notas MIDI. */
+export const voicingNotes = (v: { bass: number; upper: number[] }) => [v.bass, ...v.upper]

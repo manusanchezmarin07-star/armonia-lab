@@ -61,7 +61,7 @@ class Key:
     mode: str  # 'major' | 'minor'
 
     @staticmethod
-    def parse(text: str) -> "Key":
+    def parse(text: str) -> Key:
         """'C', 'Am', 'F# minor', 'Eb major', 'c' (minúscula = menor, notación clásica)."""
         t = text.strip().replace("major", "").replace("mayor", "").strip()
         minor = False
@@ -122,7 +122,7 @@ class Key:
                 steps = list(HARMONIC_MINOR_STEPS)
             root_s = steps[deg]
 
-            def iv(k: int) -> int:
+            def iv(k: int, steps=steps, deg=deg, root_s=root_s) -> int:
                 return (steps[(deg + k) % 7] - root_s) % 12
 
             suffix = _quality_from_stack(iv(2), iv(4), iv(6) if sevenths else None)

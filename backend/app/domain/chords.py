@@ -12,7 +12,11 @@ import re
 from dataclasses import dataclass, field
 
 from .pitch import (
-    SpelledNote, letter_up, parse_note, pc_name, spell_pc,
+    SpelledNote,
+    letter_up,
+    parse_note,
+    pc_name,
+    spell_pc,
 )
 
 # etiqueta -> (semitonos sobre la fundamental, grados de letra por encima).
@@ -181,6 +185,8 @@ def chord_suffix(base: BaseChord, tensions: tuple[str, ...] | list[str]) -> str:
         paren = sorted(t - {"9"}, key=_tension_order)
     else:
         paren = sorted(t, key=_tension_order)
+    # La 7ª mayor como tensión (sobre dim7) se escribe "maj7" para no confundirla con la 7ª menor.
+    paren = ["maj7" if x == "7" else x for x in paren]
     return s + (f"({','.join(paren)})" if paren else "")
 
 
@@ -362,7 +368,9 @@ def parse_symbol(text: str) -> ParsedChord:
     bass = parse_note(m.group(3)) if m.group(3) else None
 
     paren: list[str] = []
-    pm = re.search(r"\(([^)]*)\)", suffix)
+    # "m(maj7)" lleva paréntesis pero es un tipo de acorde, no una lista de tensiones.
+    # Solo se toma como tensiones el último grupo entre paréntesis ("Cm(maj7)(9)").
+    pm = None if suffix in _SUFFIX_ALIASES else re.search(r"\(([^)]*)\)$", suffix) or re.search(r"\(([^)]*)\)", suffix)
     if pm:
         paren = [p.strip().replace("add", "") for p in re.split(r"[,\s]+", pm.group(1)) if p.strip()]
         suffix = (suffix[: pm.start()] + suffix[pm.end():]).strip()
@@ -373,6 +381,8 @@ def parse_symbol(text: str) -> ParsedChord:
     all_t = list(tensions)
     for p in paren:
         p = p.replace("♭", "b").replace("♯", "#")
+        if p in ("maj7", "M7", "∆7", "Δ7"):
+            p = "7"
         if p not in TONES or p in ("1", "3", "b3", "5"):
             raise ValueError(f"Tensión no reconocida en {text!r}: '{p}'")
         if p not in all_t:
@@ -387,7 +397,9 @@ def _safe_order(t: str) -> int:
 
 def parse_progression(text: str) -> list[ParsedChord]:
     """Separa por espacios, comas o barras de compás ('Dm7 G7 | Cmaj7')."""
-    tokens = [t for t in re.split(r"[\s,|]+", text) if t and t not in ("-", "%")]
+    # Tokenizador en vez de split: los paréntesis pueden llevar comas y espacios
+    # ("G7(b9, b13)") y no deben partir el acorde.
+    tokens = [t for t in re.findall(r"[^\s,|()]+(?:\([^)]*\))*(?:/[^\s,|()]+)?", text) if t not in ("-", "%")]
     return [parse_symbol(t) for t in tokens]
 
 

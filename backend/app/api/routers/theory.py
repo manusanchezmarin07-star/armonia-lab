@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.application import theory_service as svc
+from app.domain.transpose import transpose as transpose_progression
 
 router = APIRouter(prefix="/api", tags=["teoría"])
 
@@ -87,3 +88,26 @@ def negative(body: ProgressionIn):
 @router.get("/rhythm")
 def rhythm():
     return svc.rhythm_catalog()
+
+
+class TransposeIn(BaseModel):
+    text: str
+    semitones: int | None = None
+    from_key: str | None = None
+    to_key: str | None = None
+
+
+@router.post("/progression/transpose")
+def transpose(body: TransposeIn):
+    return _safe(transpose_progression, body.text, body.semitones, body.from_key or None, body.to_key or None)
+
+
+@router.get("/chords/scales")
+def chord_scales(symbol: str):
+    from app.domain.chords import parse_symbol
+    from app.domain.scales import scales_for_chord
+
+    def run():
+        p = parse_symbol(symbol)
+        return {"symbol": p.symbol, "scales": scales_for_chord(p.root.pc, p.pcs, p.root.name)}
+    return _safe(run)

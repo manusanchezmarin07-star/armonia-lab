@@ -18,6 +18,7 @@ from app.domain.analysis import negative_progression
 from app.domain.chords import ParsedChord, parse_symbol
 from app.domain.keys import Key, analyze_chord_in_key
 from app.domain.modulation import explain_transition
+from app.domain.reharm import substitutes
 from app.domain.scales import SCALES, scale_info
 from app.infrastructure.knowledge_base import get_kb, normalize
 from app.infrastructure.ollama_client import OllamaClient
@@ -32,6 +33,7 @@ tangos sevillanas amalgama metronomo tempo pulso corchea negra blanca redonda se
 lidio mixolidio eolico locrio jonico pentatonica blues jazz collier bach messiaen coltrane simetrica simetrica
 octatonica cromatica tonos grado grados romano funcion inversion arpegio improvisar improvisacion componer
 composicion transcribir transcripcion oido midi alesis tocar toca sonar suena reharmonizar rearmonizar
+sustituto sustitucion backdoor mediante lectura leer solfeo
 """.replace("\n", " ")))
 
 REJECTION = ("Solo puedo ayudarte con música: armonía, acordes, escalas, ritmo, lectura de partituras, piano o "
@@ -134,6 +136,13 @@ def compute_facts(question: str) -> list[str]:
         facts.append(f"Armonía negativa en {key.name} (eje {neg['axis']}): " +
                      ", ".join(f"{p['original']} → {p['negative']}" + (f" (= {', '.join(p['alternatives'])})" if p['alternatives'] else "")
                                for p in neg["pairs"]) + ".")
+    # Preguntas de rearmonización: se calculan las sustituciones con el motor.
+    if chords and any(w in q for w in ("sustitu", "en lugar", "en vez", "rearmoniz", "reharmon", "cambiar el acorde", "otro acorde")):
+        target = chords[0]
+        nxt = chords[1].symbol if len(chords) > 1 else None
+        subs = substitutes(target.symbol, (key or Key.parse("C")).short, nxt)["substitutes"][:8]
+        facts.append(f"Sustituciones posibles de {target.symbol}" + (f" yendo a {nxt}" if nxt else "") +
+                     f" en {(key or Key.parse('C')).name}: " + "; ".join(f"{x['symbol']} ({x['technique']})" for x in subs) + ".")
     if len(chords) >= 2 and "negativ" not in q:
         for a, b in list(zip(chords, chords[1:]))[:2]:
             t = explain_transition(a.symbol, b.symbol)

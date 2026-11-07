@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Piano, { type Mark } from '../components/Piano'
 import Staff from '../components/Staff'
 import KeySelect from '../components/KeySelect'
@@ -7,17 +8,20 @@ import { api, type Reading, type Transition } from '../lib/api'
 import { playSequence } from '../lib/audio'
 import { useInput } from '../lib/input'
 import { fnColor, midiName } from '../lib/music'
+import { usePersistentState } from '../lib/prefs'
 
+interface ChordScale { id: string; name: string; notes: string[]; symmetric: boolean }
 interface IdentifyResult { notes: { midi: number; name: string }[]; readings: Reading[] }
 
 export default function Lab() {
   const { pressed, press, release, lastChord, midi, soundOnMidi, setSoundOnMidi } = useInput()
-  const [key, setKey] = useState('C')
+  const [key, setKey] = usePersistentState('key', 'C')
   const [result, setResult] = useState<IdentifyResult | null>(null)
   const [slotA, setSlotA] = useState<string | null>(null)
   const [slotB, setSlotB] = useState<string | null>(null)
   const [trans, setTrans] = useState<Transition | null>(null)
   const [transErr, setTransErr] = useState<string | null>(null)
+  const [scales, setScales] = useState<ChordScale[]>([])
 
   const notes = pressed.size ? [...pressed].sort((a, b) => a - b) : lastChord
 
@@ -39,6 +43,13 @@ export default function Lab() {
   }, [slotA, slotB])
 
   const best = result?.readings[0]
+
+  // Escalas para improvisar sobre el acorde (teoría acorde-escala).
+  useEffect(() => {
+    if (!best) { setScales([]); return }
+    api.get<{ scales: ChordScale[] }>(`/api/chords/scales?symbol=${encodeURIComponent(best.symbol)}`)
+      .then((r) => setScales(r.scales)).catch(() => setScales([]))
+  }, [best?.symbol])
   const spell = useMemo(() => {
     const s: Record<number, string> = {}
     best?.tones.forEach((t) => (s[t.pc] = t.note))
@@ -105,7 +116,11 @@ export default function Lab() {
                   )}
                 </div>
               )}
-              {!best && <p className="muted">Toca al menos dos notas a la vez.</p>}
+              {!best && notes.length >= 2 && result && (
+                <p className="explain">Sonoridad sin nombre estándar: <b>{result.notes.map((n) => n.name).join(' · ')}</b>.
+                  Prueba a quitar alguna nota o a cambiar el bajo: muchos clusters son acordes conocidos con una nota añadida.</p>
+              )}
+              {!best && notes.length < 2 && <p className="muted">Toca al menos dos notas a la vez.</p>}
             </div>
             <div style={{ background: 'var(--bg-2)', borderRadius: 12, padding: 6 }}>
               <Staff notes={notes} spell={spell} width={250} />
@@ -122,6 +137,17 @@ export default function Lab() {
                 <span className="pill violet">{best.analysis.kind}</span>
               </div>
               <p className="explain" style={{ margin: 0 }}>{best.analysis.explanation}</p>
+            </div>
+          )}
+          {best && scales.length > 0 && (
+            <div className="mt fade-in" style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 16 }}>
+              <h3>Escalas para improvisar sobre {best.symbol}</h3>
+              <div className="row">
+                {scales.slice(0, 8).map((sc) => (
+                  <Link key={sc.id} to={`/escalas?id=${sc.id}&tonic=${encodeURIComponent(best.root)}`} title={sc.notes.join(' ')}
+                        className={`pill ${sc.symmetric ? 'violet' : 'accent'}`}>{sc.name.split(' (')[0]}</Link>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import assistant, library, study, theory
+from app.api.routers import assistant, library, reharm, study, theory
 from app.config import FRONTEND_DIST
 
 app = FastAPI(title="Armonía Lab", version="0.1.0")
@@ -19,6 +19,7 @@ app.include_router(theory.router)
 app.include_router(library.router)
 app.include_router(study.router)
 app.include_router(assistant.router)
+app.include_router(reharm.router)
 
 try:  # Pistas: requiere librosa (requirements-pistas.txt). Sin ella la app arranca igual.
     import librosa  # noqa: F401
