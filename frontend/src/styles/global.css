@@ -262,3 +262,12 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 @media (max-width: 860px) { .topbar { display: flex; } .hero-title { font-size: 36px; } }
+
+/* Aviso de audio en pausa (política de autoplay del navegador) */
+.audio-banner { position: sticky; top: 0; z-index: 25; display: flex; gap: 12px; align-items: center; width: 100%; text-align: left;
+  padding: 11px 40px; border: 0; border-bottom: 1px solid rgba(232, 176, 75, 0.35); background: #2a2216; color: var(--text);
+  cursor: pointer; font-size: 14px; }
+.audio-banner:hover { background: #33291a; }
+.audio-banner.urgent { background: #3a1f1b; border-bottom-color: rgba(255, 122, 107, 0.5); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { background: #4a2620; } }
+@media (max-width: 860px) { .audio-banner { padding: 10px 16px; top: 49px; } }
