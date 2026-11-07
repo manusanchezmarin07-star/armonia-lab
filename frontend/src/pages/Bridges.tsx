@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import Piano, { type Mark } from '../components/Piano'
 import KeySelect from '../components/KeySelect'
+import CircleOfFifths from '../components/CircleOfFifths'
+import { usePersistentState } from '../lib/prefs'
 import { IconPlay, IconStop } from '../components/Icons'
 import { api, type ModulationResult } from '../lib/api'
 import { playChord, playSequence, stopSequence } from '../lib/audio'
 import { midiName } from '../lib/music'
 
 export default function Bridges() {
-  const [from, setFrom] = useState('C')
-  const [to, setTo] = useState('E')
+  const [from, setFrom] = usePersistentState('bridges.from', 'C')
+  const [to, setTo] = usePersistentState('bridges.to', 'E')
   const [data, setData] = useState<ModulationResult | null>(null)
   const [sel, setSel] = useState(0)
   const [step, setStep] = useState(0)
@@ -65,6 +67,13 @@ export default function Bridges() {
 
       {data && (
         <div className="grid grid-side-l">
+          <div className="stack">
+          <div className="card">
+            <CircleOfFifths from={from} to={to} size={290} onPick={(k, w) => (w === 'from' ? setFrom(k) : setTo(k))} />
+            <p className="small muted" style={{ margin: '8px 0 0', textAlign: 'center' }}>
+              Clic: destino <span style={{ color: 'var(--accent)' }}>●</span> · Mayús+clic o clic derecho: origen <span style={{ color: 'var(--teal)' }}>●</span>
+            </p>
+          </div>
           <div className="card flush">
             <div style={{ padding: '16px 16px 8px' }} className="row">
               <h3 style={{ margin: 0 }}>Rutas</h3>
@@ -87,6 +96,7 @@ export default function Bridges() {
                 <div className="small text-2" style={{ marginTop: 6 }}>{r.steps.map((s) => s.symbol).join(' → ')}</div>
               </div>
             ))}
+          </div>
           </div>
 
           {route && cur && (

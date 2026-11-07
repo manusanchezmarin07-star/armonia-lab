@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import Piano, { type Mark } from '../components/Piano'
 import KeySelect from '../components/KeySelect'
 import PracticeBar from '../components/PracticeBar'
+import { useToast } from '../components/Toast'
 import { api, type ProgressionAnalysis } from '../lib/api'
 import { playChord, voicingNotes } from '../lib/audio'
 import { ARTISTS, KEYS, fnColor, keyLabel } from '../lib/music'
@@ -140,7 +141,9 @@ function SaveForm({ text, keyText, onDone }: { text: string; keyText: string | n
   const [title, setTitle] = useState('')
   const [artist, setArtist] = useState(ARTISTS[0])
   const [notes, setNotes] = useState('')
-  const save = () => api.post('/api/library', { title: title || 'Sin título', artist, key: keyText, progression: text, notes, source: 'transcripción propia' }).then(onDone)
+  const toast = useToast()
+  const save = () => api.post('/api/library', { title: title || 'Sin título', artist, key: keyText, progression: text, notes, source: 'transcripción propia' })
+    .then(() => { toast('Guardado en tu biblioteca'); onDone() }).catch((e) => toast(e.message, 'error'))
   return (
     <div className="row fade-in" style={{ marginBottom: 16, padding: 14, background: 'var(--bg-2)', borderRadius: 12 }}>
       <input className="input" placeholder="Título (canción y sección)" value={title} onChange={(e) => setTitle(e.target.value)} />
