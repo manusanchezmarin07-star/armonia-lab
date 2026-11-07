@@ -3,12 +3,14 @@ import * as I from './components/Icons'
 import { useInput } from './lib/input'
 import Lab from './pages/Lab'
 import Bridges from './pages/Bridges'
+import Scales from './pages/Scales'
 import { EXTRA_ROUTES } from './pages/extra'
 
 const NAV = [
   { section: 'Armonía' },
   { to: '/laboratorio', label: 'Laboratorio', icon: I.IconLab },
   { to: '/puentes', label: 'Puentes y modulaciones', icon: I.IconBridge },
+  { to: '/escalas', label: 'Escalas y simetría', icon: I.IconScale },
   ...EXTRA_ROUTES.map((r) => ({ to: r.path, label: r.label, icon: r.icon })),
 ] as const
 
@@ -40,6 +42,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/laboratorio" replace />} />
           <Route path="/laboratorio" element={<Lab />} />
           <Route path="/puentes" element={<Bridges />} />
+          <Route path="/escalas" element={<Scales />} />
           {EXTRA_ROUTES.map((r) => <Route key={r.path} path={r.path} element={<r.element />} />)}
           <Route path="*" element={<Navigate to="/laboratorio" replace />} />
         </Routes>
