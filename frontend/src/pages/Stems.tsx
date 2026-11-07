@@ -57,10 +57,16 @@ export default function Stems() {
 
   if (unavailable) {
     return (
-      <div className="page"><div className="card empty-state">
-        <p style={{ fontFamily: 'var(--serif)', fontSize: 22, color: 'var(--text)' }}>El módulo de pistas no está instalado</p>
-        <p>Ejecuta <span className="kbd">INSTALAR.bat</span> sin la opción <span className="kbd">-SinPistas</span> para instalar Demucs y librosa.</p>
-      </div></div>
+      <div className="page fade-in">
+        <div className="page-head"><div>
+          <div className="eyebrow">Pistas</div>
+          <h1>Separa una canción y saca sus acordes</h1>
+        </div></div>
+        <div className="card empty-state">
+          <p style={{ fontFamily: 'var(--serif)', fontSize: 22, color: 'var(--text)' }}>El módulo de pistas no está instalado</p>
+          <p>Ejecuta <span className="kbd">INSTALAR.bat</span> sin la opción <span className="kbd">-SinPistas</span> para instalar Demucs y librosa.</p>
+        </div>
+      </div>
     )
   }
 

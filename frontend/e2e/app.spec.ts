@@ -36,6 +36,9 @@ test('laboratorio reconoce un acorde tocado con el teclado del ordenador', async
   await playChord(page, ['a', 'd', 'g', 'u']) // Do Mi Sol Sib
   await expect(page.locator('.chord-big').first()).toHaveText('C7')
   await expect(page.getByText('V7/IV')).toBeVisible()
+  // Teoría acorde-escala: sobre C7 encaja el mixolidio, y el enlace abre esa escala.
+  await page.getByRole('link', { name: 'Mixolidio', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'C Mixolidio' })).toBeVisible()
 })
 
 test('analizador: grados, modulación y transporte', async ({ page }) => {

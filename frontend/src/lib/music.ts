@@ -13,7 +13,7 @@ export const KEYS = [
 ]
 export const keyLabel = (k: string) => (k.endsWith('m') ? `${k.slice(0, -1)} menor` : `${k} mayor`)
 
-export const TONICS = ['C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+export const TONICS = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B']
 
 /** Color por función tonal (T/S/D), coherente en toda la app. */
 export const fnColor = (fn?: string | null) =>

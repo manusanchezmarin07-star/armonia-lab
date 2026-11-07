@@ -100,3 +100,14 @@ class TransposeIn(BaseModel):
 @router.post("/progression/transpose")
 def transpose(body: TransposeIn):
     return _safe(transpose_progression, body.text, body.semitones, body.from_key or None, body.to_key or None)
+
+
+@router.get("/chords/scales")
+def chord_scales(symbol: str):
+    from app.domain.chords import parse_symbol
+    from app.domain.scales import scales_for_chord
+
+    def run():
+        p = parse_symbol(symbol)
+        return {"symbol": p.symbol, "scales": scales_for_chord(p.root.pc, p.pcs, p.root.name)}
+    return _safe(run)
