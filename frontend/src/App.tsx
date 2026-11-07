@@ -2,11 +2,13 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import * as I from './components/Icons'
 import { useInput } from './lib/input'
 import Lab from './pages/Lab'
+import Bridges from './pages/Bridges'
 import { EXTRA_ROUTES } from './pages/extra'
 
 const NAV = [
   { section: 'Armonía' },
   { to: '/laboratorio', label: 'Laboratorio', icon: I.IconLab },
+  { to: '/puentes', label: 'Puentes y modulaciones', icon: I.IconBridge },
   ...EXTRA_ROUTES.map((r) => ({ to: r.path, label: r.label, icon: r.icon })),
 ] as const
 
@@ -37,6 +39,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/laboratorio" replace />} />
           <Route path="/laboratorio" element={<Lab />} />
+          <Route path="/puentes" element={<Bridges />} />
           {EXTRA_ROUTES.map((r) => <Route key={r.path} path={r.path} element={<r.element />} />)}
           <Route path="*" element={<Navigate to="/laboratorio" replace />} />
         </Routes>
