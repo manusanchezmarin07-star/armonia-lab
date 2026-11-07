@@ -7,12 +7,13 @@ import { api, type Reading, type Transition } from '../lib/api'
 import { playSequence } from '../lib/audio'
 import { useInput } from '../lib/input'
 import { fnColor, midiName } from '../lib/music'
+import { usePersistentState } from '../lib/prefs'
 
 interface IdentifyResult { notes: { midi: number; name: string }[]; readings: Reading[] }
 
 export default function Lab() {
   const { pressed, press, release, lastChord, midi, soundOnMidi, setSoundOnMidi } = useInput()
-  const [key, setKey] = useState('C')
+  const [key, setKey] = usePersistentState('key', 'C')
   const [result, setResult] = useState<IdentifyResult | null>(null)
   const [slotA, setSlotA] = useState<string | null>(null)
   const [slotB, setSlotB] = useState<string | null>(null)
@@ -105,7 +106,11 @@ export default function Lab() {
                   )}
                 </div>
               )}
-              {!best && <p className="muted">Toca al menos dos notas a la vez.</p>}
+              {!best && notes.length >= 2 && result && (
+                <p className="explain">Sonoridad sin nombre estándar: <b>{result.notes.map((n) => n.name).join(' · ')}</b>.
+                  Prueba a quitar alguna nota o a cambiar el bajo: muchos clusters son acordes conocidos con una nota añadida.</p>
+              )}
+              {!best && notes.length < 2 && <p className="muted">Toca al menos dos notas a la vez.</p>}
             </div>
             <div style={{ background: 'var(--bg-2)', borderRadius: 12, padding: 6 }}>
               <Staff notes={notes} spell={spell} width={250} />
