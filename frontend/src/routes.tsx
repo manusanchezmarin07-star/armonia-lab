@@ -11,6 +11,7 @@ import Library from './pages/Library'
 import Stems from './pages/Stems'
 import Bach from './pages/Bach'
 import Assistant from './pages/Assistant'
+import Ear from './pages/Ear'
 
 export interface Module {
   path: string
@@ -32,6 +33,7 @@ export const MODULES: Module[] = [
   { section: 'Armonía', path: '/negativa', label: 'Armonía negativa', icon: I.IconMirror, element: Negative, blurb: 'Refleja progresiones sobre el eje de la tónica.' },
   { section: 'Armonía', path: '/analizador', label: 'Analizador', icon: I.IconAnalyze, element: Analyzer, blurb: 'Grados, funciones y modulaciones de cualquier progresión.' },
   { section: 'Ritmo', path: '/ritmo', label: 'Compás y palos', icon: I.IconRhythm, element: Rhythm, blurb: 'Soleá, bulería, seguiriya y amalgamas con palmas.' },
+  { section: 'Entrenamiento', path: '/oido', label: 'Oído', icon: I.IconEar, element: Ear, blurb: 'Intervalos, acordes, grados y progresiones, respondiendo con tu MIDI.' },
   { section: 'Estudio', path: '/pistas', label: 'Pistas y acordes', icon: I.IconStems, element: Stems, blurb: 'Separa una canción en instrumentos y saca sus acordes.' },
   { section: 'Estudio', path: '/bach', label: 'Corales de Bach', icon: I.IconBach, element: Bach, blurb: 'Partituras reales analizadas acorde a acorde.' },
   { section: 'Estudio', path: '/biblioteca', label: 'Mi biblioteca', icon: I.IconBook, element: Library, blurb: 'Tus transcripciones por artista.' },
