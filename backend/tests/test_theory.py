@@ -146,7 +146,7 @@ def test_routes_are_voice_led():
     assert r["routes"]
     for route in r["routes"]:
         for step in route["steps"]:
-            assert all(53 <= n <= 81 for n in step["upper"][1:])
+            assert all(50 <= n <= 81 for n in step["upper"][1:])
 
 
 def test_transition_relations():

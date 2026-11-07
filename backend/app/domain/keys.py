@@ -242,7 +242,10 @@ def analyze_chord_in_key(key: Key, root_pc: int, suffix: str, pcs: list[int]) ->
 
     if family == "dom":
         target_pc = (root_pc - 1) % 12
-        t = target_info(target_pc) if target_pc != tonic else {"symbol": key.short, "roman": "I" if key.mode == "major" else "i"}
+        # Solo se consideran los destinos habituales del subV (I, ii, IV, V): hacia
+        # iii o vi es tan raro que suele haber una explicación mejor (préstamo modal).
+        common_target = key.degree_of(target_pc) in (0, 1, 3, 4)
+        t = None if not common_target else target_info(target_pc) if target_pc != tonic else {"symbol": key.short, "roman": "I" if key.mode == "major" else "i"}
         if t:
             res.update(kind="sustituto tritonal", function="D", target=t["symbol"],
                        roman=f"subV7/{t['roman']}" if target_pc != tonic else "subV7 (bII7)",
