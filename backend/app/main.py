@@ -20,9 +20,11 @@ app.include_router(library.router)
 app.include_router(study.router)
 app.include_router(assistant.router)
 
-try:  # routers opcionales del sprint 2 (dependencias pesadas)
-    from app.api.routers import extra  # noqa: F401
-    extra.register(app)
+try:  # Pistas: requiere librosa (requirements-pistas.txt). Sin ella la app arranca igual.
+    import librosa  # noqa: F401
+
+    from app.api.routers import stems
+    app.include_router(stems.router)
 except ImportError:
     pass
 
