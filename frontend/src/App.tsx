@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import AudioBanner from './components/AudioBanner'
 import Palette from './components/Palette'
 import { IconHome } from './components/Icons'
 import { useInput } from './lib/input'
@@ -48,6 +49,7 @@ export default function App() {
       </aside>
       {menuOpen && <div className="drawer-backdrop" onClick={() => setMenuOpen(false)} />}
       <main className="main">
+        <AudioBanner />
         <Routes>
           <Route path="/" element={<Home />} />
           {MODULES.map((m) => <Route key={m.path} path={m.path} element={<m.element />} />)}

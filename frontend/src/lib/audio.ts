@@ -37,12 +37,44 @@ function makeSynth(): Inst {
   return synth as unknown as Inst
 }
 
-/** Inicializa el audio (debe llamarse tras un gesto del usuario por política del navegador). */
+// ---------------------------------------------------------------------------
+// Desbloqueo del audio. Los navegadores mantienen el AudioContext en pausa hasta
+// un gesto del usuario (clic, tecla, toque). Una nota MIDI NO cuenta como gesto,
+// así que si lo primero que haces es tocar el teclado MIDI el audio no arranca.
+// Por eso: (1) se intenta reanudar en cada gesto hasta conseguirlo y (2) se avisa
+// en pantalla mientras siga bloqueado. Nunca se espera (await) a Tone.start()
+// fuera de un gesto: esa promesa no se resuelve hasta que hay uno.
+// ---------------------------------------------------------------------------
+const listeners = new Set<(running: boolean) => void>()
+export const audioRunning = () => Tone.getContext().state === 'running'
+
+/** Reanuda el audio. Llamar desde un manejador de clic o tecla. */
+export function unlockAudio() {
+  if (!audioRunning()) Tone.start().catch(() => {})
+  ensureAudio()
+}
+
+/** Suscribe a los cambios de estado del audio (bloqueado / sonando). */
+export function onAudioState(fn: (running: boolean) => void) {
+  listeners.add(fn)
+  fn(audioRunning())
+  return () => { listeners.delete(fn) }
+}
+
+if (typeof window !== 'undefined') {
+  Tone.getContext().rawContext.addEventListener('statechange', () => listeners.forEach((l) => l(audioRunning())))
+  const gesture = () => {
+    unlockAudio()
+    if (audioRunning()) ['pointerdown', 'keydown', 'touchstart'].forEach((e) => window.removeEventListener(e, gesture, true))
+  }
+  ;['pointerdown', 'keydown', 'touchstart'].forEach((e) => window.addEventListener(e, gesture, true))
+}
+
+/** Prepara el instrumento (piano con samples o sintetizador). No requiere gesto. */
 export async function ensureAudio(): Promise<Inst> {
   if (instrument) return instrument
   if (loading) return loading
   loading = (async () => {
-    await Tone.start()
     if (await samplesAvailable()) {
       const urls: Record<string, string> = {}
       SAMPLE_NOTES.forEach((n) => (urls[n.replace('s', '#')] = `${n}.mp3`))
@@ -63,13 +95,16 @@ export async function ensureAudio(): Promise<Inst> {
 
 const freq = (m: number) => Tone.Frequency(m, 'midi').toFrequency()
 
+// Notas en directo con Tone.immediate() y no Tone.now(): now() añade el "lookAhead"
+// de 0,1 s pensado para secuencias programadas, que se nota mucho al tocar
+// (y más con auriculares Bluetooth, que ya tienen su propia latencia).
 export async function noteOn(midi: number, velocity = 0.8) {
   const i = await ensureAudio()
-  i.triggerAttack(freq(midi), Tone.now(), velocity)
+  i.triggerAttack(freq(midi), Tone.immediate(), velocity)
 }
 export async function noteOff(midi: number) {
   const i = await ensureAudio()
-  i.triggerRelease(freq(midi), Tone.now())
+  i.triggerRelease(freq(midi), Tone.immediate())
 }
 
 export async function playChord(notes: number[], dur = 1.6, arpeggio = 0.0, velocity = 0.7) {
@@ -100,7 +135,7 @@ export async function playSequence(chords: number[][], stepSec: number, onStep?:
 
 /** Golpe de palma/metrónomo: acentuado más fuerte y agudo. */
 export async function click(accent: boolean, time?: number) {
-  await Tone.start()
+  if (!audioRunning()) Tone.start().catch(() => {})
   if (!clickHi) {
     clickHi = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, envelope: { attack: 0.001, decay: 0.12, sustain: 0 } }).toDestination()
     clickLo = new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.07, sustain: 0 }, volume: -10 }).toDestination()
