@@ -26,6 +26,16 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 | **Analizador** | Grados romanos, funciones, dominantes secundarias, sustitutos tritonales, préstamos modales y detección de modulaciones. |
 | **Compás y palos** | Soleá, alegrías, bulería, seguiriya, tangos, sevillanas y compases de amalgama, en reloj y en línea, con metrónomo de palmas. |
 | **Mi biblioteca** | Tus transcripciones por artista (Jacob Collier, Bach, Vicente Marín Trío, Emily Bear...). Se guardan en `data/`. |
+| **Pistas y acordes** | Sube una canción: Demucs separa voz, bajo, piano, guitarra y batería en tu GPU; se detectan pulso, tonalidad y acordes en una línea de tiempo. Aísla una pista, ralentízala sin cambiar el tono, repite un acorde en bucle y corrígelo tocándolo en tu MIDI. |
+| **Corales de Bach** | Los corales del corpus de music21 con su partitura, voces silenciables y análisis acorde a acorde (con music21 como segunda opinión). |
+| **Asistente** | Profesor local con Ollama (Qwen 2.5 7B por defecto) que **solo habla de música**. Las notas y acordes los calcula el motor de teoría y las explicaciones salen de `backend/knowledge` con fuentes citadas. Sin Ollama funciona en modo bot. |
+
+## Asistente local
+
+- Necesita [Ollama](https://ollama.com) abierto. El instalador descarga `qwen2.5:7b`, que cabe en 8 GB de VRAM.
+- Para usar otro modelo: variable de entorno `OLLAMA_MODEL` (por ejemplo `qwen2.5:14b` si tienes más VRAM).
+- La base de conocimiento son ficheros Markdown en `backend/knowledge/`. Puedes añadir los tuyos (por ejemplo, apuntes
+  sobre Vicente Marín Trío) con el mismo formato: cabecera `title` y `sources`, y secciones `## `.
 
 ## Fiabilidad
 

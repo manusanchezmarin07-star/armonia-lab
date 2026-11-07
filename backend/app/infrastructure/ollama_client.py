@@ -1,6 +1,8 @@
 """Cliente mínimo de Ollama (API HTTP local en el puerto 11434)."""
 from __future__ import annotations
 
+import re
+
 import httpx
 
 from app.config import OLLAMA_MODEL, OLLAMA_URL
@@ -29,4 +31,7 @@ class OllamaClient:
             "options": {"temperature": temperature, "num_ctx": 8192, "num_predict": max_tokens},
         })
         r.raise_for_status()
-        return r.json()["message"]["content"].strip()
+        text = r.json()["message"]["content"]
+        # Modelos "razonadores" (qwen3, deepseek-r1) devuelven su borrador entre
+        # <think>...</think>; el usuario solo debe ver la respuesta final.
+        return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()

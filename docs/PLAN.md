@@ -15,8 +15,20 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] feature/instalador-windows — install.ps1 / start.bat
 - [x] PR develop → main (Sprint 1)
 
-## Sprint 2 — Estudio de genios y pistas
-- [ ] feature/bach — corales de Bach (corpus music21) con análisis
-- [ ] feature/pistas — separación Demucs (GPU) + acordes por tiempo + corrección por MIDI
-- [ ] feature/asistente — asistente local (Ollama/Qwen) solo de música, con base de conocimiento local y modo bot sin IA
-- [ ] PR develop → main (Sprint 2)
+## Sprint 2 — Estudio de genios y pistas ✅
+- [x] feature/bach — corales de Bach (corpus music21) con análisis
+- [x] feature/pistas — separación Demucs (GPU) + acordes por tiempo + corrección por MIDI
+- [x] feature/asistente — asistente local (Ollama/Qwen) solo de música, con base de conocimiento local y modo bot sin IA
+- [x] PR develop → main (Sprint 2)
+
+## Pendiente de validar en el PC de Manu (no reproducible en el entorno de desarrollo)
+- [ ] MIDI real con el Alesis Q49 y el piano
+- [ ] Demucs en la RTX 5060 (PyTorch cu128)
+- [ ] Respuestas del asistente con Ollama + qwen2.5:7b
+- [ ] Descarga de los samples de piano Salamander
+
+## Ideas para el Sprint 3
+- Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
+- Ejercicios de oído: adivinar el acorde / la función / el puente
+- Exportar a MIDI y MusicXML lo transcrito
+- Entrenador de lectura de partituras conectado al MIDI
