@@ -115,3 +115,18 @@ def test_negative_of_negative_is_original(progression, key):
         if back["negative"].startswith("{"):
             continue
         assert set(parse_symbol(back["negative"]).pcs) == set(parse_symbol(orig).pcs)
+
+
+@given(chords)
+def test_scales_for_chord_contain_every_chord_tone(sym):
+    from app.domain.scales import SCALES_BY_ID, scales_for_chord
+    p = parse_symbol(sym)
+    for s in scales_for_chord(p.root.pc, p.pcs, p.root.name):
+        pcs = {(p.root.pc + d) % 12 for d in SCALES_BY_ID[s["id"]].degrees}
+        assert set(p.pcs) - {(p.root.pc + 7) % 12} <= pcs
+
+
+def test_scales_for_dominant_include_jazz_choices():
+    from app.domain.scales import scales_for_chord
+    ids = [s["id"] for s in scales_for_chord(7, parse_symbol("G7").pcs, "G")]
+    assert ids[0] == "mixolydian" and {"lydian_dominant", "altered", "octatonic_hw"} <= set(ids)

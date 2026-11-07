@@ -179,3 +179,26 @@ def scale_info(tonic_text: str, scale_id: str) -> dict:
 def scale_catalog() -> list[dict]:
     return [{"id": s.id, "name": s.name, "family": s.family, "symmetric": s.transpositions < 12,
              "size": len(s.degrees), "transpositions": s.transpositions} for s in SCALES]
+
+
+def scales_for_chord(root_pc: int, chord_pcs: list[int], root_name: str | None = None) -> list[dict]:
+    """Escalas (con la fundamental del acorde como tónica) que contienen todas sus notas.
+
+    Es la "teoría acorde-escala" del jazz: sobre G7 encajan mixolidio, lidio
+    dominante, alterada, disminuida semitono-tono... Se ordenan de la más
+    consonante (menos notas añadidas) a la más coloreada.
+    """
+    # La 5ª justa es opcional (se omite en los voicings y escalas como la alterada no la tienen).
+    target = {p % 12 for p in chord_pcs} - {(root_pc + 7) % 12}
+    full = len({p % 12 for p in chord_pcs})
+    out = []
+    for s in SCALES:
+        if s.id == "chromatic":
+            continue
+        pcs = {(root_pc + d) % 12 for d in s.degrees}
+        if target <= pcs:
+            tonic = parse_note(root_name) if root_name else parse_note(pc_name(root_pc))
+            out.append({"id": s.id, "name": s.name, "family": s.family, "notes": spell_scale(tonic, s),
+                        "extra": len(pcs) - full, "symmetric": s.transpositions < 12})
+    out.sort(key=lambda x: (x["symmetric"], x["family"] != "Modos de la escala mayor", x["extra"]))
+    return out
