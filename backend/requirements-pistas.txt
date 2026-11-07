@@ -1,0 +1,5 @@
+# Separación de pistas y análisis de audio. PyTorch se instala aparte con el
+# índice de CUDA adecuado (ver scripts/install.ps1).
+demucs>=4.0.1
+librosa>=0.10.2
+soundfile>=0.12.1
