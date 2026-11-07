@@ -6,6 +6,7 @@ import Bridges from './pages/Bridges'
 import Scales from './pages/Scales'
 import Negative from './pages/Negative'
 import Analyzer from './pages/Analyzer'
+import Library from './pages/Library'
 import { EXTRA_ROUTES } from './pages/extra'
 
 const NAV = [
@@ -15,6 +16,8 @@ const NAV = [
   { to: '/escalas', label: 'Escalas y simetría', icon: I.IconScale },
   { to: '/negativa', label: 'Armonía negativa', icon: I.IconMirror },
   { to: '/analizador', label: 'Analizador', icon: I.IconAnalyze },
+  { section: 'Estudio' },
+  { to: '/biblioteca', label: 'Mi biblioteca', icon: I.IconBook },
   ...EXTRA_ROUTES.map((r) => ({ to: r.path, label: r.label, icon: r.icon })),
 ] as const
 
@@ -49,6 +52,7 @@ export default function App() {
           <Route path="/escalas" element={<Scales />} />
           <Route path="/negativa" element={<Negative />} />
           <Route path="/analizador" element={<Analyzer />} />
+          <Route path="/biblioteca" element={<Library />} />
           {EXTRA_ROUTES.map((r) => <Route key={r.path} path={r.path} element={<r.element />} />)}
           <Route path="*" element={<Navigate to="/laboratorio" replace />} />
         </Routes>
