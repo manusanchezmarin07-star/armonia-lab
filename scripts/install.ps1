@@ -49,6 +49,11 @@ if (-not $SinPistas) {
   # Las RTX serie 50 (Blackwell) necesitan PyTorch compilado con CUDA 12.8 o superior.
   uv pip install --python $Py torch torchaudio --index-url https://download.pytorch.org/whl/cu128
   uv pip install --python $Py -r backend\requirements-pistas.txt
+  # Demucs y librosa usan ffmpeg para leer mp3/m4a.
+  if (-not (Existe "ffmpeg")) {
+    winget install --id Gyan.FFmpeg -e --accept-source-agreements --accept-package-agreements
+    RefrescarPath
+  }
   & $Py -c "import torch; print('    GPU disponible:', torch.cuda.is_available(), '-', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
 }
 
