@@ -27,3 +27,13 @@ def test_progression_endpoints():
     assert r.json()["key"] == "C mayor"
     r = client.post("/api/progression/negative", json={"text": "G7 C", "key": "C"})
     assert r.json()["pairs"][0]["negative"] == "Dm7b5"
+
+
+def test_bach_chorale():
+    lst = client.get("/api/bach/chorales").json()
+    assert len(lst) > 150
+    d = client.get("/api/bach/chorales/bwv66.6").json()
+    assert d["key"] == "F#m" and len(d["voices"]) == 4
+    named = [c for c in d["chords"] if c["symbol"]]
+    assert len(named) / len(d["chords"]) > 0.7
+    assert d["musicxml"].lstrip().startswith("<?xml")
