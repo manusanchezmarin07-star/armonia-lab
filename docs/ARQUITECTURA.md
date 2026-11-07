@@ -9,19 +9,25 @@ armonia-lab/
 │   │   │   ├── chords.py        identificación, cifrado americano, tensiones
 │   │   │   ├── keys.py          tonalidades, grados, funciones, armonía negativa
 │   │   │   ├── scales.py        modos y escalas simétricas (Messiaen)
-│   │   │   ├── modulation.py    rutas de modulación + conducción de voces
+│   │   │   ├── voicing.py       conducción de voces (voicings que minimizan el movimiento)
+│   │   │   ├── modulation.py    rutas de modulación y explicación de transiciones
+│   │   │   ├── reharm.py        rearmonización: sustitutos, armonizar una nota, estilos
+│   │   │   ├── transpose.py     transporte con deletreo correcto
 │   │   │   ├── analysis.py      análisis de progresiones (Viterbi sobre tonalidades)
 │   │   │   └── rhythm.py        palos flamencos y compases
 │   │   ├── application/     Casos de uso: orquestan el dominio para la API
 │   │   ├── infrastructure/  Disco (JSON), music21, Demucs, Ollama...
 │   │   └── api/routers/     Endpoints REST (validación con Pydantic)
 │   ├── knowledge/           Base de conocimiento local del asistente (Markdown con fuentes)
-│   └── tests/               Tests contrastados con music21
+│   └── tests/               Unitarios (vs music21), propiedades (Hypothesis) y API
 ├── frontend/                React 19 + TypeScript + Vite
 │   └── src/
 │       ├── lib/             api, audio (Tone.js), midi (Web MIDI), estado de entrada
 │       ├── components/      Piano SVG, pentagrama (VexFlow), reloj de notas, selectores
-│       └── pages/           Una pantalla por módulo
+│       ├── pages/           Una pantalla por módulo
+│       └── routes.tsx       Registro único de pantallas (menú, inicio y buscador salen de aquí)
+│   └── e2e/                 Tests end-to-end con Playwright (escritorio y móvil)
+├── .github/workflows/ci.yml  CI: ruff + pytest + build + e2e
 ├── scripts/install.ps1      Instalador de Windows
 ├── INSTALAR.bat / ARRANCAR.bat
 └── data/                    Datos del usuario (no se versiona)
