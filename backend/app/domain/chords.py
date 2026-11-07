@@ -185,6 +185,8 @@ def chord_suffix(base: BaseChord, tensions: tuple[str, ...] | list[str]) -> str:
         paren = sorted(t - {"9"}, key=_tension_order)
     else:
         paren = sorted(t, key=_tension_order)
+    # La 7ª mayor como tensión (sobre dim7) se escribe "maj7" para no confundirla con la 7ª menor.
+    paren = ["maj7" if x == "7" else x for x in paren]
     return s + (f"({','.join(paren)})" if paren else "")
 
 
@@ -379,6 +381,8 @@ def parse_symbol(text: str) -> ParsedChord:
     all_t = list(tensions)
     for p in paren:
         p = p.replace("♭", "b").replace("♯", "#")
+        if p in ("maj7", "M7", "∆7", "Δ7"):
+            p = "7"
         if p not in TONES or p in ("1", "3", "b3", "5"):
             raise ValueError(f"Tensión no reconocida en {text!r}: '{p}'")
         if p not in all_t:
