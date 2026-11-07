@@ -27,8 +27,16 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [ ] Respuestas del asistente con Ollama + qwen2.5:7b
 - [ ] Descarga de los samples de piano Salamander
 
-## Ideas para el Sprint 3
+## Sprint 3 — Entrenamiento, rearmonización y calidad
+- [ ] feature/refactor-backend — API pública de voicings, tests de propiedades (invariantes musicales)
+- [ ] feature/rearmonizar — motor de rearmonización (sustitutos para una melodía/acorde) + pantalla
+- [ ] feature/oido — entrenamiento auditivo (intervalos, acordes, funciones, cadencias) respondiendo con el MIDI
+- [ ] feature/lectura — entrenador de lectura de partituras por niveles, respondiendo con el MIDI
+- [ ] feature/transporte-midi — transportar progresiones, exportar a .mid y modo práctica en bucle
+- [ ] feature/inicio-ui — pantalla de inicio, círculo de quintas, avisos, preferencias persistentes, pulido visual
+- [ ] feature/e2e-ci — tests end-to-end con Playwright y CI en GitHub Actions
+- [ ] PR develop → main (Sprint 3)
+
+## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
-- Ejercicios de oído: adivinar el acorde / la función / el puente
-- Exportar a MIDI y MusicXML lo transcrito
-- Entrenador de lectura de partituras conectado al MIDI
+- Exportar a MusicXML lo transcrito

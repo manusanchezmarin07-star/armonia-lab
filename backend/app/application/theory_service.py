@@ -4,8 +4,8 @@ from __future__ import annotations
 from app.domain import analysis, modulation, rhythm, scales
 from app.domain.chords import identify, parse_symbol
 from app.domain.keys import Key, analyze_chord_in_key
-from app.domain.modulation import Step, _drop_for_voicing, realize
 from app.domain.pitch import midi_name
+from app.domain.voicing import Step, realize
 
 
 def identify_notes(notes: list[int], key_text: str | None) -> dict:
@@ -24,7 +24,7 @@ def identify_notes(notes: list[int], key_text: str | None) -> dict:
 def parse_chord(symbol: str, key_text: str | None) -> dict:
     p = parse_symbol(symbol)
     d = p.to_dict()
-    d["voicing"] = realize([Step(p.symbol, _drop_for_voicing(p), p.bass_pc)])[0]
+    d["voicing"] = realize([Step.from_chord(p)])[0]
     if key_text:
         k = Key.parse(key_text)
         d["analysis"] = analyze_chord_in_key(k, p.root.pc, p.base.suffix, p.pcs)

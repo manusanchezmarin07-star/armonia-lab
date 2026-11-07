@@ -2,7 +2,8 @@
 "segunda opinión" independiente: si nuestro cálculo y el suyo discrepan, falla."""
 import pytest
 from music21 import chord as m21chord
-from music21 import harmony, roman, scale as m21scale
+from music21 import harmony, roman
+from music21 import scale as m21scale
 
 from app.domain.analysis import analyze_progression, negative_progression
 from app.domain.chords import identify, parse_symbol

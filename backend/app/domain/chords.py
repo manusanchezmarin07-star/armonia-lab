@@ -12,7 +12,11 @@ import re
 from dataclasses import dataclass, field
 
 from .pitch import (
-    SpelledNote, letter_up, parse_note, pc_name, spell_pc,
+    SpelledNote,
+    letter_up,
+    parse_note,
+    pc_name,
+    spell_pc,
 )
 
 # etiqueta -> (semitonos sobre la fundamental, grados de letra por encima).
@@ -362,7 +366,9 @@ def parse_symbol(text: str) -> ParsedChord:
     bass = parse_note(m.group(3)) if m.group(3) else None
 
     paren: list[str] = []
-    pm = re.search(r"\(([^)]*)\)", suffix)
+    # "m(maj7)" lleva paréntesis pero es un tipo de acorde, no una lista de tensiones.
+    # Solo se toma como tensiones el último grupo entre paréntesis ("Cm(maj7)(9)").
+    pm = None if suffix in _SUFFIX_ALIASES else re.search(r"\(([^)]*)\)$", suffix) or re.search(r"\(([^)]*)\)", suffix)
     if pm:
         paren = [p.strip().replace("add", "") for p in re.split(r"[,\s]+", pm.group(1)) if p.strip()]
         suffix = (suffix[: pm.start()] + suffix[pm.end():]).strip()
@@ -387,7 +393,9 @@ def _safe_order(t: str) -> int:
 
 def parse_progression(text: str) -> list[ParsedChord]:
     """Separa por espacios, comas o barras de compás ('Dm7 G7 | Cmaj7')."""
-    tokens = [t for t in re.split(r"[\s,|]+", text) if t and t not in ("-", "%")]
+    # Tokenizador en vez de split: los paréntesis pueden llevar comas y espacios
+    # ("G7(b9, b13)") y no deben partir el acorde.
+    tokens = [t for t in re.findall(r"[^\s,|()]+(?:\([^)]*\))*(?:/[^\s,|()]+)?", text) if t not in ("-", "%")]
     return [parse_symbol(t) for t in tokens]
 
 
