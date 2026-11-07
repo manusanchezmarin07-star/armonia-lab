@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import library, study, theory
+from app.api.routers import assistant, library, study, theory
 from app.config import FRONTEND_DIST
 
 app = FastAPI(title="Armonía Lab", version="0.1.0")
@@ -18,6 +18,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http
 app.include_router(theory.router)
 app.include_router(library.router)
 app.include_router(study.router)
+app.include_router(assistant.router)
 
 try:  # routers opcionales del sprint 2 (dependencias pesadas)
     from app.api.routers import extra  # noqa: F401
