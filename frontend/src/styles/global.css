@@ -175,3 +175,4 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
   h1 { font-size: 30px; }
 }
+.chord-input { font-family: var(--serif); font-size: 18px; width: 150px; }
