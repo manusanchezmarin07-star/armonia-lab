@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import library, theory
+from app.api.routers import assistant, library, study, theory
 from app.config import FRONTEND_DIST
 
 app = FastAPI(title="Armonía Lab", version="0.1.0")
@@ -17,10 +17,14 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http
 
 app.include_router(theory.router)
 app.include_router(library.router)
+app.include_router(study.router)
+app.include_router(assistant.router)
 
-try:  # routers opcionales del sprint 2 (dependencias pesadas)
-    from app.api.routers import extra  # noqa: F401
-    extra.register(app)
+try:  # Pistas: requiere librosa (requirements-pistas.txt). Sin ella la app arranca igual.
+    import librosa  # noqa: F401
+
+    from app.api.routers import stems
+    app.include_router(stems.router)
 except ImportError:
     pass
 

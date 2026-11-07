@@ -138,17 +138,19 @@ class Key:
             })
         return out
 
-    def diatonic_pcs_for_degree(self, deg: int) -> set[int]:
+    def diatonic_pcs_for_degree(self, deg: int) -> list[set[int]]:
         """Notas permitidas para un acorde sobre el grado `deg`.
 
         En menor, la sensible solo se admite en los acordes de V y vii (menor
-        armónica). Si se admitiera siempre, D7 o G7 contarían como diatónicos en
+        armónica), aunque también valen sus versiones naturales (v, VII). Si se admitiera siempre, D7 o G7 contarían como diatónicos en
         La menor y el análisis confundiría C mayor con su relativa menor.
         """
         base = {(self.tonic.pc + s) % 12 for s in self.steps}
         if self.mode == "minor" and deg in (4, 6):
-            base = {(self.tonic.pc + s) % 12 for s in HARMONIC_MINOR_STEPS}
-        return base
+            # v/V y VII/vii° conviven en menor: se acepta la versión natural o la armónica.
+            harmonic = {(self.tonic.pc + s) % 12 for s in HARMONIC_MINOR_STEPS}
+            return [base, harmonic]
+        return [base]
 
     def degree_of(self, pc: int) -> int | None:
         rel = (pc - self.tonic.pc) % 12
@@ -223,7 +225,7 @@ def analyze_chord_in_key(key: Key, root_pc: int, suffix: str, pcs: list[int]) ->
     res = {"roman": roman, "kind": "cromático", "function": None, "explanation": "", "target": None}
 
     deg = key.degree_of(root_pc)
-    if deg is not None and core_pcs <= key.diatonic_pcs_for_degree(deg):
+    if deg is not None and any(core_pcs <= opt for opt in key.diatonic_pcs_for_degree(deg)):
         fn = (MAJOR_FUNCTIONS if key.mode == "major" else MINOR_FUNCTIONS)[deg]
         res.update(kind="diatónico", function=fn,
                    explanation=f"Acorde propio de {key.name}. Función: {FUNCTION_ES[fn]}.")

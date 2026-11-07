@@ -79,10 +79,10 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 20px; }
 .card.flush { padding: 0; overflow: hidden; }
 .grid { display: grid; gap: 18px; }
-.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-side { grid-template-columns: 1fr 360px; }
-.grid-side-l { grid-template-columns: 340px 1fr; }
+.grid-side { grid-template-columns: minmax(0, 1fr) 360px; }
+.grid-side-l { grid-template-columns: 340px minmax(0, 1fr); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .spacer { flex: 1; }
