@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Piano, { type Mark } from '../components/Piano'
 import KeySelect from '../components/KeySelect'
-import { IconPlay, IconStop } from '../components/Icons'
+import PracticeBar from '../components/PracticeBar'
 import { api, type ProgressionAnalysis } from '../lib/api'
-import { playChord, playSequence, stopSequence } from '../lib/audio'
-import { fnColor } from '../lib/music'
+import { playChord, voicingNotes } from '../lib/audio'
+import { ARTISTS, KEYS, fnColor, keyLabel } from '../lib/music'
 
-const ARTISTS = ['Jacob Collier', 'J. S. Bach', 'Vicente Marín Trío', 'Emily Bear', 'Otro']
 
 export default function Analyzer() {
   const [params] = useSearchParams()
@@ -16,26 +15,29 @@ export default function Analyzer() {
   const [data, setData] = useState<ProgressionAnalysis | null>(null)
   const [sel, setSel] = useState(0)
   const [err, setErr] = useState<string | null>(null)
-  const [playing, setPlaying] = useState(false)
   const [saveOpen, setSaveOpen] = useState(false)
 
-  const run = () => {
+  const run = (t = text, k = key) => {
     setErr(null)
-    api.post<ProgressionAnalysis>('/api/progression/analyze', { text, key: key || null })
+    api.post<ProgressionAnalysis>('/api/progression/analyze', { text: t, key: k || null })
       .then((d) => { setData(d); setSel(0) }).catch((e) => { setData(null); setErr(e.message) })
   }
-  useEffect(run, [])
+  useEffect(() => run(), [])
 
   const cur = data?.chords[sel]
   const marks: Record<number, Mark> = {}
   cur?.voicing.upper.forEach((m) => (marks[m] = 'target'))
   if (cur) marks[cur.voicing.bass] = 'held'
 
-  const play = () => {
-    if (!data) return
-    if (playing) { stopSequence(); setPlaying(false); return }
-    setPlaying(true)
-    playSequence(data.chords.map((c) => [c.voicing.bass, ...c.voicing.upper]), 1.2, setSel, () => setPlaying(false))
+  // Transporte: si se conoce la tonalidad (indicada o detectada) se transporta por
+  // tonalidades para deletrear bien; si no, por semitonos.
+  const transpose = async (body: { semitones?: number; to_key?: string }) => {
+    const from = key || data?.key ? (key || keyFromName(data!.key)) : undefined
+    const r = await api.post<{ text: string }>('/api/progression/transpose', { text, from_key: body.to_key ? from : undefined, ...body })
+    setText(r.text)
+    if (body.to_key) setKey(body.to_key)
+    else if (key) setKey('')
+    run(r.text, body.to_key ?? (key ? '' : key))
   }
 
   return (
@@ -57,7 +59,7 @@ export default function Analyzer() {
                       onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run() } }} />
           </label>
           <KeySelect value={key} onChange={setKey} allowNone label="Tonalidad" />
-          <button className="btn primary" onClick={run}>Analizar</button>
+          <button className="btn primary" onClick={() => run()}>Analizar</button>
         </div>
         <p className="small muted" style={{ margin: '10px 0 0' }}>
           Admite: C, Cm, C7, Cmaj7 / C∆7, Cm7, Cm7b5 / Cø, Cdim7 / C°7, C9, C13, C7(b9,#11), C7alt, C6/9, Csus4, C/E…
@@ -75,7 +77,16 @@ export default function Analyzer() {
               ))}
               <div className="spacer" />
               <button className="btn sm" onClick={() => setSaveOpen((v) => !v)}>Guardar en biblioteca</button>
-              <button className="btn primary sm" onClick={play}>{playing ? <><IconStop /> Parar</> : <><IconPlay /> Escuchar</>}</button>
+              <select className="select" style={{ padding: '6px 28px 6px 10px' }} value="" title="Transportar"
+                      onChange={(e) => e.target.value && transpose({ to_key: e.target.value })}>
+                <option value="">Transportar a…</option>
+                {KEYS.map((k) => <option key={k} value={k}>{keyLabel(k)}</option>)}
+              </select>
+              <button className="btn sm" title="Bajar medio tono" onClick={() => transpose({ semitones: -1 })}>−½</button>
+              <button className="btn sm" title="Subir medio tono" onClick={() => transpose({ semitones: 1 })}>+½</button>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <PracticeBar chords={data.chords.map((c) => voicingNotes(c.voicing))} name={text.slice(0, 40)} onChord={setSel} />
             </div>
             {saveOpen && <SaveForm text={text} keyText={key || null} onDone={() => setSaveOpen(false)} />}
             <div className="seq">
@@ -138,4 +149,10 @@ function SaveForm({ text, keyText, onDone }: { text: string; keyText: string | n
       <button className="btn primary sm" onClick={save}>Guardar</button>
     </div>
   )
+}
+
+/** "Eb mayor" / "C# menor" (formato del backend) → "Eb" / "C#m". */
+function keyFromName(name: string) {
+  const [tonic, mode] = name.split(' ')
+  return tonic + (mode === 'menor' ? 'm' : '')
 }

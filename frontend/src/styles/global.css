@@ -205,3 +205,9 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .btn.primary .kbd { color: #1a1408; border-color: rgba(26, 20, 8, 0.35); }
 .read-stage { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
 .read-paper { background: var(--bg-2); border: 1px solid var(--line-soft); border-radius: 14px; padding: 8px 6px; }
+.practice-bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 14px; border-radius: 12px;
+  background: var(--bg-2); border: 1px solid var(--line-soft); }
+.practice-bar .beats { display: flex; gap: 5px; }
+.practice-bar .beats span { width: 10px; height: 10px; border-radius: 50%; background: var(--line); transition: background 0.05s; }
+.practice-bar .beats span:first-child { width: 12px; height: 12px; }
+.practice-bar .beats span.on { background: var(--accent); box-shadow: 0 0 10px rgba(232, 176, 75, 0.6); }
