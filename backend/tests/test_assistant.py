@@ -75,3 +75,11 @@ def test_off_topic_follow_up_is_rejected():
     assert r["mode"] == "rechazo"
     r = svc.answer(history + [{"role": "user", "content": "¿Y por qué?"}], llm=Offline())
     assert r["mode"] == "bot"
+
+
+def test_reharmonization_facts():
+    facts = svc.compute_facts("¿Qué puedo poner en lugar de G7 antes de Cmaj7 en Do mayor?")
+    joined = " ".join(facts)
+    assert "Db7" in joined and "Bb7" in joined and "Sustituto tritonal" in joined
+    r = ask("¿Qué es un dominante backdoor?")
+    assert any("Rearmonización" in s["title"] for s in r["sources"])
