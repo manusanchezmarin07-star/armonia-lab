@@ -142,3 +142,16 @@ test('tour guiado: recorre la app y se puede cerrar', async ({ page }) => {
   await page.getByRole('button', { name: 'Tour de esta pantalla' }).click()
   await expect(page.locator('.tour-title')).toHaveText('Laboratorio: toca')
 })
+
+test('grabadora: grabar dos acordes y sacar la progresión', async ({ page }) => {
+  await open(page, '/laboratorio')
+  await page.getByRole('button', { name: '● Grabar' }).click()
+  await playChord(page, ['a', 'd', 'g']) // C
+  await page.waitForTimeout(250)
+  await playChord(page, ['f', 'h', 'k']) // F
+  await page.getByRole('button', { name: '■ Parar' }).click()
+  await page.getByRole('button', { name: 'Sacar acordes' }).click()
+  await expect(page.getByText('C  F', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Abrir en el Analizador →' }).click()
+  await expect(page.locator('textarea')).toHaveValue('C F')
+})

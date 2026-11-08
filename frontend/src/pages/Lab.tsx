@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Piano, { type Mark } from '../components/Piano'
 import Staff from '../components/Staff'
 import ChordTutor from '../components/ChordTutor'
+import RecorderCard from '../components/RecorderCard'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
 import { api, type Reading, type Transition } from '../lib/api'
@@ -156,6 +157,7 @@ export default function Lab() {
           )}
         </div>
 
+        <div className="stack">
         <div className="card stack" data-tour="lab-transition">
           <h2>¿Cómo conectan dos acordes?</h2>
           <p className="small text-2" style={{ margin: 0 }}>Toca un acorde y guárdalo como A, luego otro como B. Te explico la relación y la conducción de voces más suave.</p>
@@ -183,6 +185,8 @@ export default function Lab() {
               </button>
             </div>
           )}
+        </div>
+        <RecorderCard />
         </div>
       </div>
       {tutor && <ChordTutor symbol={tutor} onClose={() => setTutor(null)} />}
