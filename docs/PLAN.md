@@ -38,6 +38,14 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] feature/asistente-rearmonizacion — el asistente calcula sustituciones y conoce los módulos nuevos
 - [x] PR develop → main (Sprint 3)
 
+## Sprint 4 — Aprender a usar la app y a tocar cada acorde
+- [ ] feature/tutor-acordes — voicings a dos manos, digitación sugerida, inversiones y estilos (backend + tests)
+- [ ] feature/tutor-ui — tutor en Rearmonizar: teclado con dedos, pentagrama, paso a paso, arpegios, modo espera, grabar y comparar
+- [ ] feature/tour — tour guiado con cuadros de diálogo y flechas (desde Inicio y con «?» en cada pantalla)
+- [ ] feature/grabadora — grabadora MIDI en el Laboratorio (reproducir y exportar lo tocado)
+- [ ] feature/rendimiento — carga diferida de pantallas y tests unitarios del frontend (Vitest)
+- [ ] PR develop → main (Sprint 4)
+
 ## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
 - Exportar a MusicXML lo transcrito

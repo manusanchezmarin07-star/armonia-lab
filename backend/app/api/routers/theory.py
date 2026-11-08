@@ -111,3 +111,15 @@ def chord_scales(symbol: str):
         p = parse_symbol(symbol)
         return {"symbol": p.symbol, "scales": scales_for_chord(p.root.pc, p.pcs, p.root.name)}
     return _safe(run)
+
+
+@router.get("/chords/hands")
+def chord_hands(symbol: str, style: str = "basico", inversion: int = 0):
+    from app.domain.hands import two_hands
+    return _safe(two_hands, symbol, style, inversion)
+
+
+@router.get("/chords/hand-styles")
+def hand_styles():
+    from app.domain.hands import INVERSIONS, STYLES
+    return {"styles": STYLES, "inversions": INVERSIONS}
