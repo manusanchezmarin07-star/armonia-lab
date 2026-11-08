@@ -181,3 +181,49 @@ def two_hands(symbol: str, style: str = "basico", inversion: int = 0) -> dict:
             "notes": lh + rh, "spelled": c.spelled,
             # Nombre correcto de cada nota del acorde (Eb y no D#) para el pentagrama.
             "spell": {str((root + TONES[l][0]) % 12): n for l, n in zip(labels, c.spelled)}}
+
+
+def arrange(symbols: list[str], style: str = "basico") -> list[dict]:
+    """Voicings a dos manos para una canción entera.
+
+    Para cada acorde se prueban sus inversiones y se elige la que obliga a mover
+    menos la mano derecha desde el acorde anterior: así se toca "sin saltos",
+    como lo haría un pianista, en lugar de saltar siempre a la posición fundamental.
+    """
+    from .voicing import movement
+
+    cache: dict[tuple[str, int], dict] = {}
+
+    def options(sym: str) -> list[dict]:
+        out = []
+        for inv in range(4 if style != "jazz" else 1):
+            key = (sym, inv)
+            if key not in cache:
+                try:
+                    cache[key] = two_hands(sym, style, inv)
+                except ValueError:
+                    continue
+            v = cache[key]
+            if not any(v["notes"] == o["notes"] for o in out):
+                out.append(v)
+        return out
+
+    result: list[dict] = []
+    prev_rh: list[int] | None = None
+    for sym in symbols:
+        opts = options(sym)
+        if not opts:
+            result.append({})
+            continue
+        if prev_rh is None:
+            # Primer acorde: la posición con la derecha más centrada (alrededor de Mi4).
+            best = min(opts, key=lambda v: abs(sum(x["midi"] for x in v["right"]) / len(v["right"]) - 64))
+        else:
+            def cost(v: dict, prev: list[int] = prev_rh) -> float:
+                rh = [x["midi"] for x in v["right"]]
+                drift = abs(sum(rh) / len(rh) - 64) * 0.15  # que no se vaya a los extremos poco a poco
+                return movement(prev, rh) + drift
+            best = min(opts, key=cost)
+        prev_rh = [x["midi"] for x in best["right"]]
+        result.append(best)
+    return result

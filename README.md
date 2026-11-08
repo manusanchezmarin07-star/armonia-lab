@@ -30,7 +30,7 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 | **Oído** | Intervalos, tipos de acorde, grados con cadencia y progresiones. Respondes con botones, números o **tocando en el MIDI**; lo que más fallas sale más. |
 | **Lectura** | Entrenador de lectura por niveles: clave de Sol, de Fa, líneas adicionales, alteraciones, tríadas y armaduras. Tocas la nota que ves. |
 | **Mi biblioteca** | Tus transcripciones por artista (Jacob Collier, Bach, Vicente Marín Trío, Emily Bear...). Se guardan en `data/`. |
-| **Pistas y acordes** | Sube una canción: Demucs separa voz, bajo, piano, guitarra y batería en tu GPU; se detectan pulso, tonalidad y acordes en una línea de tiempo. Aísla una pista, ralentízala sin cambiar el tono, repite un acorde en bucle y corrígelo tocándolo en tu MIDI. |
+| **Pistas y acordes (modo canción)** | 1) Demucs separa voz, bajo, piano, guitarra y batería; se detectan pulso, tonalidad y acordes (con alternativas para corregir con un clic o tocando en el MIDI). 2) **Letra y acordes**: transcripción de la voz con Whisper o letra pegada alineada con la voz; cada acorde encima de su palabra, karaoke y validación. 3) **Tutorial de piano** tipo vídeo: notas que caen con el número de dedo, las dos manos en el teclado, acorde siguiente, letra y modo espera. |
 | **Corales de Bach** | Los corales del corpus de music21 con su partitura, voces silenciables y análisis acorde a acorde (con music21 como segunda opinión). |
 | **Asistente** | Profesor local con Ollama (Qwen 2.5 7B por defecto) que **solo habla de música**. Las notas y acordes los calcula el motor de teoría y las explicaciones salen de `backend/knowledge` con fuentes citadas. Sin Ollama funciona en modo bot. |
 
@@ -58,6 +58,8 @@ La app **no descarga música** de YouTube, Spotify ni otras plataformas: sus con
 
 1. Consigue el archivo: compra la canción en una tienda que dé descarga (Bandcamp, iTunes Store, Qobuz, Amazon Music…), pásala de un CD tuyo o graba tu propia interpretación. Sirven mp3, wav, flac y m4a sin DRM.
 2. **Pistas y acordes** → arrastra el archivo. Demucs separa voz, bajo, piano, guitarra y batería, y se detectan pulso, tonalidad y acordes.
+   En la pestaña **Letra y acordes** pulsa «Transcribir la voz» o pega la letra que tengas; revisa y pulsa «✓ Está bien».
+   En **Tutorial de piano** tócala con las dos manos (activa «Modo espera» para ir a tu ritmo).
 3. Escucha cada pista aislada (solo, velocidad al 50–70 %, bucle sobre un acorde) y **corrige con tu MIDI** los acordes dudosos.
 4. **Guardar progresión** → queda en Mi biblioteca con el artista.
 5. Desde ahí: **Analizar** (grados y modulaciones), **Rearmonizar** y **Cómo se toca** para cada acorde.
@@ -82,6 +84,7 @@ sus fuentes. Hay tres capas de tests:
 - **De propiedades** (Hypothesis): invariantes musicales comprobadas sobre cientos de casos aleatorios. Por ejemplo, que
   reflejar dos veces en armonía negativa devuelva el original o que transportar conserve la forma de cada acorde.
   Encontraron dos bugs reales que ya están corregidos.
+- **Banco de pruebas del detector de acordes** (`backend/tests/chord_bench.py`): canciones sintéticas con verdad conocida para medir el acierto; un test impide que empeore.
 - **Unitarios del frontend** (Vitest): lógica del tutor, del oído, de las tomas y de los ficheros MIDI.
 - **End-to-end** (Playwright): recorren la app en un navegador real, en escritorio y en móvil, con un teclado MIDI simulado.
 

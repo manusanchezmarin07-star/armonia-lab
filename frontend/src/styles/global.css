@@ -352,3 +352,16 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .sheet-row:hover .sheet-nudge { opacity: 1; }
 .chord-editor { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px; border-radius: 12px; background: var(--bg-2);
   border: 1px solid var(--accent); position: sticky; bottom: 10px; }
+
+/* ---------- Tutorial de canción (estilo vídeo) ---------- */
+.fall-wrap { background: linear-gradient(180deg, #0b0c10, #12141b); border-radius: 12px; padding: 0 0 4px; overflow: hidden; }
+.fall { display: block; }
+.fall-wrap .piano-wrap { padding: 0; overflow: hidden; }
+.tutorial-info { display: grid; grid-template-columns: 200px 200px minmax(0, 1fr); gap: 22px; align-items: start; }
+.next-bar { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.next-bar span { display: block; height: 100%; background: var(--teal); }
+.karaoke { font-size: 22px; line-height: 1.5; }
+.karaoke span { cursor: pointer; color: var(--text-2); transition: color 0.1s; }
+.karaoke span.sung { color: var(--accent); }
+.karaoke-next { font-size: 16px; color: var(--muted); margin-top: 4px; }
+@media (max-width: 900px) { .tutorial-info { grid-template-columns: 1fr 1fr; } .karaoke { grid-column: 1 / -1; } }
