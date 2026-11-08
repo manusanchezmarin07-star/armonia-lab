@@ -105,3 +105,26 @@ test('buscador rápido con Ctrl+K', async ({ page }) => {
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/bach$/)
 })
+
+test('tutor de acordes: digitación, modo espera y grabación', async ({ page }) => {
+  await open(page, '/laboratorio')
+  await playChord(page, ['a', 'd', 'g']) // Do mayor
+  await page.getByRole('button', { name: '🎹 Cómo se toca' }).click()
+  const dlg = page.getByRole('dialog', { name: 'Cómo tocar C' })
+  await expect(dlg.getByText('pulgar').first()).toBeVisible()
+  // Modo espera: paso 2 (mano derecha = Do4-Mi4-Sol4) tocado con el teclado del ordenador.
+  await dlg.getByText('2. Mano derecha').click()
+  for (const k of ['a', 'd', 'g']) await page.keyboard.down(k)
+  await page.waitForTimeout(200)
+  for (const k of ['a', 'd', 'g']) await page.keyboard.up(k)
+  await expect(dlg.getByText('✓ Mano derecha')).toBeVisible()
+  // Grabar la derecha en bloque y recibir la evaluación.
+  await dlg.getByRole('button', { name: '3 · Practicar y grabar' }).click()
+  await dlg.locator('select').selectOption('bloque')
+  await dlg.getByRole('button', { name: '● Grabar' }).click()
+  await playChord(page, ['a', 'd', 'g'])
+  await dlg.getByRole('button', { name: '■ Terminar toma' }).click()
+  await expect(dlg.getByText(/Faltaron: Do3, Sol3/)).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dlg).toBeHidden()
+})

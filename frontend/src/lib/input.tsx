@@ -17,6 +17,17 @@ interface InputCtx {
 
 const Ctx = createContext<InputCtx | null>(null)
 
+// Bus de eventos de nota con marca de tiempo (todas las fuentes: MIDI, ratón y
+// teclado). Lo usan la grabadora y el tutor, que necesitan el orden y el momento
+// exacto de cada nota y no solo "qué está pulsado ahora".
+export interface NoteEvent { type: 'on' | 'off'; note: number; velocity: number; time: number; source: 'midi' | 'pantalla' }
+const noteListeners = new Set<(e: NoteEvent) => void>()
+const emit = (e: Omit<NoteEvent, 'time'>) => { const ev = { ...e, time: performance.now() }; noteListeners.forEach((l) => l(ev)) }
+export function subscribeNotes(fn: (e: NoteEvent) => void) {
+  noteListeners.add(fn)
+  return () => { noteListeners.delete(fn) }
+}
+
 // Distribución tipo DAW: fila central = teclas blancas, fila superior = negras.
 const PC_KEYS: Record<string, number> = {
   a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, o: 13, l: 14, p: 15, 'ñ': 16, ';': 16,
@@ -42,8 +53,12 @@ export function InputProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const press = useCallback((m: number, vel = 0.75) => { noteOn(m, vel); update((s) => s.add(m)) }, [update])
-  const release = useCallback((m: number) => { noteOff(m); update((s) => s.delete(m)) }, [update])
+  const press = useCallback((m: number, vel = 0.75) => {
+    noteOn(m, vel); update((s) => s.add(m)); emit({ type: 'on', note: m, velocity: vel, source: 'pantalla' })
+  }, [update])
+  const release = useCallback((m: number) => {
+    noteOff(m); update((s) => s.delete(m)); emit({ type: 'off', note: m, velocity: 0, source: 'pantalla' })
+  }, [update])
 
   useEffect(() => subscribeMidi((type, note, vel) => {
     if (type === 'on') {
@@ -53,6 +68,7 @@ export function InputProvider({ children }: { children: ReactNode }) {
       if (soundRef.current) noteOff(note)
       update((s) => s.delete(note))
     }
+    emit({ type, note, velocity: vel, source: 'midi' })
   }), [update])
 
   useEffect(() => {

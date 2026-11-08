@@ -38,3 +38,23 @@ export function downloadMidi(name: string, bytes: Uint8Array) {
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
+/** Exporta una toma grabada (notas con inicio/fin en ms) respetando el tiempo real. */
+export function notesToMidi(notes: { note: number; start: number; end: number; velocity: number }[], bpm = 120): Uint8Array {
+  const ticks = (ms: number) => Math.round((ms / 1000) * (bpm / 60) * TPQ)
+  const raw: { t: number; bytes: number[] }[] = []
+  notes.forEach((n) => {
+    const vel = Math.max(1, Math.min(127, Math.round(n.velocity * 127)))
+    raw.push({ t: ticks(n.start), bytes: [0x90, n.note, vel] })
+    raw.push({ t: ticks(n.end), bytes: [0x80, n.note, 0] })
+  })
+  // A igualdad de tiempo, primero los note-off: así una nota repetida no se corta a sí misma.
+  raw.sort((a, b) => a.t - b.t || (a.bytes[0] === 0x80 ? -1 : 1))
+  const tempo = Math.round(60_000_000 / bpm)
+  const ev: number[] = [0, 0xff, 0x51, 0x03, (tempo >> 16) & 0xff, (tempo >> 8) & 0xff, tempo & 0xff]
+  let last = 0
+  raw.forEach((r) => { ev.push(...vlq(r.t - last), ...r.bytes); last = r.t })
+  ev.push(0, 0xff, 0x2f, 0x00)
+  const header = [0x4d, 0x54, 0x68, 0x64, ...u32(6), ...u16(0), ...u16(1), ...u16(TPQ)]
+  return new Uint8Array([...header, 0x4d, 0x54, 0x72, 0x6b, ...u32(ev.length), ...ev])
+}

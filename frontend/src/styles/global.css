@@ -271,3 +271,35 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .audio-banner.urgent { background: #3a1f1b; border-bottom-color: rgba(255, 122, 107, 0.5); animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 50% { background: #4a2620; } }
 @media (max-width: 860px) { .audio-banner { padding: 10px 16px; top: 49px; } }
+
+/* ---------- Ventanas modales ---------- */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(5, 6, 9, 0.66); backdrop-filter: blur(4px); z-index: 80;
+  display: flex; align-items: flex-start; justify-content: center; padding: 4vh 16px; overflow-y: auto; }
+.modal { width: min(1180px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  box-shadow: var(--shadow); padding: 22px 24px; animation: fade 0.2s ease both; }
+
+/* ---------- Tutor de acordes ---------- */
+.tutor-body { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 22px; margin-top: 16px; }
+.tutor-steps { display: grid; gap: 10px; }
+.tutor-step { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); cursor: pointer; transition: all 0.15s; }
+.tutor-step.on { border-color: var(--accent); background: var(--accent-soft); }
+.tutor-step.done { border-color: rgba(79, 209, 197, 0.5); }
+.tutor-step.done b { color: var(--teal); }
+.arp-strip { display: flex; gap: 6px; flex-wrap: wrap; }
+.arp-cell { display: flex; flex-direction: column-reverse; gap: 2px; min-width: 34px; padding: 6px; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--bg-2); align-items: center; transition: all 0.06s; }
+.arp-cell.on { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-2px); }
+.arp-cell span { font-weight: 800; font-size: 13px; }
+.arp-cell .l { color: var(--teal); }
+.arp-cell .r { color: var(--accent); }
+.rec-on { background: var(--coral); border-color: var(--coral); animation: pulse-rec 1.2s infinite; }
+@keyframes pulse-rec { 50% { box-shadow: 0 0 0 6px rgba(255, 122, 107, 0.25); } }
+.report { display: flex; gap: 18px; align-items: center; padding: 14px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line-soft); }
+.score-ring { --p: 0; width: 76px; height: 76px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--teal) calc(var(--p) * 1%), var(--line) 0); }
+.score-ring span { width: 60px; height: 60px; border-radius: 50%; background: var(--bg-2); display: grid; place-items: center;
+  font-family: var(--serif); font-size: 24px; font-weight: 600; }
+.finger-table { display: grid; gap: 7px; width: 100%; }
+.finger-badge { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: #14161d; font-weight: 800; font-size: 12px; flex: none; }
+.take-roll { background: var(--bg-2); border-radius: 10px; border: 1px solid var(--line-soft); }
+@media (max-width: 960px) { .tutor-body { grid-template-columns: 1fr; } }

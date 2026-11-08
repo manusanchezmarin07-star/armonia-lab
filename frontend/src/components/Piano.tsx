@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { isBlack, pcName } from '../lib/music'
 
-export type Mark = 'pressed' | 'held' | 'move' | 'target' | 'scale' | 'char' | 'root' | 'neg' | 'ghost'
+export type Mark = 'pressed' | 'held' | 'move' | 'target' | 'scale' | 'char' | 'root' | 'neg' | 'ghost' | 'lh' | 'rh' | 'lh-todo' | 'rh-todo' | 'wrong'
 
 interface Props {
   from?: number
@@ -9,6 +9,8 @@ interface Props {
   pressed?: Set<number>
   marks?: Record<number, Mark>
   labels?: Record<number, string>
+  /** Número de dedo (1-5) dibujado como insignia sobre la tecla. */
+  fingers?: Record<number, number>
   showNames?: boolean
   height?: number
   onDown?: (m: number) => void
@@ -17,11 +19,13 @@ interface Props {
 
 const FILL: Partial<Record<Mark, string>> = {
   pressed: '#e8b04b', held: '#4fd1c5', move: '#ff7a6b', target: '#e8b04b', neg: '#a78bfa', ghost: 'rgba(232,176,75,0.35)',
+  // Tutor: turquesa = mano izquierda, ámbar = derecha; las versiones claras son notas aún por tocar.
+  lh: '#4fd1c5', rh: '#e8b04b', 'lh-todo': '#b5ece7', 'rh-todo': '#f5dca6', wrong: '#ff7a6b',
 }
 const DOT: Partial<Record<Mark, string>> = { scale: '#7d7a74', char: '#ff7a6b', root: '#e8b04b' }
 
 /** Teclado SVG escalable. Las marcas colorean teclas (llenas) o ponen un punto (escalas). */
-export default function Piano({ from = 48, to = 84, pressed, marks = {}, labels = {}, showNames, height = 150, onDown, onUp }: Props) {
+export default function Piano({ from = 48, to = 84, pressed, marks = {}, labels = {}, fingers = {}, showNames, height = 150, onDown, onUp }: Props) {
   const dragging = useRef(false)
   const last = useRef<number | null>(null)
   const whites: number[] = []
@@ -68,6 +72,13 @@ export default function Piano({ from = 48, to = 84, pressed, marks = {}, labels 
               style={fill ? { fill } : undefined} />
         {fill && !black && <rect x={x + 3} y={h - 9} width={w - 6} height={4} rx={2} fill="rgba(0,0,0,0.18)" />}
         {dot && <circle cx={x + w / 2} cy={h - (black ? 12 : 16)} r={mk === 'scale' ? 3.2 : 4.6} fill={dot} />}
+        {fingers[m] !== undefined && (
+          <g style={{ pointerEvents: 'none' }}>
+            <circle cx={x + w / 2} cy={black ? h - 13 : h - 15} r={black ? 6.2 : 8} fill="#14161d" stroke="#fff" strokeWidth={1} />
+            <text x={x + w / 2} y={black ? h - 9.5 : h - 11} textAnchor="middle" fontSize={black ? 9 : 11} fontWeight={800} fill="#fff"
+                  style={{ fontFamily: 'var(--font)' }}>{fingers[m]}</text>
+          </g>
+        )}
         {label && (
           <text x={x + w / 2} y={black ? h - 24 : h - 26} textAnchor="middle" fontSize={black ? 7.5 : 9}
                 fontWeight={600} fill={black ? (fill ? '#14161d' : '#e9e4da') : '#2a2d36'}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Piano, { type Mark } from '../components/Piano'
 import Staff from '../components/Staff'
+import ChordTutor from '../components/ChordTutor'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
 import { api, type Reading, type Transition } from '../lib/api'
@@ -22,6 +23,7 @@ export default function Lab() {
   const [trans, setTrans] = useState<Transition | null>(null)
   const [transErr, setTransErr] = useState<string | null>(null)
   const [scales, setScales] = useState<ChordScale[]>([])
+  const [tutor, setTutor] = useState<string | null>(null)
 
   const notes = pressed.size ? [...pressed].sort((a, b) => a - b) : lastChord
 
@@ -100,6 +102,7 @@ export default function Lab() {
                     <span className="pill">{best.inversion}</span>
                     {best.tensions.length > 0 && <span className="pill coral">tensiones: {best.tensions.join(', ')}</span>}
                     {best.omitted.length > 0 && <span className="pill">sin {best.omitted.join(', ')}</span>}
+                    <button className="btn sm" onClick={() => setTutor(best.symbol)}>🎹 Cómo se toca</button>
                   </div>
                   <div className="row">
                     {best.tones.map((t) => (
@@ -181,6 +184,7 @@ export default function Lab() {
           )}
         </div>
       </div>
+      {tutor && <ChordTutor symbol={tutor} onClose={() => setTutor(null)} />}
     </div>
   )
 }
