@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import ChordChip from '../components/ChordChip'
+import ChordTutor from '../components/ChordTutor'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
 import { api, type VoicedStep } from '../lib/api'
@@ -50,7 +51,7 @@ export default function Reharm() {
         </div>
         <KeySelect value={key} onChange={setKey} label="Tonalidad" />
       </div>
-      <div className="seg" style={{ marginBottom: 18 }}>
+      <div className="seg" style={{ marginBottom: 18 }} data-tour="reharm-tabs">
         <button className={tab === 'acorde' ? 'on' : ''} onClick={() => setTab('acorde')}>Sustituir un acorde</button>
         <button className={tab === 'nota' ? 'on' : ''} onClick={() => setTab('nota')}>Armonizar una nota</button>
         <button className={tab === 'progresion' ? 'on' : ''} onClick={() => setTab('progresion')}>Rearmonizar progresión</button>
@@ -68,6 +69,7 @@ function SubstituteTab({ k }: { k: string }) {
   const [melody, setMelody] = usePersistentState('reharm.melody', '')
   const [data, setData] = useState<SubResult | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [tutor, setTutor] = useState<string | null>(null)
   const melodyPc = melody ? keyPc(melody) : null
 
   const run = () => {
@@ -88,7 +90,7 @@ function SubstituteTab({ k }: { k: string }) {
 
   return (
     <div className="stack">
-      <div className="card">
+      <div className="card" data-tour="reharm-form">
         <div className="row" style={{ alignItems: 'flex-end' }}>
           <label><span className="label">Acorde original</span><input className="input chord-input" value={chord} onChange={(e) => setChord(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} /></label>
           <label><span className="label">Va hacia (opcional)</span><input className="input chord-input" value={next} onChange={(e) => setNext(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} /></label>
@@ -110,6 +112,7 @@ function SubstituteTab({ k }: { k: string }) {
             <span className="pill violet">{data.analysis.kind}</span>
             {data.original_melody && <span className={`pill ${data.original_melody.ok ? 'teal' : 'coral'}`}>melodía: {data.original_melody.role}</span>}
             <div className="spacer" />
+            <button className="btn" data-tour="tutor-original" onClick={() => setTutor(data.original.symbol)}>🎹 Cómo se toca</button>
             <button className="btn" onClick={() => playSequence(data.original_voicing.map((v) => withMelody(voicingNotes(v), melodyPc)), 1.4)}>
               <IconPlay /> Original{next ? ` → ${next}` : ''}
             </button>
@@ -118,8 +121,9 @@ function SubstituteTab({ k }: { k: string }) {
             <div key={g}>
               <h3 style={{ margin: '8px 0 10px' }}>{g}</h3>
               <div className="grid grid-3">
-                {list.map((s) => (
-                  <div key={s.symbol} className="card stack fade-in" style={{ gap: 8 }}>
+                {list.map((s, idx) => (
+                  <div key={s.symbol} className="card stack fade-in" style={{ gap: 8 }}
+                       data-tour={g === groups[0][0] && idx === 0 ? 'reharm-cards' : undefined}>
                     <div className="row">
                       <span style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 600 }}>{s.symbol}</span>
                       <div className="spacer" />
@@ -136,6 +140,12 @@ function SubstituteTab({ k }: { k: string }) {
                     </div>
                     <p className="explain small" style={{ margin: 0 }}>{s.explanation}</p>
                     {s.common_tones.length > 0 && <div className="small muted">Notas comunes con {data.original.symbol}: {s.common_tones.join(', ')}</div>}
+                    <div className="row" style={{ gap: 6 }}>
+                      <span className="small muted">🎹 Cómo se toca:</span>
+                      {(s.chain.length ? s.chain : [s.symbol]).map((c) => (
+                        <button key={c} className="btn sm" onClick={() => setTutor(c)}>{c}</button>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -143,6 +153,7 @@ function SubstituteTab({ k }: { k: string }) {
           ))}
         </>
       )}
+      {tutor && <ChordTutor symbol={tutor} onClose={() => setTutor(null)} />}
     </div>
   )
 }

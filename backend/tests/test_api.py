@@ -37,3 +37,10 @@ def test_bach_chorale():
     named = [c for c in d["chords"] if c["symbol"]]
     assert len(named) / len(d["chords"]) > 0.7
     assert d["musicxml"].lstrip().startswith("<?xml")
+
+
+def test_hands_endpoint():
+    r = client.get("/api/chords/hands", params={"symbol": "Ebmaj7", "style": "basico"}).json()
+    assert [x["finger"] for x in r["right"]] == [1, 2, 3, 5]
+    assert r["spell"]["3"] == "Eb"
+    assert client.get("/api/chords/hands", params={"symbol": "C", "style": "raro"}).status_code == 422

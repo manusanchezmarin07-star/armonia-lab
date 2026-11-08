@@ -153,3 +153,35 @@ export { Tone }
 
 /** Un voicing del backend ({bass, upper}) como lista de notas MIDI. */
 export const voicingNotes = (v: { bass: number; upper: number[] }) => [v.bass, ...v.upper]
+
+
+// ---------------------------------------------------------------------------
+// Controles en directo (fader de volumen, rueda de modulación, pitch bend).
+// ---------------------------------------------------------------------------
+let vibrato: Tone.Vibrato | null = null
+
+/** Volumen general 0…1 (fader del teclado o deslizador de la app). */
+export function setMasterVolume(v: number) {
+  const db = v <= 0.001 ? -Infinity : 20 * Math.log10(v)
+  Tone.getDestination().volume.rampTo(db, 0.05)
+}
+
+/** Rueda de modulación 0…1 → vibrato. Con 0 el efecto queda sin mezcla (no colorea el sonido). */
+export function setModulation(v: number) {
+  if (!vibrato) {
+    vibrato = new Tone.Vibrato({ frequency: 5.5, depth: 0, wet: 0 })
+    Tone.getDestination().chain(vibrato)
+  }
+  vibrato.depth.rampTo(Math.min(1, v) * 0.35, 0.05)
+  vibrato.wet.rampTo(v > 0.01 ? 1 : 0, 0.05)
+}
+
+/**
+ * Pitch bend en semitonos. Solo funciona con el sintetizador: un piano (y sus
+ * samples) no puede doblar la afinación, igual que un piano real.
+ */
+export function setBend(semitones: number): boolean {
+  if (mode === 'piano' || !instrument) return false
+  ;(instrument as unknown as Tone.PolySynth).set({ detune: semitones * 100 })
+  return true
+}

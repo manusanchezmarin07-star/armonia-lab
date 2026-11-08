@@ -24,6 +24,7 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 | **Escalas y simetría** | Modos de la mayor y de la menor melódica, menor armónica, frigio dominante, pentatónicas, tonos enteros, disminuida, aumentada y los 7 modos de Messiaen, con el reloj de 12 notas que revela la simetría. |
 | **Armonía negativa** | Refleja cualquier progresión sobre el eje de la tónica, en espejo nota a nota, y explica por qué conserva la función. |
 | **Rearmonizar** | Sustitutos para cualquier acorde (tritono, backdoor, negativa, disminuidos, mediantes, preparaciones) ordenados por suavidad, todos los acordes posibles bajo una nota de la melodía y estilos de rearmonización (jazz, Collier/negativa, góspel). |
+| **Tutor de acordes** | En Rearmonizar y en el Laboratorio, botón «🎹 Cómo se toca»: notas de cada mano con **digitación sugerida** en el teclado y en el pentagrama, inversiones y estilos (básico, jazz, abierto), paso a paso con **modo espera**, 6 patrones de **arpegio**, y **grabación** de tu toma con evaluación (notas, simultaneidad, orden, regularidad) y exportación a MIDI. |
 | **Analizador** | Grados romanos, funciones, dominantes secundarias, sustitutos tritonales, préstamos modales y detección de modulaciones. Transporta a cualquier tonalidad con deletreo correcto, practica en bucle con metrónomo y exporta a `.mid`. |
 | **Compás y palos** | Soleá, alegrías, bulería, seguiriya, tangos, sevillanas y compases de amalgama, en reloj y en línea, con metrónomo de palmas. |
 | **Oído** | Intervalos, tipos de acorde, grados con cadencia y progresiones. Respondes con botones, números o **tocando en el MIDI**; lo que más fallas sale más. |
@@ -40,6 +41,27 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 - La base de conocimiento son ficheros Markdown en `backend/knowledge/`. Puedes añadir los tuyos (por ejemplo, apuntes
   sobre Vicente Marín Trío) con el mismo formato: cabecera `title` y `sources`, y secciones `## `.
 
+## Tour guiado y ayuda
+
+En Inicio, **▶ Tour guiado** recorre la app con cuadros que señalan cada parte. En cada pantalla, el botón **?** (abajo a la derecha) repite el tour de esa pantalla.
+
+## Teclado MIDI y controles (🎛 en el menú)
+
+- **Transporte**: tocas con las teclas de Do y suena (y se analiza) en la tonalidad que elijas.
+- **Fader de volumen** (CC 7) y **rueda de modulación** (CC 1 → vibrato), asignados por defecto. El **pitch bend** dobla la afinación con el sonido de sintetizador; el piano de cola no la dobla, igual que un piano real.
+- **Botones asignables** con «Aprender»: transponer, octava, quitar transporte o «siguiente» (en Oído y Lectura).
+- **Monitor MIDI** para ver qué envía cada botón. Los botones de octava y transposición del propio Alesis actúan dentro del teclado (cambian las notas que envía), así que funcionan sin configurar nada.
+
+## Analizar canciones de tus artistas
+
+La app **no descarga música** de YouTube, Spotify ni otras plataformas: sus condiciones de uso no lo permiten, el streaming lleva protección anticopia y la música tiene derechos de autor. El flujo es con audio que tengas legalmente:
+
+1. Consigue el archivo: compra la canción en una tienda que dé descarga (Bandcamp, iTunes Store, Qobuz, Amazon Music…), pásala de un CD tuyo o graba tu propia interpretación. Sirven mp3, wav, flac y m4a sin DRM.
+2. **Pistas y acordes** → arrastra el archivo. Demucs separa voz, bajo, piano, guitarra y batería, y se detectan pulso, tonalidad y acordes.
+3. Escucha cada pista aislada (solo, velocidad al 50–70 %, bucle sobre un acorde) y **corrige con tu MIDI** los acordes dudosos.
+4. **Guardar progresión** → queda en Mi biblioteca con el artista.
+5. Desde ahí: **Analizar** (grados y modulaciones), **Rearmonizar** y **Cómo se toca** para cada acorde.
+
 ## Atajos
 
 | Atajo | Qué hace |
@@ -48,6 +70,7 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 | `Z` / `X` | Bajar / subir octava |
 | `Ctrl` + `K` | Buscador rápido de pantallas |
 | `Espacio`, `1`–`9` | En Oído y Lectura: siguiente / responder |
+| `←` `→` `Esc` | En el tour: anterior / siguiente / salir |
 
 ## Fiabilidad
 
@@ -59,7 +82,8 @@ sus fuentes. Hay tres capas de tests:
 - **De propiedades** (Hypothesis): invariantes musicales comprobadas sobre cientos de casos aleatorios. Por ejemplo, que
   reflejar dos veces en armonía negativa devuelva el original o que transportar conserve la forma de cada acorde.
   Encontraron dos bugs reales que ya están corregidos.
-- **End-to-end** (Playwright): recorren la app en un navegador real, en escritorio y en móvil.
+- **Unitarios del frontend** (Vitest): lógica del tutor, del oído, de las tomas y de los ficheros MIDI.
+- **End-to-end** (Playwright): recorren la app en un navegador real, en escritorio y en móvil, con un teclado MIDI simulado.
 
 El CI de GitHub Actions los ejecuta en cada push. En local:
 

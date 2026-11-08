@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Piano, { type Mark } from '../components/Piano'
 import Staff from '../components/Staff'
+import ChordTutor from '../components/ChordTutor'
+import RecorderCard from '../components/RecorderCard'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
 import { api, type Reading, type Transition } from '../lib/api'
@@ -22,6 +24,7 @@ export default function Lab() {
   const [trans, setTrans] = useState<Transition | null>(null)
   const [transErr, setTransErr] = useState<string | null>(null)
   const [scales, setScales] = useState<ChordScale[]>([])
+  const [tutor, setTutor] = useState<string | null>(null)
 
   const notes = pressed.size ? [...pressed].sort((a, b) => a - b) : lastChord
 
@@ -68,13 +71,14 @@ export default function Lab() {
             qué función tiene en la tonalidad y cómo conecta con el siguiente.</p>
         </div>
         <div className="row">
-          <KeySelect value={key} onChange={setKey} label="Tonalidad de referencia" />
+          <KeySelect data-tour="lab-key" value={key} onChange={setKey} label="Tonalidad de referencia" />
         </div>
       </div>
 
-      <div className="card">
+      <div className="card" data-tour="lab-piano">
         <div className="row" style={{ marginBottom: 10 }}>
-          <span className={`pill ${midi.devices.length ? 'teal' : ''}`}>
+          <span className={`pill ${midi.devices.length ? 'teal' : ''}`} style={{ cursor: 'pointer' }} title="Ajustes del teclado MIDI"
+                onClick={() => window.dispatchEvent(new Event('armonia:midi-panel'))}>
             {midi.devices.length ? `MIDI: ${midi.devices.join(', ')}` : midi.supported ? 'Conecta tu teclado MIDI por USB' : 'Este navegador no soporta MIDI (usa Chrome o Edge)'}
           </span>
           <label className="row small text-2" style={{ gap: 6, cursor: 'pointer' }}>
@@ -88,7 +92,7 @@ export default function Lab() {
       </div>
 
       <div className="grid grid-side mt">
-        <div className="card">
+        <div className="card" data-tour="lab-chord">
           <div className="row" style={{ alignItems: 'flex-start', gap: 26 }}>
             <div style={{ flex: 1, minWidth: 260 }}>
               <h3>Acorde</h3>
@@ -100,6 +104,7 @@ export default function Lab() {
                     <span className="pill">{best.inversion}</span>
                     {best.tensions.length > 0 && <span className="pill coral">tensiones: {best.tensions.join(', ')}</span>}
                     {best.omitted.length > 0 && <span className="pill">sin {best.omitted.join(', ')}</span>}
+                    <button className="btn sm" onClick={() => setTutor(best.symbol)}>🎹 Cómo se toca</button>
                   </div>
                   <div className="row">
                     {best.tones.map((t) => (
@@ -152,7 +157,8 @@ export default function Lab() {
           )}
         </div>
 
-        <div className="card stack">
+        <div className="stack">
+        <div className="card stack" data-tour="lab-transition">
           <h2>¿Cómo conectan dos acordes?</h2>
           <p className="small text-2" style={{ margin: 0 }}>Toca un acorde y guárdalo como A, luego otro como B. Te explico la relación y la conducción de voces más suave.</p>
           <div className="row">
@@ -180,7 +186,10 @@ export default function Lab() {
             </div>
           )}
         </div>
+        <RecorderCard />
+        </div>
       </div>
+      {tutor && <ChordTutor symbol={tutor} onClose={() => setTutor(null)} />}
     </div>
   )
 }

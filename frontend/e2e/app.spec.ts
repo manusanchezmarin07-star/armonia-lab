@@ -105,3 +105,53 @@ test('buscador rápido con Ctrl+K', async ({ page }) => {
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/bach$/)
 })
+
+test('tutor de acordes: digitación, modo espera y grabación', async ({ page }) => {
+  await open(page, '/laboratorio')
+  await playChord(page, ['a', 'd', 'g']) // Do mayor
+  await page.getByRole('button', { name: '🎹 Cómo se toca' }).click()
+  const dlg = page.getByRole('dialog', { name: 'Cómo tocar C' })
+  await expect(dlg.getByText('pulgar').first()).toBeVisible()
+  // Modo espera: paso 2 (mano derecha = Do4-Mi4-Sol4) tocado con el teclado del ordenador.
+  await dlg.getByText('2. Mano derecha').click()
+  for (const k of ['a', 'd', 'g']) await page.keyboard.down(k)
+  await page.waitForTimeout(200)
+  for (const k of ['a', 'd', 'g']) await page.keyboard.up(k)
+  await expect(dlg.getByText('✓ Mano derecha')).toBeVisible()
+  // Grabar la derecha en bloque y recibir la evaluación.
+  await dlg.getByRole('button', { name: '3 · Practicar y grabar' }).click()
+  await dlg.locator('select').selectOption('bloque')
+  await dlg.getByRole('button', { name: '● Grabar' }).click()
+  await playChord(page, ['a', 'd', 'g'])
+  await dlg.getByRole('button', { name: '■ Terminar toma' }).click()
+  await expect(dlg.getByText(/Faltaron: Do3, Sol3/)).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dlg).toBeHidden()
+})
+
+test('tour guiado: recorre la app y se puede cerrar', async ({ page }) => {
+  await open(page, '/')
+  await page.getByRole('button', { name: '▶ Tour guiado' }).click()
+  await expect(page.locator('.tour-title')).toHaveText('Bienvenido a Armonía Lab')
+  for (let i = 0; i < 3; i++) await page.getByRole('button', { name: /Siguiente/ }).click()
+  await expect(page).toHaveURL(/\/laboratorio$/)
+  await expect(page.locator('.tour-spot')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.tour-card')).toHaveCount(0)
+  // Tour de una sola pantalla con el botón «?».
+  await page.getByRole('button', { name: 'Tour de esta pantalla' }).click()
+  await expect(page.locator('.tour-title')).toHaveText('Laboratorio: toca')
+})
+
+test('grabadora: grabar dos acordes y sacar la progresión', async ({ page }) => {
+  await open(page, '/laboratorio')
+  await page.getByRole('button', { name: '● Grabar' }).click()
+  await playChord(page, ['a', 'd', 'g']) // C
+  await page.waitForTimeout(250)
+  await playChord(page, ['f', 'h', 'k']) // F
+  await page.getByRole('button', { name: '■ Parar' }).click()
+  await page.getByRole('button', { name: 'Sacar acordes' }).click()
+  await expect(page.getByText('C  F', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Abrir en el Analizador →' }).click()
+  await expect(page.locator('textarea')).toHaveValue('C F')
+})

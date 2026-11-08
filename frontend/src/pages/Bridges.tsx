@@ -68,13 +68,13 @@ export default function Bridges() {
       {data && (
         <div className="grid grid-side-l">
           <div className="stack">
-          <div className="card">
+          <div className="card" data-tour="bridges-circle">
             <CircleOfFifths from={from} to={to} size={290} onPick={(k, w) => (w === 'from' ? setFrom(k) : setTo(k))} />
             <p className="small muted" style={{ margin: '8px 0 0', textAlign: 'center' }}>
               Clic: destino <span style={{ color: 'var(--accent)' }}>●</span> · Mayús+clic o clic derecho: origen <span style={{ color: 'var(--teal)' }}>●</span>
             </p>
           </div>
-          <div className="card flush">
+          <div className="card flush" data-tour="bridges-routes">
             <div style={{ padding: '16px 16px 8px' }} className="row">
               <h3 style={{ margin: 0 }}>Rutas</h3>
               <div className="spacer" />
@@ -101,7 +101,7 @@ export default function Bridges() {
 
           {route && cur && (
             <div className="stack">
-              <div className="card">
+              <div className="card" data-tour="bridges-detail">
                 <div className="row" style={{ marginBottom: 14 }}>
                   <h2 style={{ margin: 0 }}>{route.name}</h2>
                   <div className="spacer" />

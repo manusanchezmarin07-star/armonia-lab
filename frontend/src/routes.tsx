@@ -1,18 +1,18 @@
-import type { ComponentType } from 'react'
+import { lazy, type ComponentType } from 'react'
 import * as I from './components/Icons'
-import Lab from './pages/Lab'
-import Bridges from './pages/Bridges'
-import Reharm from './pages/Reharm'
-import Scales from './pages/Scales'
-import Negative from './pages/Negative'
-import Analyzer from './pages/Analyzer'
-import Rhythm from './pages/Rhythm'
-import Library from './pages/Library'
-import Stems from './pages/Stems'
-import Bach from './pages/Bach'
-import Assistant from './pages/Assistant'
-import Ear from './pages/Ear'
-import Reading from './pages/Reading'
+const Lab = lazy(() => import('./pages/Lab'))
+const Bridges = lazy(() => import('./pages/Bridges'))
+const Reharm = lazy(() => import('./pages/Reharm'))
+const Scales = lazy(() => import('./pages/Scales'))
+const Negative = lazy(() => import('./pages/Negative'))
+const Analyzer = lazy(() => import('./pages/Analyzer'))
+const Rhythm = lazy(() => import('./pages/Rhythm'))
+const Library = lazy(() => import('./pages/Library'))
+const Stems = lazy(() => import('./pages/Stems'))
+const Bach = lazy(() => import('./pages/Bach'))
+const Assistant = lazy(() => import('./pages/Assistant'))
+const Ear = lazy(() => import('./pages/Ear'))
+const Reading = lazy(() => import('./pages/Reading'))
 
 export interface Module {
   path: string
@@ -24,6 +24,8 @@ export interface Module {
   blurb: string
 }
 
+// Cada pantalla se carga bajo demanda (React.lazy): la primera visita es mucho más
+// ligera y librerías pesadas como la de partituras (OSMD) solo se descargan en Bach.
 // Registro único de pantallas: el menú lateral y la pantalla de inicio se generan
 // a partir de esta lista, así añadir un módulo es tocar un solo sitio.
 export const MODULES: Module[] = [
