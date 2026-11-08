@@ -6,12 +6,14 @@ import { useInput } from '../lib/input'
 import { fnColor } from '../lib/music'
 import LyricsSheet from '../components/LyricsSheet'
 import SongTutorial from '../components/SongTutorial'
+import Mixer, { type Instrument, type StemInfo } from '../components/Mixer'
 import { usePersistentState } from '../lib/prefs'
 
 interface Segment { start: number; end: number; symbol: string; pcs: number[]; confidence: number; edited: boolean; roman?: string; function?: string | null; kind?: string; alternatives?: string[] }
 interface Job {
   id: string; title: string; status: string; progress: number; message: string; separated: boolean; device: string | null
-  stems: { id: string; name: string }[]
+  stems: StemInfo[]
+  instruments?: Instrument[]; instruments_method?: string
   analysis: { duration: number; tempo: number; key: string; segments: Segment[] } | null
   lyrics_status?: string; lyrics_error?: string; validated?: boolean
   lyrics?: { source: string; lines: { start: number; end: number; words: { text: string; start: number; end: number }[] }[]; text?: string }
@@ -160,7 +162,8 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
   const analysis = job.analysis!
   const segs = analysis.segments
   // Si hay pistas separadas, la mezcla original arranca silenciada para no duplicar el sonido.
-  const stems = job.stems
+  // Solo se cargan las pistas con contenido (y la mezcla): menos memoria y menos ruido.
+  const stems = job.stems.filter((st) => st.active !== false)
 
   useEffect(() => {
     const map: Record<string, HTMLAudioElement> = {}
@@ -247,6 +250,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
           <h2 style={{ margin: 0 }}>{job.title}</h2>
           <span className="pill accent">{analysis.key.endsWith('m') ? analysis.key.slice(0, -1) + ' menor' : analysis.key + ' mayor'}</span>
           <span className="pill">≈ {Math.round(analysis.tempo)} bpm</span>
+          {(job.instruments ?? []).slice(0, 5).map((i) => <span key={i.name} className="pill violet" title="Instrumento detectado">{i.icon} {i.name}</span>)}
           <div className="spacer" />
           <button className="btn sm" onClick={saveToLibrary}>Guardar progresión</button>
           <button className="btn sm ghost" onClick={() => confirm('¿Borrar esta canción y sus pistas?') && onDelete()}><IconTrash /></button>
@@ -294,21 +298,11 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
       )}
 
       {tab === 'acordes' && <div className="grid grid-2">
-        <div className="card">
-          <h3>Mezclador</h3>
-          {stems.map((s) => (
-            <div key={s.id} className="row" style={{ padding: '6px 0' }}>
-              <span style={{ width: 120 }}>{s.name}</span>
-              <button className={`btn sm ${muted[s.id] ? '' : 'ghost'}`} style={{ width: 34, justifyContent: 'center', color: muted[s.id] ? 'var(--coral)' : undefined }}
-                      onClick={() => setMuted((m) => ({ ...m, [s.id]: !m[s.id] }))} title="Silenciar">M</button>
-              <button className="btn sm ghost" style={{ width: 34, justifyContent: 'center', color: solo === s.id ? 'var(--accent)' : undefined, borderColor: solo === s.id ? 'var(--accent)' : undefined }}
-                      onClick={() => setSolo((x) => (x === s.id ? null : s.id))} title="Solo">S</button>
-              <input type="range" className="range" style={{ flex: 1 }} min={0} max={1} step={0.01} value={vol[s.id] ?? 1}
-                     onChange={(e) => setVol((v) => ({ ...v, [s.id]: +e.target.value }))} />
-            </div>
-          ))}
-          {!job.separated && <p className="small muted">Sin Demucs solo está la mezcla. Instálalo para separar instrumentos.</p>}
-        </div>
+        <Mixer stems={job.stems} separated={job.separated} duration={dur} time={time} muted={muted} solo={solo} vol={vol}
+               method={job.instruments_method}
+               onMute={(id) => setMuted((m) => ({ ...m, [id]: !m[id] }))} onSolo={(id) => setSolo((x) => (x === id ? null : id))}
+               onVol={(id, v) => setVol((x) => ({ ...x, [id]: v }))}
+               onRedetect={() => api.post<Job>(`/api/stems/${job.id}/instruments`, {}).then(() => setTimeout(() => api.get<Job>(`/api/stems/${job.id}`).then(onChange), 4000))} />
 
         <div className="card stack">
           <h3 style={{ margin: 0 }}>{sel !== null ? 'Acorde seleccionado' : 'Sonando ahora'}</h3>
