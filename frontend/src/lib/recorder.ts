@@ -1,26 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Tone, ensureAudio } from './audio'
 import { subscribeNotes, type NoteEvent } from './input'
+import { eventsToNotes, type RecordedNote } from './takes'
 
-export interface RecordedNote { note: number; start: number; end: number; velocity: number }
-
-/** Convierte eventos on/off en notas con inicio y fin (ms relativos al principio). */
-export function eventsToNotes(events: NoteEvent[]): RecordedNote[] {
-  if (!events.length) return []
-  const t0 = events[0].time
-  const open = new Map<number, NoteEvent>()
-  const out: RecordedNote[] = []
-  for (const e of events) {
-    if (e.type === 'on') open.set(e.note, e)
-    else {
-      const on = open.get(e.note)
-      if (on) { out.push({ note: e.note, start: on.time - t0, end: e.time - t0, velocity: on.velocity }); open.delete(e.note) }
-    }
-  }
-  const last = events[events.length - 1].time - t0
-  open.forEach((on) => out.push({ note: on.note, start: on.time - t0, end: last + 300, velocity: on.velocity }))
-  return out.sort((a, b) => a.start - b.start)
-}
+export type { RecordedNote } from './takes'
 
 /** Grabadora de lo que se toca (MIDI, ratón o teclado). Empieza a contar en la primera nota. */
 export function useRecorder() {

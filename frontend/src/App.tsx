@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AudioBanner from './components/AudioBanner'
 import Palette from './components/Palette'
@@ -67,11 +67,13 @@ export default function App() {
       {menuOpen && <div className="drawer-backdrop" onClick={() => setMenuOpen(false)} />}
       <main className="main">
         <AudioBanner />
+        <Suspense fallback={<div className="page"><div className="empty-state">Cargando…</div></div>}>
         <Routes>
           <Route path="/" element={<Home />} />
           {MODULES.map((m) => <Route key={m.path} path={m.path} element={<m.element />} />)}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
       <Palette />
       <TourHelpButton />
