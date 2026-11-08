@@ -64,7 +64,7 @@ export default function Scales() {
       </div>
 
       <div className="grid grid-side-l">
-        <div className="card flush" style={{ maxHeight: 720, overflowY: 'auto' }}>
+        <div className="card flush" style={{ maxHeight: 720, overflowY: 'auto' }} data-tour="scales-list">
           {families.map(([fam, list]) => (
             <div key={fam}>
               <div className="nav-section" style={{ padding: '14px 16px 6px' }}>{fam}</div>
@@ -109,7 +109,7 @@ export default function Scales() {
                       empezando en <b>{equivalents.join(', ')}</b>. Por eso un mismo acorde o escala sirve para varias tonalidades a la vez.</p>
                   )}
                 </div>
-                <PcCircle pcs={info.pcs} accent={info.characteristic_pcs} root={info.pcs[0]} names={names} size={250} />
+                <div data-tour="scales-circle"><PcCircle pcs={info.pcs} accent={info.characteristic_pcs} root={info.pcs[0]} names={names} size={250} /></div>
               </div>
             </div>
             <div className="card">

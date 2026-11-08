@@ -167,7 +167,7 @@ export default function Reading() {
       </div>
 
       <div className="grid grid-side-l" style={{ gridTemplateColumns: '300px minmax(0, 1fr)' }}>
-        <div className="stack">
+        <div className="stack" data-tour="read-levels">
           {LEVELS.map((l) => (
             <div key={l.id} className={`card mode-card ${l.id === level.id ? 'on' : ''}`} onClick={() => setLevelId(l.id)}>
               <b>{l.name}</b>

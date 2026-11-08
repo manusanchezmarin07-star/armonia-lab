@@ -303,3 +303,23 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .finger-badge { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: #14161d; font-weight: 800; font-size: 12px; flex: none; }
 .take-roll { background: var(--bg-2); border-radius: 10px; border: 1px solid var(--line-soft); }
 @media (max-width: 960px) { .tutor-body { grid-template-columns: 1fr; } }
+
+/* ---------- Tour guiado ---------- */
+.tour-layer { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+.tour-spot { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(5, 6, 9, 0.68), 0 0 0 2px var(--accent), 0 0 30px rgba(232, 176, 75, 0.35);
+  transition: all 0.3s ease; }
+.tour-dim { position: fixed; inset: 0; background: rgba(5, 6, 9, 0.68); }
+.tour-card { position: fixed; pointer-events: auto; background: var(--surface); border: 1px solid rgba(232, 176, 75, 0.5); border-radius: 14px;
+  padding: 14px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 9px; animation: fade 0.25s ease both;
+  transition: top 0.3s ease, left 0.3s ease; }
+.tour-card::before { content: ''; position: absolute; width: 14px; height: 14px; background: var(--surface); transform: rotate(45deg); display: none; }
+.tour-card.arrow-up::before { display: block; top: -8px; left: calc(var(--ax) - 7px); border-left: 1px solid rgba(232,176,75,0.5); border-top: 1px solid rgba(232,176,75,0.5); }
+.tour-card.arrow-down::before { display: block; bottom: -8px; left: calc(var(--ax) - 7px); border-right: 1px solid rgba(232,176,75,0.5); border-bottom: 1px solid rgba(232,176,75,0.5); }
+.tour-card.arrow-left::before { display: block; left: -8px; top: 26px; border-left: 1px solid rgba(232,176,75,0.5); border-bottom: 1px solid rgba(232,176,75,0.5); }
+.tour-title { font-family: var(--serif); font-size: 21px; font-weight: 600; }
+.tour-progress { height: 3px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.tour-progress span { display: block; height: 100%; background: var(--accent); transition: width 0.3s; }
+.tour-help { position: fixed; right: 20px; bottom: 20px; z-index: 50; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--accent); font-family: var(--serif); font-size: 20px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow); }
+.tour-help:hover { border-color: var(--accent); }
+.toasts { bottom: 74px; }

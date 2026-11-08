@@ -128,7 +128,7 @@ export default function Ear() {
       </div>
 
       <div className="grid grid-side-l" style={{ gridTemplateColumns: '280px minmax(0, 1fr)' }}>
-        <div className="stack">
+        <div className="stack" data-tour="ear-modes">
           {MODES.map((m) => (
             <div key={m.id} className={`card mode-card ${m.id === mode.id ? 'on' : ''}`} onClick={() => setModeId(m.id)}>
               <b>{m.name}</b>

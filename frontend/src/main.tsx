@@ -9,13 +9,16 @@ import './styles/global.css'
 import App from './App'
 import { InputProvider } from './lib/input'
 import { ToastProvider } from './components/Toast'
+import { TourProvider } from './components/Tour'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <InputProvider>
         <ToastProvider>
-          <App />
+          <TourProvider>
+            <App />
+          </TourProvider>
         </ToastProvider>
       </InputProvider>
     </BrowserRouter>

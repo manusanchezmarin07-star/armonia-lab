@@ -128,3 +128,17 @@ test('tutor de acordes: digitación, modo espera y grabación', async ({ page })
   await page.keyboard.press('Escape')
   await expect(dlg).toBeHidden()
 })
+
+test('tour guiado: recorre la app y se puede cerrar', async ({ page }) => {
+  await open(page, '/')
+  await page.getByRole('button', { name: '▶ Tour guiado' }).click()
+  await expect(page.locator('.tour-title')).toHaveText('Bienvenido a Armonía Lab')
+  for (let i = 0; i < 3; i++) await page.getByRole('button', { name: /Siguiente/ }).click()
+  await expect(page).toHaveURL(/\/laboratorio$/)
+  await expect(page.locator('.tour-spot')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.tour-card')).toHaveCount(0)
+  // Tour de una sola pantalla con el botón «?».
+  await page.getByRole('button', { name: 'Tour de esta pantalla' }).click()
+  await expect(page.locator('.tour-title')).toHaveText('Laboratorio: toca')
+})

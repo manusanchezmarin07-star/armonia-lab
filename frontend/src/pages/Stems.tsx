@@ -88,7 +88,7 @@ export default function Stems() {
 
       <div className="grid grid-side-l" style={{ gridTemplateColumns: '280px minmax(0, 1fr)' }}>
         <div className="stack">
-          <label className="card" style={{ borderStyle: 'dashed', textAlign: 'center', cursor: 'pointer', padding: 26 }}
+          <label className="card" data-tour="stems-upload" style={{ borderStyle: 'dashed', textAlign: 'center', cursor: 'pointer', padding: 26 }}
                  onDragOver={(e) => e.preventDefault()}
                  onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) upload(f) }}>
             <input type="file" accept="audio/*" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />

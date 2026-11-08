@@ -46,7 +46,7 @@ export default function Negative() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card" data-tour="negative-form">
         <div className="row" style={{ alignItems: 'flex-end' }}>
           <KeySelect value={key} onChange={(k) => { setKey(k); run(text, k) }} label="Tónica (eje)" />
           <label style={{ flex: 1, minWidth: 260 }}>

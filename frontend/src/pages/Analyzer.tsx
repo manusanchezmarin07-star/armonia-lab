@@ -51,7 +51,7 @@ export default function Analyzer() {
             "prestados" o de paso y dónde cambia la tonalidad. Si no indicas tonalidad, la deduzco yo.</p>
         </div>
       </div>
-      <div className="card">
+      <div className="card" data-tour="analyzer-input">
         <div className="row" style={{ alignItems: 'flex-end' }}>
           <label style={{ flex: 1, minWidth: 280 }}>
             <span className="label">Progresión (separa con espacios o |)</span>
@@ -86,7 +86,7 @@ export default function Analyzer() {
               <button className="btn sm" title="Bajar medio tono" onClick={() => transpose({ semitones: -1 })}>−½</button>
               <button className="btn sm" title="Subir medio tono" onClick={() => transpose({ semitones: 1 })}>+½</button>
             </div>
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginBottom: 14 }} data-tour="analyzer-practice">
               <PracticeBar chords={data.chords.map((c) => voicingNotes(c.voicing))} name={text.slice(0, 40)} onChord={setSel} />
             </div>
             {saveOpen && <SaveForm text={text} keyText={key || null} onDone={() => setSaveOpen(false)} />}
