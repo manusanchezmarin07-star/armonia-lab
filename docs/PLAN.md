@@ -53,6 +53,12 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] feature/tutorial-cancion — tutorial de piano tipo vídeo: notas que caen, dos manos con dedos, inversiones encadenadas, modo espera
 - [x] PR develop → main (Sprint 5)
 
+## Sprint 6 — Interfaz, detector v2 e instrumentos ✅
+- [x] feature/detector-v2 — modelo de notas de basic-pitch (ONNX) fusionado con el cromagrama y banco realista con instrumentos sampleados (mezcla completa: exacto 64,7 % → 73,6 %)
+- [x] feature/instrumentos — actividad de cada pista (oculta las vacías) y reconocimiento de instrumentos con AST/AudioSet para nombrar cada pista
+- [x] feature/revision-ui — tabla de acordes por compases, auditoría automática de desbordes (5 tamaños) y correcciones en móvil/tablet
+- [x] PR develop → main (Sprint 6)
+
 ## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
 - Exportar a MusicXML lo transcrito
