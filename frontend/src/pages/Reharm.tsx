@@ -51,7 +51,7 @@ export default function Reharm() {
         </div>
         <KeySelect value={key} onChange={setKey} label="Tonalidad" />
       </div>
-      <div className="seg" style={{ marginBottom: 18 }}>
+      <div className="seg" style={{ marginBottom: 18 }} data-tour="reharm-tabs">
         <button className={tab === 'acorde' ? 'on' : ''} onClick={() => setTab('acorde')}>Sustituir un acorde</button>
         <button className={tab === 'nota' ? 'on' : ''} onClick={() => setTab('nota')}>Armonizar una nota</button>
         <button className={tab === 'progresion' ? 'on' : ''} onClick={() => setTab('progresion')}>Rearmonizar progresión</button>
@@ -90,7 +90,7 @@ function SubstituteTab({ k }: { k: string }) {
 
   return (
     <div className="stack">
-      <div className="card">
+      <div className="card" data-tour="reharm-form">
         <div className="row" style={{ alignItems: 'flex-end' }}>
           <label><span className="label">Acorde original</span><input className="input chord-input" value={chord} onChange={(e) => setChord(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} /></label>
           <label><span className="label">Va hacia (opcional)</span><input className="input chord-input" value={next} onChange={(e) => setNext(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} /></label>
@@ -121,8 +121,9 @@ function SubstituteTab({ k }: { k: string }) {
             <div key={g}>
               <h3 style={{ margin: '8px 0 10px' }}>{g}</h3>
               <div className="grid grid-3">
-                {list.map((s) => (
-                  <div key={s.symbol} className="card stack fade-in" style={{ gap: 8 }}>
+                {list.map((s, idx) => (
+                  <div key={s.symbol} className="card stack fade-in" style={{ gap: 8 }}
+                       data-tour={g === groups[0][0] && idx === 0 ? 'reharm-cards' : undefined}>
                     <div className="row">
                       <span style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 600 }}>{s.symbol}</span>
                       <div className="spacer" />

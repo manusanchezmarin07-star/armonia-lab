@@ -95,7 +95,7 @@ export default function Rhythm() {
           <div className="stack">
             <div className="card">
               <div className="row" style={{ alignItems: 'flex-start', gap: 30 }}>
-                <Clock beats={sel.beats} accents={accents} current={beat} onToggle={toggleAccent} labelOf={labelOf} />
+                <div data-tour="rhythm-clock"><Clock beats={sel.beats} accents={accents} current={beat} onToggle={toggleAccent} labelOf={labelOf} /></div>
                 <div style={{ flex: 1, minWidth: 260 }} className="stack">
                   <h2 style={{ fontSize: 30, margin: 0 }}>{sel.name}</h2>
                   <p className="explain" style={{ margin: 0 }}>{sel.description}</p>

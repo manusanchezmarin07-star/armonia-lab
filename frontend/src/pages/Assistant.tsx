@@ -112,7 +112,7 @@ export default function Assistant() {
           {busy && <div className="muted small">Pensando…</div>}
           <div ref={endRef} />
         </div>
-        <div className="row" style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 14 }}>
+        <div className="row" data-tour="assistant-input" style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 14 }}>
           <input className="input" style={{ flex: 1 }} placeholder="Ej.: ¿por qué Fm6 resuelve a C? · ¿qué es el modo lidio?" value={text}
                  onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} />
           <button className="btn primary" onClick={() => send()} disabled={busy || !text.trim()}>Enviar</button>

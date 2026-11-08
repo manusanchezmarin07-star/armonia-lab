@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AudioBanner from './components/AudioBanner'
 import Palette from './components/Palette'
+import { TourHelpButton } from './components/Tour'
 import { IconHome } from './components/Icons'
 import { useInput } from './lib/input'
 import Home from './pages/Home'
@@ -22,7 +23,7 @@ export default function App() {
         <NavLink to="/" className="brand-name" style={{ color: 'inherit' }}>Armonía <em>Lab</em></NavLink>
         <span className="dot" style={{ background: midi.devices.length ? 'var(--teal)' : 'var(--muted)', marginLeft: 'auto' }} />
       </header>
-      <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${menuOpen ? 'open' : ''}`} data-tour="sidebar">
         <NavLink to="/" className="brand" style={{ color: 'inherit' }}>
           <img className="brand-mark" src="/favicon.svg" alt="" />
           <div className="brand-name">Armonía <em>Lab</em></div>
@@ -57,6 +58,7 @@ export default function App() {
         </Routes>
       </main>
       <Palette />
+      <TourHelpButton />
     </div>
   )
 }
