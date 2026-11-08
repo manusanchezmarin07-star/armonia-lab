@@ -216,3 +216,35 @@ def _viterbi(sims: np.ndarray, stay: float = 0.08) -> list[int]:
         path.append(int(back[path[-1], s]))
     path.reverse()
     return path
+
+
+def vocal_phrases(path: str, min_gap: float = 0.45, min_len: float = 0.5) -> list[tuple[float, float]]:
+    """Tramos en los que se canta, a partir de la energía de la pista de voz separada.
+
+    Sirve para colocar una letra pegada sin transcripción automática: cada verso
+    suele coincidir con una frase entre respiraciones.
+    """
+    import librosa
+    y = load_mono([path])
+    rms = librosa.feature.rms(y=y, hop_length=HOP)[0]
+    if rms.max() <= 0:
+        return []
+    db = 20 * np.log10(rms / rms.max() + 1e-9)
+    active = db > -32
+    times = librosa.frames_to_time(np.arange(len(rms)), sr=SR, hop_length=HOP)
+    spans, start = [], None
+    for t, a in zip(times, active):
+        if a and start is None:
+            start = t
+        elif not a and start is not None:
+            spans.append([start, t])
+            start = None
+    if start is not None:
+        spans.append([start, float(times[-1])])
+    merged: list[list[float]] = []
+    for s in spans:
+        if merged and s[0] - merged[-1][1] < min_gap:
+            merged[-1][1] = s[1]
+        else:
+            merged.append(s)
+    return [(round(a, 2), round(b, 2)) for a, b in merged if b - a >= min_len]

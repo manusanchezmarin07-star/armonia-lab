@@ -4,12 +4,16 @@ import { IconPlay, IconStop, IconTrash } from '../components/Icons'
 import { api } from '../lib/api'
 import { useInput } from '../lib/input'
 import { fnColor } from '../lib/music'
+import LyricsSheet from '../components/LyricsSheet'
+import { usePersistentState } from '../lib/prefs'
 
 interface Segment { start: number; end: number; symbol: string; pcs: number[]; confidence: number; edited: boolean; roman?: string; function?: string | null; kind?: string; alternatives?: string[] }
 interface Job {
   id: string; title: string; status: string; progress: number; message: string; separated: boolean; device: string | null
   stems: { id: string; name: string }[]
   analysis: { duration: number; tempo: number; key: string; segments: Segment[] } | null
+  lyrics_status?: string; lyrics_error?: string; validated?: boolean
+  lyrics?: { source: string; lines: { start: number; end: number; words: { text: string; start: number; end: number }[] }[]; text?: string }
 }
 interface Caps { demucs: boolean; models: Record<string, string>; device: string | null }
 
@@ -151,6 +155,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
   const [loop, setLoop] = useState(false)
   const [fix, setFix] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
+  const [tab, setTab] = usePersistentState<'acordes' | 'letra' | 'tutorial'>('stems.tab', 'acordes')
   const analysis = job.analysis!
   const segs = analysis.segments
   // Si hay pistas separadas, la mezcla original arranca silenciada para no duplicar el sonido.
@@ -271,7 +276,15 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
         <div className="small muted" style={{ marginTop: 6 }}>Más opaco = más seguro · subrayado turquesa = corregido por ti</div>
       </div>
 
-      <div className="grid grid-2">
+      <div className="seg" data-tour="stems-tabs">
+        <button className={tab === 'acordes' ? 'on' : ''} onClick={() => setTab('acordes')}>1 · Acordes y pistas</button>
+        <button className={tab === 'letra' ? 'on' : ''} onClick={() => setTab('letra')}>2 · Letra y acordes</button>
+        <button className={tab === 'tutorial' ? 'on' : ''} onClick={() => setTab('tutorial')}>3 · Tutorial de piano {job.validated ? '✓' : ''}</button>
+      </div>
+
+      {tab === 'letra' && <LyricsSheet job={job} time={time} onSeek={seek} onJob={(j) => onChange(j)} />}
+
+      {tab === 'acordes' && <div className="grid grid-2">
         <div className="card">
           <h3>Mezclador</h3>
           {stems.map((s) => (
@@ -324,7 +337,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
             </>
           ) : <p className="muted">Pulsa reproducir o elige un acorde en la línea de tiempo.</p>}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

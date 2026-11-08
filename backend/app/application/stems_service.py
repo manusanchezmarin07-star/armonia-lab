@@ -11,6 +11,7 @@ from pathlib import Path
 from app.config import DATA_DIR
 from app.domain.analysis import analyze_progression
 from app.domain.chords import identify, parse_symbol
+from app.domain.lyrics import align_to_asr, build_sheet, distribute_to_phrases, lines_from_asr
 from app.infrastructure import separation
 
 ROOT = DATA_DIR / "stems"
@@ -160,3 +161,79 @@ def progression_text(job_id: str) -> str:
 def capabilities() -> dict:
     return {"demucs": separation.demucs_available(), "models": separation.MODELS,
             "device": separation.gpu_info() if separation.demucs_available() else None}
+
+
+# ---------------------------------------------------------------------------
+# Letra
+# ---------------------------------------------------------------------------
+
+def _vocals_path(meta: dict) -> Path | None:
+    for st in meta.get("stems", []):
+        if st["id"] == "vocals":
+            return ROOT / meta["id"] / st["file"]
+    return None
+
+
+def lyrics_capabilities() -> dict:
+    from app.infrastructure import lyrics_asr
+    return {"whisper": lyrics_asr.available(), "model": lyrics_asr.MODEL}
+
+
+def transcribe_lyrics(job_id: str, language: str | None = None) -> dict:
+    """Lanza la transcripción automática en segundo plano (usa la pista de voz si existe)."""
+    from app.infrastructure import lyrics_asr
+    meta = load(job_id)
+    if not lyrics_asr.available():
+        raise ValueError("Whisper no está instalado: ejecuta INSTALAR.bat con el módulo de pistas")
+    src = _vocals_path(meta) or ROOT / job_id / meta["stems"][-1]["file"]
+    meta = _update(job_id, lyrics_status="transcribiendo")
+
+    def run():
+        try:
+            segs = lyrics_asr.transcribe(str(src), language)
+            lines = lines_from_asr(segs)
+            words = [w for line in lines for w in line["words"]]
+            _update(job_id, lyrics_status="listo", asr_words=words,
+                    lyrics={"source": "transcripción automática", "lines": lines})
+        except Exception as e:
+            _update(job_id, lyrics_status="error", lyrics_error=str(e)[:500])
+    _pool.submit(run)
+    return meta
+
+
+def set_lyrics(job_id: str, text: str) -> dict:
+    """Guarda una letra pegada y le pone tiempos (alineada con la transcripción o con las frases de la voz)."""
+    from app.infrastructure import audio_analysis
+    meta = load(job_id)
+    if meta.get("asr_words"):
+        lines, source = align_to_asr(text, meta["asr_words"]), "pegada + alineada con la voz"
+    else:
+        vocals = _vocals_path(meta)
+        phrases = audio_analysis.vocal_phrases(str(vocals)) if vocals else []
+        duration = (meta.get("analysis") or {}).get("duration", 0.0)
+        lines = distribute_to_phrases(text, phrases, duration)
+        source = "pegada + frases de la voz" if phrases else "pegada (reparto aproximado)"
+    return _update(job_id, lyrics={"source": source, "lines": lines, "text": text}, validated=False)
+
+
+def shift_line(job_id: str, index: int, seconds: float) -> dict:
+    """Ajuste fino: adelanta o retrasa un verso entero."""
+    meta = load(job_id)
+    line = meta["lyrics"]["lines"][index]
+    for w in line["words"]:
+        w["start"] = round(max(0.0, w["start"] + seconds), 3)
+        w["end"] = round(max(0.0, w["end"] + seconds), 3)
+    line["start"], line["end"] = line["words"][0]["start"], line["words"][-1]["end"]
+    _save(meta)
+    return meta
+
+
+def sheet(job_id: str) -> list[dict]:
+    meta = load(job_id)
+    lines = (meta.get("lyrics") or {}).get("lines", [])
+    analysis = meta.get("analysis") or {}
+    return build_sheet(lines, analysis.get("segments", []), analysis.get("duration", 0.0))
+
+
+def set_validated(job_id: str, value: bool) -> dict:
+    return _update(job_id, validated=value)
