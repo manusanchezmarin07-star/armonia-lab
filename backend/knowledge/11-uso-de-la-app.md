@@ -16,3 +16,6 @@ La app no descarga música de plataformas de streaming. Para analizar una canci�
 
 ## Modo canción
 En Pistas y acordes cada canción tiene tres pestañas: «Acordes y pistas» (mezclador, línea de tiempo y corrección de acordes, con alternativas), «Letra y acordes» (transcribir la voz con Whisper o pegar la letra; los acordes aparecen sobre la palabra donde cambian; se valida con «Está bien») y «Tutorial de piano» (las notas caen hacia el teclado con el número de dedo, se ven las dos manos, el acorde siguiente y la letra; el modo espera pausa hasta que tocas cada acorde).
+
+## Mezclador e instrumentos
+En el modo canción, el mezclador solo muestra las pistas que suenan de verdad y las nombra por su contenido (por ejemplo, «Cuerdas frotadas: violín, chelo» en lugar de «Otros»), con una franja que indica en qué partes de la canción intervienen. Demucs separa en seis pistas (voz, batería, bajo, guitarra, piano y otros): los instrumentos que comparten pista se controlan juntos, porque separar cada violín por separado no es posible con la tecnología actual. Los acordes se muestran en una tabla por compases de cuatro pulsos.
