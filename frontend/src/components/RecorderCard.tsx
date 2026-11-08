@@ -2,22 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { downloadMidi, notesToMidi } from '../lib/midifile'
-import { takeDurationMs, useRecorder, type RecordedNote } from '../lib/recorder'
+import { takeDurationMs, useRecorder } from '../lib/recorder'
+import { groupChords } from '../lib/takes'
 import { IconPlay } from './Icons'
-
-/**
- * Agrupa una toma en acordes: notas que empiezan casi a la vez (≤ 90 ms) forman un
- * mismo acorde. Así una progresión tocada en bloques se convierte en cifrado.
- */
-export function groupChords(take: RecordedNote[], windowMs = 90): number[][] {
-  const groups: number[][] = []
-  let start = -Infinity
-  take.forEach((n) => {
-    if (n.start - start > windowMs) { groups.push([]); start = n.start }
-    groups[groups.length - 1].push(n.note)
-  })
-  return groups.filter((g) => new Set(g.map((x) => x % 12)).size >= 2)
-}
 
 export default function RecorderCard() {
   const rec = useRecorder()

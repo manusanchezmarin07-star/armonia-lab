@@ -1,5 +1,5 @@
 // Lógica pura del tutor de acordes: patrones de arpegio y evaluación de lo tocado.
-import type { RecordedNote } from './recorder'
+import type { RecordedNote } from './takes'
 
 export interface HandNote { midi: number; note: string; finger: number; role: string }
 export interface HandsData {

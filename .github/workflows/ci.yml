@@ -24,7 +24,7 @@ jobs:
       - run: python -m pytest -q
 
   frontend:
-    name: Frontend (tipos + build + e2e)
+    name: Frontend (unitarios + tipos + build + e2e)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +41,7 @@ jobs:
       - working-directory: frontend
         run: |
           npm ci
+          npm test
           npm run build
           npx playwright install --with-deps chromium
           npx playwright test
