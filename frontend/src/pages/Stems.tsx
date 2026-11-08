@@ -7,6 +7,7 @@ import { fnColor } from '../lib/music'
 import LyricsSheet from '../components/LyricsSheet'
 import SongTutorial from '../components/SongTutorial'
 import Mixer, { type Instrument, type StemInfo } from '../components/Mixer'
+import ChordChart from '../components/ChordChart'
 import { usePersistentState } from '../lib/prefs'
 
 interface Segment { start: number; end: number; symbol: string; pcs: number[]; confidence: number; edited: boolean; roman?: string; function?: string | null; kind?: string; alternatives?: string[] }
@@ -14,7 +15,7 @@ interface Job {
   id: string; title: string; status: string; progress: number; message: string; separated: boolean; device: string | null
   stems: StemInfo[]
   instruments?: Instrument[]; instruments_method?: string
-  analysis: { duration: number; tempo: number; key: string; segments: Segment[] } | null
+  analysis: { duration: number; tempo: number; key: string; segments: Segment[]; beats?: number[]; method?: string } | null
   lyrics_status?: string; lyrics_error?: string; validated?: boolean
   lyrics?: { source: string; lines: { start: number; end: number; words: { text: string; start: number; end: number }[] }[]; text?: string }
 }
@@ -93,7 +94,7 @@ export default function Stems() {
         )}
       </div>
 
-      <div className="grid grid-side-l" style={{ gridTemplateColumns: '280px minmax(0, 1fr)' }}>
+      <div className="grid grid-side-l" style={{ ['--side' as string]: '280px' }}>
         <div className="stack">
           <label className="card" data-tour="stems-upload" style={{ borderStyle: 'dashed', textAlign: 'center', cursor: 'pointer', padding: 26 }}
                  onDragOver={(e) => e.preventDefault()}
@@ -250,6 +251,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
           <h2 style={{ margin: 0 }}>{job.title}</h2>
           <span className="pill accent">{analysis.key.endsWith('m') ? analysis.key.slice(0, -1) + ' menor' : analysis.key + ' mayor'}</span>
           <span className="pill">≈ {Math.round(analysis.tempo)} bpm</span>
+          {analysis.method && <span className="pill" title="Método de detección de acordes">{analysis.method}</span>}
           {(job.instruments ?? []).slice(0, 5).map((i) => <span key={i.name} className="pill violet" title="Instrumento detectado">{i.icon} {i.name}</span>)}
           <div className="spacer" />
           <button className="btn sm" onClick={saveToLibrary}>Guardar progresión</button>
@@ -266,22 +268,10 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
             <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} disabled={sel === null} /> Repetir acorde
           </label>
         </div>
-        {/* Línea de tiempo de acordes, proporcional a la duración */}
-        <div style={{ position: 'relative', marginTop: 16, height: 64, background: 'var(--bg-2)', borderRadius: 10, overflow: 'hidden' }}>
-          {segs.map((s, i) => (
-            <div key={i} onClick={() => { setSel(i); seek(s.start) }} title={`${s.symbol} ${s.roman ?? ''}`}
-                 style={{ position: 'absolute', left: `${(s.start / dur) * 100}%`, width: `${((s.end - s.start) / dur) * 100}%`, top: 0, bottom: 0,
-                   borderRight: '1px solid var(--bg)', cursor: 'pointer', padding: '6px 4px', overflow: 'hidden',
-                   background: i === sel ? 'var(--accent-soft)' : i === curIdx ? 'var(--surface-2)' : 'transparent',
-                   boxShadow: s.edited ? 'inset 0 -3px 0 var(--teal)' : `inset 0 3px 0 ${s.symbol === 'N' ? 'transparent' : fnColor(s.function)}`,
-                   opacity: s.symbol === 'N' ? 0.4 : 0.55 + s.confidence * 0.45 }}>
-              <div style={{ fontFamily: 'var(--serif)', fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>{s.symbol === 'N' ? '·' : s.symbol}</div>
-              <div className="small" style={{ color: fnColor(s.function), whiteSpace: 'nowrap', fontSize: 11 }}>{s.roman ?? ''}</div>
-            </div>
-          ))}
-          <div style={{ position: 'absolute', left: `${(time / dur) * 100}%`, top: 0, bottom: 0, width: 2, background: 'var(--accent)' }} />
+        <div className="mt">
+          <ChordChart segments={segs} beats={analysis.beats ?? []} duration={dur} time={time} selected={sel}
+                      onPick={(i, at) => { setSel(i); seek(at) }} onSeek={seek} />
         </div>
-        <div className="small muted" style={{ marginTop: 6 }}>Más opaco = más seguro · subrayado turquesa = corregido por ti</div>
       </div>
 
       <div className="seg" data-tour="stems-tabs">
