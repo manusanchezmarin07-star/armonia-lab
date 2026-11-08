@@ -51,3 +51,8 @@ def test_two_hands_invariants(root, suffix, style, inv):
         if lab in p.labels:
             assert any(x["role"] for x in left + right)
     assert all(36 <= m <= 84 for m in lh + rh)
+
+
+def test_note_names_follow_chord_spelling():
+    r = two_hands("Db7", "basico")
+    assert [x["note"] for x in r["right"]] == ["Db4", "F4", "Ab4", "Cb5"]

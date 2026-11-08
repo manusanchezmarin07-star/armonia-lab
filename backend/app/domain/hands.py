@@ -146,11 +146,23 @@ def two_hands(symbol: str, style: str = "basico", inversion: int = 0) -> dict:
             lh = [n - 12 for n in lh]
     lf, rf = fingering(lh, "left"), fingering(rh, "right")
 
+    spelled_by_pc = {(root + TONES[l][0]) % 12: n for l, n in zip(labels, c.spelled)}
+    if c.bass:
+        spelled_by_pc.setdefault(c.bass.pc, c.bass.name)
+
+    def note_name(m: int) -> str:
+        """Nombre deletreado según el acorde (Cb5 y no B4 en Db7), con la octava de su letra."""
+        name = spelled_by_pc.get(m % 12)
+        if not name:
+            return midi_name(m)
+        alter = name.count("#") - name.count("b")
+        return f"{name}{(m - alter) // 12 - 1}"
+
     def describe(notes: list[int], fingers: list[int]) -> list[dict]:
         out = []
         for m, f in zip(notes, fingers):
             lab = pc_label.get(m % 12)
-            out.append({"midi": m, "note": midi_name(m), "finger": f,
+            out.append({"midi": m, "note": note_name(m), "finger": f,
                         "role": TONE_NAMES_ES.get(lab, "nota del bajo") if lab else "nota del bajo"})
         return out
 
