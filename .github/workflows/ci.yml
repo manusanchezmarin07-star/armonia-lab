@@ -37,7 +37,8 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: pip install -r backend/requirements.txt
+      # librosa para el test e2e del modo canción (sin Demucs ni Whisper, que son pesados).
+      - run: pip install -r backend/requirements.txt librosa soundfile
       - working-directory: frontend
         run: |
           npm ci

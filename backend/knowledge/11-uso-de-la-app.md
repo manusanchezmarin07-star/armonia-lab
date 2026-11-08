@@ -13,3 +13,6 @@ En Rearmonizar y en el Laboratorio, el botón «Cómo se toca» abre el tutor de
 
 ## Analizar canciones
 La app no descarga música de plataformas de streaming. Para analizar una canción se usa un archivo de audio propio (comprado en una tienda con descarga, pasado de un CD o grabado por uno mismo) en la pantalla Pistas y acordes: se separan los instrumentos, se detectan los acordes, se corrigen con el MIDI y se guardan en la biblioteca.
+
+## Modo canción
+En Pistas y acordes cada canción tiene tres pestañas: «Acordes y pistas» (mezclador, línea de tiempo y corrección de acordes, con alternativas), «Letra y acordes» (transcribir la voz con Whisper o pegar la letra; los acordes aparecen sobre la palabra donde cambian; se valida con «Está bien») y «Tutorial de piano» (las notas caen hacia el teclado con el número de dedo, se ven las dos manos, el acorde siguiente y la letra; el modo espera pausa hasta que tocas cada acorde).

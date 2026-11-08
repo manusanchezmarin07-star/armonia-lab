@@ -39,3 +39,73 @@ def test_upload_analyze_and_correct_with_midi(tmp_path):
     assert meta["analysis"]["segments"][2]["edited"] is True
     assert "Fmaj7" in client.get(f"/api/stems/{job['id']}/progression").json()["text"]
     assert client.delete(f"/api/stems/{job['id']}").status_code == 200
+
+
+def test_detector_accuracy_does_not_regress():
+    """Umbrales medidos con el banco de pruebas (tests/chord_bench.py) sobre canciones sintéticas
+    con inversiones, arpegios, bajo, batería y desafinación. Si baja, algo se ha roto."""
+    from tests.chord_bench import run
+    res = run(n=4, offset=900)
+    assert res["pistas.exacto"] >= 75, res
+    assert res["pistas.raiz"] >= 85, res
+    assert res["mezcla.mayor_menor"] >= 80, res
+
+
+def test_segments_offer_alternatives(tmp_path):
+    path = write_progression(tmp_path / "alt.wav", [[60, 64, 67], [57, 60, 64]])
+    segs = analyze([str(path)])["segments"]
+    assert all(len(s["alternatives"]) >= 2 for s in segs if s["symbol"] != "N")
+
+
+def test_vocal_phrases_detects_sung_spans(tmp_path):
+    import numpy as np
+    import soundfile as sf
+    sr = 22050
+    y = np.zeros(sr * 6)
+    for a, b in ((0.5, 2.0), (3.0, 4.5)):  # dos frases con silencio entre medias
+        t = np.arange(int((b - a) * sr)) / sr
+        y[int(a * sr):int(a * sr) + len(t)] = 0.5 * np.sin(2 * np.pi * 220 * t)
+    p = tmp_path / "voz.wav"
+    sf.write(p, y, sr)
+    from app.infrastructure.audio_analysis import vocal_phrases
+    ph = vocal_phrases(str(p))
+    assert len(ph) == 2
+    assert abs(ph[0][0] - 0.5) < 0.1 and abs(ph[1][1] - 4.5) < 0.1
+
+
+def test_lyrics_flow_with_fake_whisper(tmp_path, monkeypatch):
+    """Transcripción (Whisper simulado) → letra pegada alineada → hoja con acordes → validar."""
+    import time
+
+    from fastapi.testclient import TestClient
+
+    from app.infrastructure import lyrics_asr
+    from app.main import app
+    monkeypatch.setattr(lyrics_asr, "available", lambda: True)
+    monkeypatch.setattr(lyrics_asr, "transcribe", lambda path, language=None: [
+        {"start": 0.1, "end": 3.5, "words": [{"word": " hola", "start": 0.1, "end": 0.6}, {"word": " amor", "start": 2.1, "end": 2.6}]},
+        {"start": 4.1, "end": 7.0, "words": [{"word": " vuelve", "start": 4.1, "end": 4.6}, {"word": " ya", "start": 6.1, "end": 6.5}]}])
+    client = TestClient(app)
+    path = write_progression(tmp_path / "s.wav", [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62, 65]])
+    with open(path, "rb") as f:
+        job = client.post("/api/stems", files={"file": ("s.wav", f, "audio/wav")}, data={"separate": "false"}).json()
+    for _ in range(120):
+        meta = client.get(f"/api/stems/{job['id']}").json()
+        if meta["status"] in ("listo", "error"):
+            break
+        time.sleep(0.25)
+    assert meta["status"] == "listo"
+    client.post(f"/api/stems/{job['id']}/lyrics/transcribe")
+    for _ in range(40):
+        meta = client.get(f"/api/stems/{job['id']}").json()
+        if meta.get("lyrics_status") == "listo":
+            break
+        time.sleep(0.1)
+    assert meta["lyrics"]["source"] == "transcripción automática"
+    meta = client.put(f"/api/stems/{job['id']}/lyrics", json={"text": "Hola, amor\nvuelve ya"}).json()
+    assert meta["lyrics"]["lines"][1]["words"][0] == {"text": "vuelve", "start": 4.1, "end": 4.6}
+    sheet = client.get(f"/api/stems/{job['id']}/sheet").json()
+    verses = [r for r in sheet if r["type"] == "verse"]
+    assert verses[0]["words"][0]["chord"]["symbol"] == "C"
+    assert client.put(f"/api/stems/{job['id']}/validated", json={"validated": True}).json()["validated"] is True
+    client.delete(f"/api/stems/{job['id']}")

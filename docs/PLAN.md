@@ -47,6 +47,12 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] feature/controles-midi — fader, modulación, pitch bend, transporte en la app, botones asignables y monitor MIDI
 - [x] PR develop → main (Sprint 4)
 
+## Sprint 5 — Modo canción ✅
+- [x] feature/detector-acordes — banco de pruebas y detector más preciso (con pistas: acorde exacto 70 % → 90 %), alternativas por acorde
+- [x] feature/letra — letra con acordes (Whisper o letra pegada alineada), karaoke, ajuste de versos y validación
+- [x] feature/tutorial-cancion — tutorial de piano tipo vídeo: notas que caen, dos manos con dedos, inversiones encadenadas, modo espera
+- [x] PR develop → main (Sprint 5)
+
 ## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
 - Exportar a MusicXML lo transcrito

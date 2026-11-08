@@ -334,3 +334,34 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .map-row:last-child { border-bottom: 0; }
 .midi-log { display: grid; gap: 3px; }
 @media (max-width: 700px) { .map-row { grid-template-columns: 1fr; } }
+
+/* ---------- Cancionero (letra con acordes) ---------- */
+.sheet { display: flex; flex-direction: column; gap: 4px; line-height: 1.2; }
+.sheet-row { display: flex; align-items: flex-end; gap: 10px; padding: 6px 10px; border-radius: 10px; transition: background 0.15s; }
+.sheet-row.on { background: var(--accent-soft); }
+.sheet-row.instrumental { align-items: center; gap: 8px; padding: 10px; }
+.sheet-words { display: flex; flex-wrap: wrap; column-gap: 0.35em; row-gap: 6px; flex: 1; }
+.sheet-word { display: inline-flex; flex-direction: column; cursor: pointer; border-radius: 4px; }
+.sheet-word.now { color: var(--accent); text-shadow: 0 0 12px rgba(232, 176, 75, 0.4); }
+.sheet-chord-slot { height: 1.25em; font-size: 0.82em; }
+.sheet-chord { font: inherit; font-family: var(--serif); font-weight: 700; color: var(--teal); background: none; border: 0; padding: 0;
+  cursor: pointer; white-space: nowrap; }
+.sheet-row.instrumental .sheet-chord { font-size: 0.9em; padding: 3px 8px; border: 1px solid var(--line); border-radius: 8px; }
+.sheet-chord:hover { color: var(--accent); }
+.sheet-nudge { opacity: 0; transition: opacity 0.15s; white-space: nowrap; }
+.sheet-row:hover .sheet-nudge { opacity: 1; }
+.chord-editor { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px; border-radius: 12px; background: var(--bg-2);
+  border: 1px solid var(--accent); position: sticky; bottom: 10px; }
+
+/* ---------- Tutorial de canción (estilo vídeo) ---------- */
+.fall-wrap { background: linear-gradient(180deg, #0b0c10, #12141b); border-radius: 12px; padding: 0 0 4px; overflow: hidden; }
+.fall { display: block; }
+.fall-wrap .piano-wrap { padding: 0; overflow: hidden; }
+.tutorial-info { display: grid; grid-template-columns: 200px 200px minmax(0, 1fr); gap: 22px; align-items: start; }
+.next-bar { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.next-bar span { display: block; height: 100%; background: var(--teal); }
+.karaoke { font-size: 22px; line-height: 1.5; }
+.karaoke span { cursor: pointer; color: var(--text-2); transition: color 0.1s; }
+.karaoke span.sung { color: var(--accent); }
+.karaoke-next { font-size: 16px; color: var(--muted); margin-top: 4px; }
+@media (max-width: 900px) { .tutorial-info { grid-template-columns: 1fr 1fr; } .karaoke { grid-column: 1 / -1; } }
