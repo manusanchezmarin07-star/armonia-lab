@@ -21,6 +21,7 @@ export const TOUR_STEPS: TourStep[] = [
   { route: '/laboratorio', target: 'lab-key', title: 'Tonalidad de referencia', text: 'Elige la tonalidad para que te diga el grado (I, V7/IV, bVII…) y la función de cada acorde.', detail: true },
   { route: '/laboratorio', target: 'lab-transition', title: 'Conectar dos acordes', text: 'Guarda un acorde como A y otro como B: te explico por qué uno lleva al otro y cómo moverte con el menor movimiento de dedos.', detail: true },
 
+  { route: '/laboratorio', target: 'lab-recorder', title: 'Grabadora', text: 'Graba lo que tocas, escúchalo, expórtalo a MIDI o pulsa «Sacar acordes» para convertir tu toma en una progresión que puedes analizar.', detail: true },
   { route: '/puentes', target: 'bridges-circle', title: 'Puentes: el círculo de quintas', text: 'Clic en una tonalidad = destino; Mayús+clic = origen. Cuanto más lejos en el círculo, más brusco es el cambio.' },
   { route: '/puentes', target: 'bridges-routes', title: 'Siete caminos', text: 'Pivote, ii–V–I, bisagra disminuida, sustituto tritonal… ordenados de más suave a más brusco según cuánto se mueven las voces.' },
   { route: '/puentes', target: 'bridges-detail', title: 'Míralo en el teclado', text: 'Pulsa Reproducir: en turquesa las notas que se mantienen (las que disimulan el cambio) y en coral las que se mueven.', detail: true },
