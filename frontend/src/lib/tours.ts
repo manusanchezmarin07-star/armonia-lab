@@ -41,7 +41,7 @@ export const TOUR_STEPS: TourStep[] = [
   { route: '/ritmo', target: 'rhythm-clock', title: 'Compás y palos', text: 'El ciclo como un reloj: los círculos grandes son los acentos. Pulsa cualquier tiempo para crear tus propias amalgamas.' },
   { route: '/oido', target: 'ear-modes', title: 'Entrena el oído', text: 'Intervalos, tipos de acorde, grados y progresiones. Responde tocando en el MIDI: lo que más fallas, más te sale.' },
   { route: '/lectura', target: 'read-levels', title: 'Aprende a leer', text: 'Seis niveles, de la clave de Sol a las armaduras. Aparece una nota y la tocas en el piano.' },
-  { route: '/pistas', target: 'stems-upload', title: 'Separa canciones', text: 'Sube un audio: se separa en voz, bajo, piano, batería… y se sacan los acordes. Si alguno falla, lo corriges tocándolo en el MIDI.' },
+  { route: '/pistas', target: 'stems-upload', title: 'Modo canción', text: 'Sube un audio: se separa en voz, bajo, piano, batería… y se sacan los acordes (con alternativas para corregir). Después: letra con los acordes encima y un tutorial de piano tipo vídeo con las dos manos.' },
   { route: '/bach', target: 'bach-list', title: 'Corales de Bach', text: 'Partituras reales analizadas acorde a acorde, con cada voz silenciable.', detail: true },
   { route: '/asistente', target: 'assistant-input', title: 'Pregunta', text: 'Un profesor local que solo habla de música. Los acordes los calcula el motor de teoría, así que no se los inventa.' },
   { route: '/', target: 'midi-button', title: 'Tu teclado MIDI', text: 'Aquí ajustas el teclado: transporte (tocar en Do y que suene en Sol), volumen con el fader, vibrato con la rueda de modulación y botones asignables con «Aprender». Incluye un monitor para ver qué envía cada botón.' },

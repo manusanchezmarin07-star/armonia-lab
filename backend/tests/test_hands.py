@@ -56,3 +56,17 @@ def test_two_hands_invariants(root, suffix, style, inv):
 def test_note_names_follow_chord_spelling():
     r = two_hands("Db7", "basico")
     assert [x["note"] for x in r["right"]] == ["Db4", "F4", "Ab4", "Cb5"]
+
+
+def test_arrange_moves_less_than_root_position():
+    from app.domain.hands import arrange
+    from app.domain.voicing import movement
+    prog = ["C", "Am", "F", "G7", "Em", "Am", "Dm7", "G7", "C"]
+    smooth = arrange(prog)
+    naive = [two_hands(s, "basico", 0) for s in prog]
+
+    def total(vs):
+        rhs = [[x["midi"] for x in v["right"]] for v in vs]
+        return sum(movement(a, b) for a, b in zip(rhs, rhs[1:]))
+    assert total(smooth) < total(naive)
+    assert all(v["left"] and v["right"] for v in smooth)

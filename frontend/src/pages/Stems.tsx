@@ -5,6 +5,7 @@ import { api } from '../lib/api'
 import { useInput } from '../lib/input'
 import { fnColor } from '../lib/music'
 import LyricsSheet from '../components/LyricsSheet'
+import SongTutorial from '../components/SongTutorial'
 import { usePersistentState } from '../lib/prefs'
 
 interface Segment { start: number; end: number; symbol: string; pcs: number[]; confidence: number; edited: boolean; roman?: string; function?: string | null; kind?: string; alternatives?: string[] }
@@ -206,11 +207,14 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
   }, [vol, muted, solo, rate, job.id])
 
   const seek = useCallback((t: number) => { Object.values(audios.current).forEach((a) => (a.currentTime = t)); setTime(t) }, [])
-  const toggle = () => {
+  const pause = useCallback(() => { Object.values(audios.current).forEach((a) => a.pause()); setPlaying(false) }, [])
+  const play = useCallback(() => {
     const all = Object.values(audios.current)
-    if (playing) { all.forEach((a) => a.pause()); setPlaying(false) }
-    else { const t = master().currentTime; all.forEach((a) => { a.currentTime = t; a.play() }); setPlaying(true) }
-  }
+    const t = master().currentTime
+    all.forEach((a) => { a.currentTime = t; a.play() })
+    setPlaying(true)
+  }, [])
+  const toggle = () => (playing ? pause() : play())
 
   const curIdx = useMemo(() => segs.findIndex((s) => time >= s.start && time < s.end), [time, segs])
   const shown = sel ?? (curIdx >= 0 ? curIdx : null)
@@ -283,6 +287,11 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
       </div>
 
       {tab === 'letra' && <LyricsSheet job={job} time={time} onSeek={seek} onJob={(j) => onChange(j)} />}
+      {tab === 'tutorial' && (
+        <SongTutorial jobId={job.id} validated={!!job.validated} lines={job.lyrics?.lines ?? []} time={time} playing={playing}
+                      onPlay={play} onPause={pause} onSeek={seek}
+                      onMuteOriginal={(m) => setMuted((cur) => ({ ...cur, ...Object.fromEntries(stems.filter((st) => ['piano', 'other', 'mezcla'].includes(st.id) && (job.separated ? st.id !== 'mezcla' : true)).map((st) => [st.id, m])) }))} />
+      )}
 
       {tab === 'acordes' && <div className="grid grid-2">
         <div className="card">

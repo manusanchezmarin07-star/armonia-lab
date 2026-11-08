@@ -108,3 +108,8 @@ def sheet(job_id: str):
 @router.put("/{job_id}/validated")
 def validated(job_id: str, body: ValidateIn):
     return _wrap(svc.set_validated, job_id, body.validated)
+
+
+@router.get("/{job_id}/arrangement")
+def arrangement(job_id: str, style: str = "basico"):
+    return _wrap(svc.arrangement, job_id, style)

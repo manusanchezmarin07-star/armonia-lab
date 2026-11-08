@@ -237,3 +237,19 @@ def sheet(job_id: str) -> list[dict]:
 
 def set_validated(job_id: str, value: bool) -> dict:
     return _update(job_id, validated=value)
+
+
+def arrangement(job_id: str, style: str = "basico") -> list[dict]:
+    """Voicing a dos manos (con dedos) para cada acorde de la canción, encadenados sin saltos."""
+    from app.domain.hands import STYLES, arrange
+    if style not in STYLES:
+        raise ValueError(f"Estilo desconocido: {style}")
+    segs = (load(job_id).get("analysis") or {}).get("segments", [])
+    playable = [s for s in segs if s["symbol"] != "N"]
+    voiced = iter(arrange([s["symbol"].split(" ")[0] for s in playable], style))
+    out = []
+    for i, s in enumerate(segs):
+        v = next(voiced) if s["symbol"] != "N" else {}
+        out.append({"index": i, "start": s["start"], "end": s["end"], "symbol": s["symbol"],
+                    "left": v.get("left", []), "right": v.get("right", []), "spell": v.get("spell", {})})
+    return out

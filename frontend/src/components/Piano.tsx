@@ -22,6 +22,20 @@ const FILL: Partial<Record<Mark, string>> = {
   // Tutor: turquesa = mano izquierda, ámbar = derecha; las versiones claras son notas aún por tocar.
   lh: '#4fd1c5', rh: '#e8b04b', 'lh-todo': '#b5ece7', 'rh-todo': '#f5dca6', wrong: '#ff7a6b',
 }
+/** Geometría del teclado (unidades del viewBox): la comparten el piano y el tutorial de canciones. */
+export function pianoGeometry(from: number, to: number) {
+  const W = 24
+  const BW = 14.5
+  const xOf = new Map<number, number>()
+  let i = 0
+  for (let m = from; m <= to; m++) if (!isBlack(m)) xOf.set(m, i++ * W)
+  return {
+    width: i * W,
+    keyX: (m: number) => (isBlack(m) ? (xOf.get(m - 1) ?? 0) + W - BW / 2 : xOf.get(m) ?? 0),
+    keyW: (m: number) => (isBlack(m) ? BW : W),
+  }
+}
+
 const DOT: Partial<Record<Mark, string>> = { scale: '#7d7a74', char: '#ff7a6b', root: '#e8b04b' }
 
 /** Teclado SVG escalable. Las marcas colorean teclas (llenas) o ponen un punto (escalas). */
