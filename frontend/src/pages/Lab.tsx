@@ -76,7 +76,8 @@ export default function Lab() {
 
       <div className="card" data-tour="lab-piano">
         <div className="row" style={{ marginBottom: 10 }}>
-          <span className={`pill ${midi.devices.length ? 'teal' : ''}`}>
+          <span className={`pill ${midi.devices.length ? 'teal' : ''}`} style={{ cursor: 'pointer' }} title="Ajustes del teclado MIDI"
+                onClick={() => window.dispatchEvent(new Event('armonia:midi-panel'))}>
             {midi.devices.length ? `MIDI: ${midi.devices.join(', ')}` : midi.supported ? 'Conecta tu teclado MIDI por USB' : 'Este navegador no soporta MIDI (usa Chrome o Edge)'}
           </span>
           <label className="row small text-2" style={{ gap: 6, cursor: 'pointer' }}>
