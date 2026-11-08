@@ -43,6 +43,7 @@ export const TOUR_STEPS: TourStep[] = [
   { route: '/pistas', target: 'stems-upload', title: 'Separa canciones', text: 'Sube un audio: se separa en voz, bajo, piano, batería… y se sacan los acordes. Si alguno falla, lo corriges tocándolo en el MIDI.' },
   { route: '/bach', target: 'bach-list', title: 'Corales de Bach', text: 'Partituras reales analizadas acorde a acorde, con cada voz silenciable.', detail: true },
   { route: '/asistente', target: 'assistant-input', title: 'Pregunta', text: 'Un profesor local que solo habla de música. Los acordes los calcula el motor de teoría, así que no se los inventa.' },
+  { route: '/', target: 'midi-button', title: 'Tu teclado MIDI', text: 'Aquí ajustas el teclado: transporte (tocar en Do y que suene en Sol), volumen con el fader, vibrato con la rueda de modulación y botones asignables con «Aprender». Incluye un monitor para ver qué envía cada botón.' },
   { route: '/', title: '¡Listo!', text: 'Ya conoces la app. En cada pantalla tienes el botón «?» abajo a la derecha para repetir su tour cuando quieras.' },
 ]
 
