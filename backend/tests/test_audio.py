@@ -113,7 +113,8 @@ def test_lyrics_flow_with_fake_whisper(tmp_path, monkeypatch):
 
 def test_realistic_benchmark_with_sampled_instruments():
     """Banco realista (piano, cuerdas, guitarra, órgano, bajo y batería sampleados con
-    FluidSynth). Solo se ejecuta donde hay fluidsynth y el banco FluidR3."""
+    FluidSynth). Solo se ejecuta donde hay fluidsynth, el banco FluidR3 y pretty_midi."""
+    pytest.importorskip("pretty_midi")
     from tests import chord_bench_real
     if not chord_bench_real.available():
         pytest.skip("fluidsynth o FluidR3_GM.sf2 no disponibles")
