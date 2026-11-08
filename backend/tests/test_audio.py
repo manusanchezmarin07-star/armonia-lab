@@ -39,3 +39,19 @@ def test_upload_analyze_and_correct_with_midi(tmp_path):
     assert meta["analysis"]["segments"][2]["edited"] is True
     assert "Fmaj7" in client.get(f"/api/stems/{job['id']}/progression").json()["text"]
     assert client.delete(f"/api/stems/{job['id']}").status_code == 200
+
+
+def test_detector_accuracy_does_not_regress():
+    """Umbrales medidos con el banco de pruebas (tests/chord_bench.py) sobre canciones sintéticas
+    con inversiones, arpegios, bajo, batería y desafinación. Si baja, algo se ha roto."""
+    from tests.chord_bench import run
+    res = run(n=4, offset=900)
+    assert res["pistas.exacto"] >= 75, res
+    assert res["pistas.raiz"] >= 85, res
+    assert res["mezcla.mayor_menor"] >= 80, res
+
+
+def test_segments_offer_alternatives(tmp_path):
+    path = write_progression(tmp_path / "alt.wav", [[60, 64, 67], [57, 60, 64]])
+    segs = analyze([str(path)])["segments"]
+    assert all(len(s["alternatives"]) >= 2 for s in segs if s["symbol"] != "N")

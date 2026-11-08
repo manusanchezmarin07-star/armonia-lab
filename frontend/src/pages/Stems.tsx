@@ -5,7 +5,7 @@ import { api } from '../lib/api'
 import { useInput } from '../lib/input'
 import { fnColor } from '../lib/music'
 
-interface Segment { start: number; end: number; symbol: string; pcs: number[]; confidence: number; edited: boolean; roman?: string; function?: string | null; kind?: string }
+interface Segment { start: number; end: number; symbol: string; pcs: number[]; confidence: number; edited: boolean; roman?: string; function?: string | null; kind?: string; alternatives?: string[] }
 interface Job {
   id: string; title: string; status: string; progress: number; message: string; separated: boolean; device: string | null
   stems: { id: string; name: string }[]
@@ -302,6 +302,12 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
               <Piano from={48} to={83} marks={marks} height={95} />
               {sel !== null && (
                 <div className="stack" style={{ gap: 8 }}>
+                  {shownSeg.alternatives && shownSeg.alternatives.length > 0 && (
+                    <div className="row" style={{ gap: 6 }}>
+                      <span className="small text-2">También podría ser:</span>
+                      {shownSeg.alternatives.map((a) => <button key={a} className="btn sm" onClick={() => correct({ symbol: a })}>{a}</button>)}
+                    </div>
+                  )}
                   <div className="small text-2">¿No es correcto? Escúchalo en bucle con la pista aislada y:</div>
                   <div className="row">
                     <button className="btn primary sm" disabled={!(pressed.size ? pressed.size : lastChord.length) || (pressed.size || lastChord.length) < 2}
