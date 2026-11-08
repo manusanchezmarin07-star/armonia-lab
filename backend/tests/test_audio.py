@@ -109,3 +109,14 @@ def test_lyrics_flow_with_fake_whisper(tmp_path, monkeypatch):
     assert verses[0]["words"][0]["chord"]["symbol"] == "C"
     assert client.put(f"/api/stems/{job['id']}/validated", json={"validated": True}).json()["validated"] is True
     client.delete(f"/api/stems/{job['id']}")
+
+
+def test_realistic_benchmark_with_sampled_instruments():
+    """Banco realista (piano, cuerdas, guitarra, órgano, bajo y batería sampleados con
+    FluidSynth). Solo se ejecuta donde hay fluidsynth y el banco FluidR3."""
+    from tests import chord_bench_real
+    if not chord_bench_real.available():
+        pytest.skip("fluidsynth o FluidR3_GM.sf2 no disponibles")
+    res = chord_bench_real.run(n=3, offset=700)
+    assert res["pistas.exacto"] >= 75, res
+    assert res["mezcla.raiz"] >= 75, res
