@@ -29,6 +29,23 @@ def capabilities():
     return svc.capabilities()
 
 
+class LyricsIn(BaseModel):
+    text: str
+
+
+class ShiftIn(BaseModel):
+    seconds: float
+
+
+class ValidateIn(BaseModel):
+    validated: bool
+
+
+@router.get("/lyrics/capabilities")
+def lyrics_capabilities():
+    return svc.lyrics_capabilities()
+
+
 @router.get("")
 def list_jobs():
     return svc.list_jobs()
@@ -66,3 +83,28 @@ def progression(job_id: str):
 def delete(job_id: str):
     _wrap(svc.delete, job_id)
     return {"ok": True}
+
+
+@router.post("/{job_id}/lyrics/transcribe")
+def transcribe(job_id: str, language: str | None = None):
+    return _wrap(svc.transcribe_lyrics, job_id, language)
+
+
+@router.put("/{job_id}/lyrics")
+def set_lyrics(job_id: str, body: LyricsIn):
+    return _wrap(svc.set_lyrics, job_id, body.text)
+
+
+@router.post("/{job_id}/lyrics/lines/{index}/shift")
+def shift(job_id: str, index: int, body: ShiftIn):
+    return _wrap(svc.shift_line, job_id, index, body.seconds)
+
+
+@router.get("/{job_id}/sheet")
+def sheet(job_id: str):
+    return _wrap(svc.sheet, job_id)
+
+
+@router.put("/{job_id}/validated")
+def validated(job_id: str, body: ValidateIn):
+    return _wrap(svc.set_validated, job_id, body.validated)
