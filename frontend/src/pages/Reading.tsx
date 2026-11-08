@@ -75,6 +75,8 @@ export default function Reading() {
   const [times, setTimes] = useState<number[]>([])
   const [score, setScore] = useState({ ok: 0, total: 0 })
   const { pressed, press, release } = useInput()
+  // En móvil el pentagrama se ajusta al ancho de la pantalla.
+  const staffW = Math.min(360, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 72)
   const prevPressed = useRef<Set<number>>(new Set())
   const chordBuffer = useRef<Set<number>>(new Set())
 
@@ -166,7 +168,7 @@ export default function Reading() {
         </div>
       </div>
 
-      <div className="grid grid-side-l" style={{ gridTemplateColumns: '300px minmax(0, 1fr)' }}>
+      <div className="grid grid-side-l" style={{ ['--side' as string]: '300px' }}>
         <div className="stack" data-tour="read-levels">
           {LEVELS.map((l) => (
             <div key={l.id} className={`card mode-card ${l.id === level.id ? 'on' : ''}`} onClick={() => setLevelId(l.id)}>
@@ -184,8 +186,8 @@ export default function Reading() {
         <div className="stack">
           <div className="card read-stage">
             <div className="read-paper">
-              {q ? <ReadStaff clef={q.clef} notes={q.notes} keySig={q.keySig?.[0]} color={color} width={360} />
-                 : <ReadStaff clef={level.clefs[0]} width={360} />}
+              {q ? <ReadStaff clef={q.clef} notes={q.notes} keySig={q.keySig?.[0]} color={color} width={staffW} />
+                 : <ReadStaff clef={level.clefs[0]} width={staffW} />}
             </div>
             <div className="stack" style={{ flex: 1, minWidth: 260 }}>
               {!q && (
