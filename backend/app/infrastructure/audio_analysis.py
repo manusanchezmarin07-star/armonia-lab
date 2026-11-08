@@ -325,3 +325,34 @@ def vocal_phrases(path: str, min_gap: float = 0.45, min_len: float = 0.5) -> lis
         else:
             merged.append(s)
     return [(round(a, 2), round(b, 2)) for a, b in merged if b - a >= min_len]
+
+
+def stem_activity(path: str, ref_peak: float | None = None) -> dict:
+    """Cuánto y dónde suena una pista: proporción de tiempo activa y tramos.
+
+    `ref_peak` es el pico de la mezcla: una pista que nunca se acerca a ese nivel
+    (p. ej. la "guitarra" de Demucs en una canción sin guitarra, que solo recoge
+    restos de otros instrumentos) se considera vacía.
+    """
+    import librosa
+    y = load_mono([path])
+    rms = librosa.feature.rms(y=y, hop_length=2048)[0]
+    peak = float(rms.max()) if len(rms) else 0.0
+    ref = ref_peak or peak or 1.0
+    db = 20 * np.log10(rms / ref + 1e-9)
+    active = db > -38
+    times = librosa.frames_to_time(np.arange(len(rms)), sr=SR, hop_length=2048)
+    spans, start = [], None
+    for t, a in zip(times, active):
+        if a and start is None:
+            start = float(t)
+        elif not a and start is not None:
+            if t - start > 1.0:
+                spans.append([round(start, 1), round(float(t), 1)])
+            start = None
+    if start is not None:
+        spans.append([round(start, 1), round(float(times[-1]), 1)])
+    ratio = float(active.mean()) if len(active) else 0.0
+    peak_db = 20 * np.log10(peak / ref + 1e-9)
+    return {"active_ratio": round(ratio, 3), "peak_db": round(float(peak_db), 1), "spans": spans,
+            "has_content": bool(ratio > 0.04 and peak_db > -30)}

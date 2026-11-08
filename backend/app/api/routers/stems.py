@@ -41,6 +41,11 @@ class ValidateIn(BaseModel):
     validated: bool
 
 
+@router.get("/instruments/capabilities")
+def instrument_capabilities():
+    return svc.instrument_capabilities()
+
+
 @router.get("/lyrics/capabilities")
 def lyrics_capabilities():
     return svc.lyrics_capabilities()
@@ -113,3 +118,8 @@ def validated(job_id: str, body: ValidateIn):
 @router.get("/{job_id}/arrangement")
 def arrangement(job_id: str, style: str = "basico"):
     return _wrap(svc.arrangement, job_id, style)
+
+
+@router.post("/{job_id}/instruments")
+def instruments(job_id: str):
+    return _wrap(svc.detect_instruments, job_id)

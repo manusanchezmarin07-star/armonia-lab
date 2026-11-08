@@ -365,3 +365,13 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .karaoke span.sung { color: var(--accent); }
 .karaoke-next { font-size: 16px; color: var(--muted); margin-top: 4px; }
 @media (max-width: 900px) { .tutorial-info { grid-template-columns: 1fr 1fr; } .karaoke { grid-column: 1 / -1; } }
+
+/* ---------- Mezclador adaptativo ---------- */
+.mixer-row { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.mixer-row.dim { opacity: 0.55; }
+.mixer-name b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mixer-ctrl { display: grid; grid-template-columns: 34px 34px minmax(0, 1fr); gap: 6px; align-items: center; }
+.lane { position: relative; height: 5px; background: var(--bg); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+.lane span { position: absolute; top: 0; bottom: 0; background: var(--teal); opacity: 0.7; border-radius: 4px; }
+.lane i { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--accent); }
+@media (max-width: 700px) { .mixer-row { grid-template-columns: 1fr; } }
