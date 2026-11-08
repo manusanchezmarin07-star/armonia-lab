@@ -94,7 +94,7 @@ export default function Bach() {
             y, al lado, la cifra que da music21 como segunda opinión. Silencia voces para escuchar cómo se mueve cada una.</p>
         </div>
       </div>
-      <div className="grid grid-side-l" style={{ gridTemplateColumns: '240px minmax(0, 1fr)' }}>
+      <div className="grid grid-side-l" style={{ ['--side' as string]: '240px' }}>
         <div className="card flush" data-tour="bach-list" style={{ maxHeight: 820, display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: 12 }}><input className="input" style={{ width: '100%' }} placeholder="Buscar BWV…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           <div style={{ overflowY: 'auto' }}>

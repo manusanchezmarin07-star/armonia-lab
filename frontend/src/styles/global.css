@@ -82,7 +82,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-side { grid-template-columns: minmax(0, 1fr) 360px; }
-.grid-side-l { grid-template-columns: 340px minmax(0, 1fr); }
+.grid-side-l { grid-template-columns: var(--side, 340px) minmax(0, 1fr); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .spacer { flex: 1; }
@@ -365,3 +365,47 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .karaoke span.sung { color: var(--accent); }
 .karaoke-next { font-size: 16px; color: var(--muted); margin-top: 4px; }
 @media (max-width: 900px) { .tutorial-info { grid-template-columns: 1fr 1fr; } .karaoke { grid-column: 1 / -1; } }
+
+/* ---------- Mezclador adaptativo ---------- */
+.mixer-row { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.mixer-row.dim { opacity: 0.55; }
+.mixer-name b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mixer-ctrl { display: grid; grid-template-columns: 34px 34px minmax(0, 1fr); gap: 6px; align-items: center; }
+.lane { position: relative; height: 5px; background: var(--bg); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+.lane span { position: absolute; top: 0; bottom: 0; background: var(--teal); opacity: 0.7; border-radius: 4px; }
+.lane i { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--accent); }
+@media (max-width: 700px) { .mixer-row { grid-template-columns: 1fr; } }
+
+/* ---------- Tabla de acordes por compases ---------- */
+.overview { position: relative; height: 12px; border-radius: 6px; background: var(--bg-2); overflow: hidden; cursor: pointer; }
+.overview span { position: absolute; top: 0; bottom: 0; opacity: 0.75; border-right: 1px solid var(--bg); }
+.overview i { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #fff; }
+.chart { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; max-height: 360px; overflow-y: auto;
+  padding: 2px; scroll-behavior: smooth; }
+.bar { position: relative; min-height: 64px; padding: 16px 10px 8px; border-radius: 10px; background: var(--bg-2); border: 1px solid var(--line-soft);
+  display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; cursor: pointer; transition: border-color 0.12s, background 0.12s; min-width: 0; }
+.bar:hover { border-color: var(--line); }
+.bar.now { border-color: var(--accent); background: var(--accent-soft); }
+.bar.sel { box-shadow: 0 0 0 2px var(--teal) inset; }
+.bar-n { position: absolute; top: 3px; left: 7px; font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar-chord { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.bar-chord b { font-family: var(--serif); font-size: 17px; font-weight: 600; border-bottom: 2px solid; padding-bottom: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bar-chord small { font-size: 11px; }
+.bar-chord.low b { opacity: 0.6; border-bottom-style: dashed; }
+.bar-chord.edited b { color: var(--teal); }
+
+/* ---------- Correcciones de la auditoría de maquetación ---------- */
+h1, h2, .chord-big { overflow-wrap: anywhere; }
+.card, .stack > *, .grid > * { min-width: 0; }
+.row > input[type='range'] { min-width: 80px; flex: 1 1 120px; }
+.karaoke, .tutorial-info > * { min-width: 0; overflow-wrap: anywhere; }
+.ear-items { grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); }
+.answers { grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); }
+.rhythm-clock svg, svg.clock { max-width: 100%; height: auto; }
+@media (max-width: 1100px) { .tutorial-info { grid-template-columns: 1fr 1fr; } .karaoke { grid-column: 1 / -1; } }
+@media (max-width: 600px) {
+  .read-paper { max-width: 100%; overflow: hidden; }
+  .chart { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .page-head .stat { min-width: 76px; }
+}

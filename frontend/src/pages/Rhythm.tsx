@@ -124,7 +124,7 @@ export default function Rhythm() {
             </div>
             <div className="card">
               <h3>Lectura lineal</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sel.beats}, 1fr)`, gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sel.beats}, minmax(0, 1fr))`, gap: 4 }}>
                 {Array.from({ length: sel.beats }, (_, i) => (
                   <button key={i} onClick={() => toggleAccent(i + 1)} style={{
                     height: accents.includes(i + 1) ? 64 : 40, alignSelf: 'end', borderRadius: 8, border: '1px solid var(--line)', cursor: 'pointer',
@@ -153,7 +153,7 @@ function Clock({ beats, accents, current, onToggle, labelOf }: {
   }
   const accPts = accents.map((a) => pt(a - 1).join(',')).join(' ')
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="clock">
       <circle cx={c} cy={c} r={r} fill="none" stroke="var(--line)" />
       {accents.length > 2 && <polygon points={accPts} fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth={1.4} />}
       {current >= 0 && (() => { const [x, y] = pt(current, r - 26); return <line x1={c} y1={c} x2={x} y2={y} stroke="var(--accent)" strokeWidth={3} strokeLinecap="round" /> })()}

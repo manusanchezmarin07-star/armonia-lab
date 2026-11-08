@@ -30,7 +30,7 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 | **Oído** | Intervalos, tipos de acorde, grados con cadencia y progresiones. Respondes con botones, números o **tocando en el MIDI**; lo que más fallas sale más. |
 | **Lectura** | Entrenador de lectura por niveles: clave de Sol, de Fa, líneas adicionales, alteraciones, tríadas y armaduras. Tocas la nota que ves. |
 | **Mi biblioteca** | Tus transcripciones por artista (Jacob Collier, Bach, Vicente Marín Trío, Emily Bear...). Se guardan en `data/`. |
-| **Pistas y acordes (modo canción)** | 1) Demucs separa voz, bajo, piano, guitarra y batería; se detectan pulso, tonalidad y acordes (con alternativas para corregir con un clic o tocando en el MIDI). 2) **Letra y acordes**: transcripción de la voz con Whisper o letra pegada alineada con la voz; cada acorde encima de su palabra, karaoke y validación. 3) **Tutorial de piano** tipo vídeo: notas que caen con el número de dedo, las dos manos en el teclado, acorde siguiente, letra y modo espera. |
+| **Pistas y acordes (modo canción)** | 1) Demucs separa voz, bajo, piano, guitarra y batería; el **mezclador se adapta a la canción** (oculta pistas vacías y nombra cada una por lo que suena: «Cuerdas frotadas: violín, chelo»…); los acordes se detectan combinando el cromagrama con el modelo de notas de basic-pitch y se muestran en una **tabla por compases** (con alternativas para corregir con un clic o tocando en el MIDI). 2) **Letra y acordes**: transcripción de la voz con Whisper o letra pegada alineada con la voz; cada acorde encima de su palabra, karaoke y validación. 3) **Tutorial de piano** tipo vídeo: notas que caen con el número de dedo, las dos manos en el teclado, acorde siguiente, letra y modo espera. |
 | **Corales de Bach** | Los corales del corpus de music21 con su partitura, voces silenciables y análisis acorde a acorde (con music21 como segunda opinión). |
 | **Asistente** | Profesor local con Ollama (Qwen 2.5 7B por defecto) que **solo habla de música**. Las notas y acordes los calcula el motor de teoría y las explicaciones salen de `backend/knowledge` con fuentes citadas. Sin Ollama funciona en modo bot. |
 
@@ -84,7 +84,8 @@ sus fuentes. Hay tres capas de tests:
 - **De propiedades** (Hypothesis): invariantes musicales comprobadas sobre cientos de casos aleatorios. Por ejemplo, que
   reflejar dos veces en armonía negativa devuelva el original o que transportar conserve la forma de cada acorde.
   Encontraron dos bugs reales que ya están corregidos.
-- **Banco de pruebas del detector de acordes** (`backend/tests/chord_bench.py`): canciones sintéticas con verdad conocida para medir el acierto; un test impide que empeore.
+- **Bancos de pruebas del detector de acordes**: `backend/tests/chord_bench.py` (síntesis rápida) y `backend/tests/chord_bench_real.py` (instrumentos sampleados con FluidSynth). Miden el acierto con verdad conocida y hay tests que impiden que empeore.
+- **Auditoría de maquetación** (e2e): ninguna pantalla puede desbordarse en móvil ni en tablet.
 - **Unitarios del frontend** (Vitest): lógica del tutor, del oído, de las tomas y de los ficheros MIDI.
 - **End-to-end** (Playwright): recorren la app en un navegador real, en escritorio y en móvil, con un teclado MIDI simulado.
 

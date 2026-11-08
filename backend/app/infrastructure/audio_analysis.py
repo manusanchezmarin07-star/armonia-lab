@@ -139,8 +139,22 @@ def analyze(harmonic_paths: list[str], bass_path: str | None = None) -> dict:
     # El bajo indica la fundamental casi siempre: se usa la pista de bajo si existe
     # y, si no, la zona grave de la propia mezcla.
     bass = _bass_profile(load_mono([bass_path]) if bass_path else y_h, bounds)
+
+    # Fusión con el modelo de notas (basic-pitch): entrenado con instrumentos reales,
+    # corrige confusiones típicas del cromagrama (armónicos, reverberación, mezclas).
+    notes_used = False
+    npc = None
+    from app.infrastructure import note_model
+    global NOTE_WEIGHT
+    NOTE_WEIGHT = NOTE_WEIGHT_STEMS if bass_path else NOTE_WEIGHT_MIX
+    if NOTE_WEIGHT > 0 and note_model.available():
+        acts = note_model.note_activations(y)
+        npc, nbass = _note_profiles(acts, times)
+        if npc is not None:
+            bass = _blend(bass, nbass, NOTE_WEIGHT * 0.5)
+            notes_used = True
     key_tonic, key_mode = estimate_key(chroma.mean(axis=1))
-    sims = _similarities(seg_chroma, bass, _key_pcs(key_tonic, key_mode))
+    sims = _similarities(seg_chroma, bass, _key_pcs(key_tonic, key_mode), npc if notes_used else None)
     labels = _viterbi(sims)
 
     segments = []
@@ -166,13 +180,76 @@ def analyze(harmonic_paths: list[str], bass_path: str | None = None) -> dict:
         i = j + 1
     segments = _merge_short(segments, min_len=60 / max(tempo, 40) * 0.99)
     return {"duration": duration, "tempo": round(tempo, 1), "beats": librosa.frames_to_time(beats, sr=SR, hop_length=HOP).tolist(),
-            "key": pc_name(key_tonic) + ("m" if key_mode == "minor" else ""), "segments": segments, "tuning_cents": round(tuning * 100)}
+            "key": pc_name(key_tonic) + ("m" if key_mode == "minor" else ""), "segments": segments, "tuning_cents": round(tuning * 100),
+            "method": "cromagrama + modelo de notas" if notes_used else "cromagrama"}
 
 
-def _similarities(seg_chroma: np.ndarray, bass: np.ndarray, key_pcs: set[int]) -> np.ndarray:
-    """Puntuación de cada plantilla en cada pulso: parecido del cromagrama + bajo + tonalidad."""
+# Peso del modelo de notas frente al cromagrama, ajustado con tests/chord_bench_real.py
+# (instrumentos sampleados). En una mezcla completa ayuda mucho (batería, voz y
+# reverberación ensucian el cromagrama); con pistas separadas el cromagrama ya es
+# limpio y basta un toque.
+NOTE_WEIGHT_MIX = 0.35
+NOTE_WEIGHT_STEMS = 0.1
+NOTE_WEIGHT = NOTE_WEIGHT_MIX
+BASS_ROOT_W = 0.12  # peso del bajo como pista de la fundamental (ajustado con los bancos de pruebas)
+KEY_W = 0.03  # preferencia por acordes de la tonalidad detectada
+
+
+def _note_profiles(acts: np.ndarray, times: np.ndarray) -> tuple[np.ndarray | None, np.ndarray | None]:
+    """Activaciones de notas (88 × fotogramas) → perfil de clases de altura y de bajo por segmento."""
+    from app.infrastructure.note_model import FPS, LOWEST_MIDI
+    n = acts.shape[1]
+    if n == 0:
+        return None, None
+    pcs = (np.arange(88) + LOWEST_MIDI) % 12
+    pcp, bass = [], []
+    for a, b in zip(times[:-1], times[1:]):
+        f0, f1 = int(a * FPS), max(int(a * FPS) + 1, int(b * FPS))
+        seg = acts[:, min(f0, n - 1):min(f1, n)].mean(axis=1)
+        # Como en el cromagrama, el acorde se lee de Do3 hacia arriba (el bajo va aparte).
+        v = np.zeros(12)
+        hi = slice(48 - LOWEST_MIDI, 88)
+        np.add.at(v, pcs[hi], seg[hi])
+        pcp.append(np.sqrt(v))
+        # Bajo: la nota activa más grave por debajo de Sol3 (midi 55).
+        low = seg[: 55 - LOWEST_MIDI]
+        bv = np.zeros(12)
+        idx = np.nonzero(low > 0.25)[0]
+        if len(idx):
+            bv[(idx[0] + LOWEST_MIDI) % 12] = 1.0
+        bass.append(bv)
+    return np.stack(pcp, axis=1), np.stack(bass, axis=1)
+
+
+def _blend(a: np.ndarray, b: np.ndarray, w: float) -> np.ndarray:
+    """Media ponderada de dos perfiles (12 × n) tras normalizarlos por columnas."""
+    na = a / (np.linalg.norm(a, axis=0, keepdims=True) + 1e-9)
+    nb = b / (np.linalg.norm(b, axis=0, keepdims=True) + 1e-9)
+    return (1 - w) * na + w * nb
+
+
+def _plain_templates() -> np.ndarray:
+    """Plantillas sin armónicos (solo las notas del acorde) para comparar con el modelo de
+    notas, que ya devuelve notas "limpias": con armónicos se inventarían notas."""
+    out = []
+    for t in TEMPLATES:
+        v = np.zeros(12)
+        v[t.pcs] = 1.0
+        out.append(v / np.linalg.norm(v))
+    return np.stack(out)
+
+
+PLAIN = _plain_templates()
+
+
+def _similarities(seg_chroma: np.ndarray, bass: np.ndarray, key_pcs: set[int], note_pcp: np.ndarray | None = None) -> np.ndarray:
+    """Puntuación de cada plantilla en cada pulso: cromagrama (+ modelo de notas) + bajo + tonalidad."""
     X = seg_chroma / (np.linalg.norm(seg_chroma, axis=0) + 1e-9)
     T = np.stack([t.vec for t in TEMPLATES])
+    base = T @ X
+    if note_pcp is not None:
+        N = note_pcp / (np.linalg.norm(note_pcp, axis=0) + 1e-9)
+        base = (1 - NOTE_WEIGHT) * base + NOTE_WEIGHT * (PLAIN @ N)
     prior = np.array([TYPE_PRIOR[t.suffix] for t in TEMPLATES])
     roots = np.array([t.root for t in TEMPLATES])
     # Bonificación si el bajo toca la fundamental (o, menos, otra nota del acorde: inversión).
@@ -181,8 +258,8 @@ def _similarities(seg_chroma: np.ndarray, bass: np.ndarray, key_pcs: set[int]) -
         tone_mask[k, t.pcs] = 1
     bass_root = bass[roots, :]
     bass_tone = (tone_mask @ bass) / tone_mask.sum(axis=1, keepdims=True)
-    diatonic = np.array([0.03 if set(t.pcs) <= key_pcs else 0.0 for t in TEMPLATES])
-    return T @ X - prior[:, None] + 0.12 * bass_root + 0.04 * bass_tone + diatonic[:, None]
+    diatonic = np.array([KEY_W if set(t.pcs) <= key_pcs else 0.0 for t in TEMPLATES])
+    return base - prior[:, None] + BASS_ROOT_W * bass_root + 0.04 * bass_tone + diatonic[:, None]
 
 
 def _merge_short(segments: list[dict], min_len: float) -> list[dict]:
@@ -248,3 +325,34 @@ def vocal_phrases(path: str, min_gap: float = 0.45, min_len: float = 0.5) -> lis
         else:
             merged.append(s)
     return [(round(a, 2), round(b, 2)) for a, b in merged if b - a >= min_len]
+
+
+def stem_activity(path: str, ref_peak: float | None = None) -> dict:
+    """Cuánto y dónde suena una pista: proporción de tiempo activa y tramos.
+
+    `ref_peak` es el pico de la mezcla: una pista que nunca se acerca a ese nivel
+    (p. ej. la "guitarra" de Demucs en una canción sin guitarra, que solo recoge
+    restos de otros instrumentos) se considera vacía.
+    """
+    import librosa
+    y = load_mono([path])
+    rms = librosa.feature.rms(y=y, hop_length=2048)[0]
+    peak = float(rms.max()) if len(rms) else 0.0
+    ref = ref_peak or peak or 1.0
+    db = 20 * np.log10(rms / ref + 1e-9)
+    active = db > -38
+    times = librosa.frames_to_time(np.arange(len(rms)), sr=SR, hop_length=2048)
+    spans, start = [], None
+    for t, a in zip(times, active):
+        if a and start is None:
+            start = float(t)
+        elif not a and start is not None:
+            if t - start > 1.0:
+                spans.append([round(start, 1), round(float(t), 1)])
+            start = None
+    if start is not None:
+        spans.append([round(start, 1), round(float(times[-1]), 1)])
+    ratio = float(active.mean()) if len(active) else 0.0
+    peak_db = 20 * np.log10(peak / ref + 1e-9)
+    return {"active_ratio": round(ratio, 3), "peak_db": round(float(peak_db), 1), "spans": spans,
+            "has_content": bool(ratio > 0.04 and peak_db > -30)}

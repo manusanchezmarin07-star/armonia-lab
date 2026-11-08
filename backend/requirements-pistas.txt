@@ -4,3 +4,5 @@ demucs>=4.0.1
 librosa>=0.10.2
 soundfile>=0.12.1
 openai-whisper>=20240930
+onnxruntime>=1.18
+transformers>=4.44

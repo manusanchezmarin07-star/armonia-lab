@@ -81,7 +81,10 @@ def _run(job_id: str, src: Path, model: str, do_sep: bool) -> None:
         _attach_roman(analysis)
         stem_list = [{"id": n, "name": STEM_NAMES.get(n, n), "file": str(p.relative_to(ROOT / job_id))} for n, p in stems.items()]
         stem_list.append({"id": "mezcla", "name": STEM_NAMES["mezcla"], "file": src.name})
-        _update(job_id, status="listo", progress=1.0, message="", separated=bool(stems), stems=stem_list, analysis=analysis)
+        _update(job_id, status="reconociendo instrumentos", progress=0.85, message="Viendo qué suena en cada pista…",
+                separated=bool(stems), stems=stem_list, analysis=analysis)
+        _detect_instruments(job_id)
+        _update(job_id, status="listo", progress=1.0, message="")
     except Exception as e:  # se guarda el error para mostrarlo en la interfaz
         _update(job_id, status="error", message=str(e)[:1000])
 
@@ -253,3 +256,60 @@ def arrangement(job_id: str, style: str = "basico") -> list[dict]:
         out.append({"index": i, "start": s["start"], "end": s["end"], "symbol": s["symbol"],
                     "left": v.get("left", []), "right": v.get("right", []), "spell": v.get("spell", {})})
     return out
+
+
+# ---------------------------------------------------------------------------
+# Instrumentos
+# ---------------------------------------------------------------------------
+
+def _detect_instruments(job_id: str) -> dict:
+    """Marca qué pistas tienen contenido y, si el clasificador está instalado, qué instrumentos suenan.
+
+    Las pistas vacías se ocultan en el mezclador y las demás se renombran por su
+    contenido real («Otros» → «Cuerdas frotadas: violín, chelo»).
+    """
+    import librosa
+
+    from app.domain.instruments import stem_label, summarize
+    from app.infrastructure import audio_analysis, instrument_tagger
+    meta = load(job_id)
+    folder = ROOT / job_id
+    mix = folder / meta["stems"][-1]["file"]
+    y = audio_analysis.load_mono([str(mix)])
+    ref = float(librosa.feature.rms(y=y, hop_length=2048)[0].max()) if len(y) else 1.0
+    tagger = instrument_tagger.available()
+    song_windows: list[dict] = []
+    for st in meta["stems"]:
+        path = folder / st["file"]
+        act = audio_analysis.stem_activity(str(path), ref_peak=ref)
+        st["activity"] = act
+        st["active"] = act["has_content"] or st["id"] == "mezcla"
+        st["instruments"] = []
+        if tagger and st["active"]:
+            try:
+                windows = instrument_tagger.tag_windows(str(path))
+                st["instruments"] = summarize(windows)
+                if st["id"] == "mezcla":
+                    song_windows = windows
+            except Exception as e:  # el modelo puede no estar descargado o fallar: no bloquea el resto
+                meta["instruments_error"] = str(e)[:300]
+                tagger = False
+        st["name"] = stem_label(st["id"], st["instruments"])
+    # Pistas con contenido primero; la mezcla original al final.
+    meta["stems"].sort(key=lambda st: (st["id"] == "mezcla", not st["active"]))
+    meta["instruments"] = summarize(song_windows) if song_windows else []
+    meta["instruments_method"] = "AST (AudioSet)" if tagger else "actividad de las pistas"
+    _save(meta)
+    return meta
+
+
+def detect_instruments(job_id: str) -> dict:
+    """Vuelve a analizar los instrumentos de una canción ya procesada (en segundo plano)."""
+    meta = load(job_id)
+    _pool.submit(_detect_instruments, job_id)
+    return meta
+
+
+def instrument_capabilities() -> dict:
+    from app.infrastructure import instrument_tagger
+    return {"tagger": instrument_tagger.available(), "model": instrument_tagger.MODEL}
