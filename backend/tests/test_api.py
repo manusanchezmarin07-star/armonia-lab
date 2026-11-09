@@ -48,3 +48,11 @@ def test_hands_endpoint():
 
 def test_missing_chorale_is_404():
     assert client.get("/api/bach/chorales/bwv999.9").status_code == 404
+
+
+def test_guitar_endpoints():
+    r = client.get("/api/guitar/chord", params={"symbol": "C"}).json()
+    assert r[0]["diagram"] == "x32010" and r[0]["notes"][0]["note"] == "C3"
+    assert client.get("/api/guitar/chord", params={"symbol": "C", "capo": 20}).status_code == 422
+    sc = client.get("/api/guitar/scale", params={"scale_id": "phrygian_dominant", "tonic": "E"}).json()
+    assert sc["notes"][:3] == ["E", "F", "G#"] and any(c["root"] for c in sc["cells"])
