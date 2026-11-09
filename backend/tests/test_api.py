@@ -44,3 +44,7 @@ def test_hands_endpoint():
     assert [x["finger"] for x in r["right"]] == [1, 2, 3, 5]
     assert r["spell"]["3"] == "Eb"
     assert client.get("/api/chords/hands", params={"symbol": "C", "style": "raro"}).status_code == 422
+
+
+def test_missing_chorale_is_404():
+    assert client.get("/api/bach/chorales/bwv999.9").status_code == 404
