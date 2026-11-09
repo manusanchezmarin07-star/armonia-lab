@@ -19,6 +19,7 @@ type Inst = { triggerAttack: Function; triggerRelease: Function; triggerAttackRe
 let kind: InstrumentKind = 'piano'
 const loaded: Partial<Record<InstrumentKind, { inst: Inst; real: boolean }>> = {}
 const loading: Partial<Record<InstrumentKind, Promise<{ inst: Inst; real: boolean }>>> = {}
+let lastClick = 0
 let clickHi: Tone.MembraneSynth | null = null
 let clickLo: Tone.NoiseSynth | null = null
 
@@ -169,11 +170,18 @@ export async function playSequence(chords: number[][], stepSec: number, onStep?:
 /** Golpe de palma/metrónomo: acentuado más fuerte y agudo. */
 export async function click(accent: boolean, time?: number) {
   if (!audioRunning()) Tone.start().catch(() => {})
+  let t = time ?? Tone.now()
+  // Los sintes de percusión son monofónicos y exigen tiempos crecientes:
+  // - mismo instante (una palma y el golpe en la tapa): se separa 1 ms;
+  // - un tiempo ANTERIOR a lo ya programado es una secuencia nueva (se paró y se volvió
+  //   a tocar): se crean sintes nuevos, que además cortan los golpes viejos pendientes.
+  if (clickHi && t < lastClick - 0.002) { clickHi.dispose(); clickLo?.dispose(); clickHi = null }
+  else if (t <= lastClick) t = lastClick + 0.001
   if (!clickHi) {
     clickHi = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, envelope: { attack: 0.001, decay: 0.12, sustain: 0 } }).toDestination()
     clickLo = new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.07, sustain: 0 }, volume: -10 }).toDestination()
   }
-  const t = time ?? Tone.now()
+  lastClick = t
   if (accent) {
     clickHi.triggerAttackRelease('C5', '32n', t, 0.9)
     clickLo!.triggerAttackRelease('32n', t, 1)

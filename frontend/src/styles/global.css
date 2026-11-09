@@ -435,3 +435,19 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
 .lane-chip .small { font-family: var(--sans, inherit); opacity: 0.75; }
 .guitar-now { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
 @media (max-width: 760px) { .guitar-now > .stack:last-child { flex-basis: 100%; } }
+/* Guitarra flamenca: compás tiempo a tiempo, notación de rasgueo y tablatura. */
+.compas-strip { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; }
+.compas-beat { flex: 1 0 52px; min-width: 52px; border: 1px solid var(--line-soft); border-radius: 10px; padding: 6px 4px; text-align: center; display: grid; gap: 2px; }
+.compas-beat.acc { border-color: var(--coral); background: rgba(255, 122, 107, 0.07); }
+.compas-beat.on { background: var(--accent); color: #14161d; border-color: var(--accent); }
+.compas-n { font-size: 18px; font-weight: 800; }
+.compas-beat.acc .compas-n { color: var(--coral); }
+.compas-beat.on .compas-n { color: #14161d; }
+.compas-chord { font-family: var(--serif); font-weight: 600; min-height: 18px; }
+.compas-strokes { font-size: 11px; line-height: 1.25; opacity: 0.85; word-break: break-word; }
+.rasgueo-notation { display: flex; gap: 6px; flex-wrap: wrap; font-weight: 700; font-size: 18px; }
+.rasgueo-notation span { padding: 2px 8px; border-radius: 8px; background: var(--surface-2); }
+.rasgueo-notation span.g { background: rgba(255, 122, 107, 0.18); color: var(--coral); }
+.tab-wrap { overflow-x: auto; }
+.tab { display: block; }
+.card-soft { border: 1px solid var(--line-soft); border-radius: 12px; padding: 12px 14px; background: var(--bg-2); }
