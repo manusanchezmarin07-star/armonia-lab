@@ -59,11 +59,11 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] feature/revision-ui — tabla de acordes por compases, auditoría automática de desbordes (5 tamaños) y correcciones en móvil/tablet
 - [x] PR develop → main (Sprint 6)
 
-## Sprint 7 — Caza de bugs
-- [ ] feature/fuzz-api — fuzzing de todos los endpoints (ninguna entrada debe dar error 500)
-- [ ] feature/robot-ui — recorrido automático de la interfaz pulsando todo, sin errores de consola ni peticiones fallidas
-- [ ] fix/* — una rama por bug encontrado
-- [ ] PR develop → main (Sprint 7)
+## Sprint 7 — Caza de bugs ✅
+- [x] feature/fuzz-api — fuzzing de todos los endpoints (ninguna entrada debe dar error 500)
+- [x] feature/robot-ui — recorrido automático de la interfaz pulsando todo, sin errores de consola ni peticiones fallidas
+- [x] fix/* — una rama por bug encontrado
+- [x] PR develop → main (Sprint 7)
 
 ## Sprint 8 — Base de guitarra
 - [ ] feature/modo-instrumento — interruptor piano/guitarra global (Inicio y menú)
