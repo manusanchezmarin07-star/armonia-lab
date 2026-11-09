@@ -182,3 +182,50 @@ test('interruptor piano/guitarra: cambia el instrumento en toda la app y se recu
   await page.locator('.sidebar .instrument-switch').getByRole('radio', { name: /Piano/ }).click()
   await expect(page.locator('svg.piano')).toBeVisible()
 })
+
+/** Arranca la app directamente en modo guitarra (como si el usuario ya lo hubiera elegido). */
+async function asGuitar(page: Page) {
+  await page.addInitScript(() => localStorage.setItem('armonia:instrumento', 'guitarra'))
+}
+
+test('tutor de guitarra: posiciones, montar el acorde dedo a dedo y patrón p-i-m-a', async ({ page }) => {
+  const errors = watchErrors(page)
+  await asGuitar(page)
+  await open(page, '/laboratorio')
+  await playChord(page, ['a', 'd', 'g'])
+  await page.getByRole('button', { name: '🎸 Cómo se toca' }).click()
+  const dlg = page.getByRole('dialog', { name: 'Cómo tocar C en guitarra' })
+  // La posición de manual sale primera: x32010.
+  await expect(dlg.getByRole('img', { name: 'C x32010' })).toBeVisible()
+  await expect(dlg.getByText('1. Dedo 3 (anular): 5ª cuerda, traste 3')).toBeVisible()
+  // Modo espera: el Do (cualquier octava) cumple el paso del dedo 3.
+  await playChord(page, ['a'])
+  await expect(dlg.getByText('✓ Dedo 3')).toBeVisible()
+  await dlg.getByRole('button', { name: '2 · Rasgueo y arpegio' }).click()
+  await dlg.getByLabel('Patrón').selectOption('pima')
+  await expect(dlg.locator('.arp-cell')).toHaveText(['p', 'i', 'm', 'a'])
+  // Con cejilla en el 5 el Do se toca con forma de Sol.
+  await dlg.getByLabel('Cejilla').selectOption('5')
+  await expect(dlg.getByText(/tocas la forma de G/)).toBeVisible()
+  await page.keyboard.press('Escape')
+  expect(errors).toEqual([])
+})
+
+test('lectura en guitarra: clave de Sol octavada y se responde una octava más grave', async ({ page }) => {
+  await asGuitar(page)
+  await open(page, '/lectura')
+  await expect(page.getByText('1 · Cuerdas 1ª a 3ª (primera posición)')).toBeVisible()
+  await page.getByLabel('Exigir la octava exacta').check()
+  await page.keyboard.press('Space')
+  // Pulsar cualquier casilla del mástil cuenta como respuesta (acierto o fallo).
+  await page.locator('svg.fretboard rect[fill="transparent"]').first().dispatchEvent('pointerdown')
+  await expect(page.locator('.feedback')).toBeVisible()
+})
+
+test('rearmonizar en guitarra: cada sustituto lleva su diagrama', async ({ page }) => {
+  await asGuitar(page)
+  await open(page, '/rearmonizar')
+  await page.getByRole('button', { name: 'Sustituir un acorde' }).click()
+  await page.getByRole('button', { name: 'Buscar sustitutos' }).click()
+  await expect(page.locator('svg.chord-diagram').first()).toBeVisible()
+})

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import ChordChip from '../components/ChordChip'
-import ChordTutor from '../components/ChordTutor'
+import MiniShape from '../components/MiniShape'
+import { useInstrument } from '../lib/instrument'
+import HowToPlay from '../components/HowToPlay'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
 import { api, type VoicedStep } from '../lib/api'
@@ -70,6 +72,7 @@ function SubstituteTab({ k }: { k: string }) {
   const [data, setData] = useState<SubResult | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [tutor, setTutor] = useState<string | null>(null)
+  const { isGuitar, icon } = useInstrument()
   const melodyPc = melody ? keyPc(melody) : null
 
   const run = () => {
@@ -112,7 +115,7 @@ function SubstituteTab({ k }: { k: string }) {
             <span className="pill violet">{data.analysis.kind}</span>
             {data.original_melody && <span className={`pill ${data.original_melody.ok ? 'teal' : 'coral'}`}>melodía: {data.original_melody.role}</span>}
             <div className="spacer" />
-            <button className="btn" data-tour="tutor-original" onClick={() => setTutor(data.original.symbol)}>🎹 Cómo se toca</button>
+            <button className="btn" data-tour="tutor-original" onClick={() => setTutor(data.original.symbol)}>{icon} Cómo se toca</button>
             <button className="btn" onClick={() => playSequence(data.original_voicing.map((v) => withMelody(voicingNotes(v), melodyPc)), 1.4)}>
               <IconPlay /> Original{next ? ` → ${next}` : ''}
             </button>
@@ -141,11 +144,16 @@ function SubstituteTab({ k }: { k: string }) {
                     <p className="explain small" style={{ margin: 0 }}>{s.explanation}</p>
                     {s.common_tones.length > 0 && <div className="small muted">Notas comunes con {data.original.symbol}: {s.common_tones.join(', ')}</div>}
                     <div className="row" style={{ gap: 6 }}>
-                      <span className="small muted">🎹 Cómo se toca:</span>
+                      <span className="small muted">{icon} Cómo se toca:</span>
                       {(s.chain.length ? s.chain : [s.symbol]).map((c) => (
                         <button key={c} className="btn sm" onClick={() => setTutor(c)}>{c}</button>
                       ))}
                     </div>
+                    {isGuitar && (
+                      <div className="row" style={{ gap: 4 }}>
+                        {(s.chain.length ? s.chain : [s.symbol]).map((c) => <MiniShape key={c} symbol={c} onClick={() => setTutor(c)} />)}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -153,7 +161,7 @@ function SubstituteTab({ k }: { k: string }) {
           ))}
         </>
       )}
-      {tutor && <ChordTutor symbol={tutor} onClose={() => setTutor(null)} />}
+      {tutor && <HowToPlay symbol={tutor} onClose={() => setTutor(null)} />}
     </div>
   )
 }

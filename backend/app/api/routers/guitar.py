@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field
 
 from app.domain import guitar
 from app.domain.chords import parse_symbol
@@ -40,3 +41,13 @@ def chord_tones(symbol: str, frets: int = Query(15, ge=5, le=19)):
         p = parse_symbol(symbol)
         return {"symbol": p.symbol, "cells": guitar.fretboard(p.pcs, p.root.pc, frets)}
     return _safe(run)
+
+
+class ChordsIn(BaseModel):
+    chords: list[str] = Field(..., max_length=400)
+
+
+@router.post("/capo")
+def capo(body: ChordsIn):
+    """Cejillas recomendadas para tocar una lista de acordes con formas fáciles."""
+    return _safe(guitar.suggest_capo, body.chords)

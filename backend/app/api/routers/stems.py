@@ -123,3 +123,8 @@ def arrangement(job_id: str, style: str = "basico"):
 @router.post("/{job_id}/instruments")
 def instruments(job_id: str):
     return _wrap(svc.detect_instruments, job_id)
+
+
+@router.get("/{job_id}/guitar-arrangement")
+def guitar_arrangement(job_id: str, capo: int | None = None):
+    return _wrap(svc.guitar_arrangement, job_id, capo)

@@ -7,6 +7,8 @@ import { useInput } from '../lib/input'
 import { fnColor } from '../lib/music'
 import LyricsSheet from '../components/LyricsSheet'
 import SongTutorial from '../components/SongTutorial'
+import GuitarSongTutorial from '../components/GuitarSongTutorial'
+import { useInstrument } from '../lib/instrument'
 import Mixer, { type Instrument, type StemInfo } from '../components/Mixer'
 import ChordChart from '../components/ChordChart'
 import { usePersistentState } from '../lib/prefs'
@@ -161,6 +163,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
   const [fix, setFix] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
   const [tab, setTab] = usePersistentState<'acordes' | 'letra' | 'tutorial'>('stems.tab', 'acordes')
+  const { isGuitar } = useInstrument()
   const analysis = job.analysis!
   const segs = analysis.segments
   // Si hay pistas separadas, la mezcla original arranca silenciada para no duplicar el sonido.
@@ -278,14 +281,22 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
       <div className="seg" data-tour="stems-tabs">
         <button className={tab === 'acordes' ? 'on' : ''} onClick={() => setTab('acordes')}>1 · Acordes y pistas</button>
         <button className={tab === 'letra' ? 'on' : ''} onClick={() => setTab('letra')}>2 · Letra y acordes</button>
-        <button className={tab === 'tutorial' ? 'on' : ''} onClick={() => setTab('tutorial')}>3 · Tutorial de piano {job.validated ? '✓' : ''}</button>
+        <button className={tab === 'tutorial' ? 'on' : ''} onClick={() => setTab('tutorial')}>3 · Tutorial de {isGuitar ? 'guitarra' : 'piano'} {job.validated ? '✓' : ''}</button>
       </div>
 
       {tab === 'letra' && <LyricsSheet job={job} time={time} onSeek={seek} onJob={(j) => onChange(j)} />}
       {tab === 'tutorial' && (
-        <SongTutorial jobId={job.id} validated={!!job.validated} lines={job.lyrics?.lines ?? []} time={time} playing={playing}
-                      onPlay={play} onPause={pause} onSeek={seek}
-                      onMuteOriginal={(m) => setMuted((cur) => ({ ...cur, ...Object.fromEntries(stems.filter((st) => ['piano', 'other', 'mezcla'].includes(st.id) && (job.separated ? st.id !== 'mezcla' : true)).map((st) => [st.id, m])) }))} />
+        (() => {
+          // Al silenciar «el instrumento original» se apaga su pista; sin separar, la mezcla entera.
+          // Si Demucs sacó una pista propia del instrumento, solo esa; si no, va dentro de «otros».
+          const mine = isGuitar ? 'guitar' : 'piano'
+          const own = stems.some((st) => st.id === mine) ? [mine] : ['other', 'mezcla']
+          const props = {
+            jobId: job.id, validated: !!job.validated, lines: job.lyrics?.lines ?? [], time, playing, onPlay: play, onPause: pause, onSeek: seek,
+            onMuteOriginal: (m: boolean) => setMuted((cur) => ({ ...cur, ...Object.fromEntries(stems.filter((st) => own.includes(st.id) && (job.separated ? st.id !== 'mezcla' : true)).map((st) => [st.id, m])) })),
+          }
+          return isGuitar ? <GuitarSongTutorial {...props} /> : <SongTutorial {...props} />
+        })()
       )}
 
       {tab === 'acordes' && <div className="grid grid-2">

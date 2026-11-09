@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useToast } from './Toast'
-import ChordTutor from './ChordTutor'
+import HowToPlay from './HowToPlay'
+import { useInstrument } from '../lib/instrument'
 
 interface SheetWord { text: string; start: number; end: number; chord: { symbol: string; segment: number } | null }
 type Row =
@@ -26,6 +27,7 @@ export default function LyricsSheet({ job, time, onSeek, onJob }: {
   job: LyricsJob; time: number; onSeek: (t: number) => void; onJob: (j: never) => void
 }) {
   const [sheet, setSheet] = useState<Row[]>([])
+  const { icon } = useInstrument()
   const [caps, setCaps] = useState<{ whisper: boolean; model: string } | null>(null)
   const [pasting, setPasting] = useState(false)
   const [text, setText] = useState(job.lyrics?.text ?? '')
@@ -128,11 +130,11 @@ export default function LyricsSheet({ job, time, onSeek, onJob }: {
           {(editingSeg.alternatives ?? []).map((a) => <button key={a} className="btn sm" onClick={() => fixChord(editing, a)}>{a}</button>)}
           <input className="input chord-input" placeholder="otro…" value={custom} onChange={(e) => setCustom(e.target.value)}
                  onKeyDown={(e) => e.key === 'Enter' && custom.trim() && fixChord(editing, custom.trim())} />
-          <button className="btn sm" onClick={() => setTutor(editingSeg.symbol.split(' ')[0])}>🎹 Cómo se toca</button>
+          <button className="btn sm" onClick={() => setTutor(editingSeg.symbol.split(' ')[0])}>{icon} Cómo se toca</button>
           <button className="btn sm ghost" onClick={() => setEditing(null)}>Cerrar</button>
         </div>
       )}
-      {tutor && <ChordTutor symbol={tutor} onClose={() => setTutor(null)} />}
+      {tutor && <HowToPlay symbol={tutor} onClose={() => setTutor(null)} />}
     </div>
   )
 }

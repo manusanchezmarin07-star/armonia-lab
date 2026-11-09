@@ -38,3 +38,34 @@ test('modo canción: letra con acordes y tutorial con modo espera', async ({ pag
     await request.delete(`/api/stems/${job.id}`)
   }
 })
+
+test('modo canción en guitarra: pista de acordes, diagramas y modo espera', async ({ page, request }) => {
+  const caps = await request.get('/api/stems/capabilities')
+  test.skip(!caps.ok(), 'El módulo de pistas no está instalado en este entorno')
+  const title = `Prueba guitarra ${Date.now()}`
+  const up = await request.post('/api/stems', {
+    multipart: { file: { name: `${title}.wav`, mimeType: 'audio/wav', buffer: readFileSync(new URL('./fixtures/progresion.wav', import.meta.url)) }, separate: 'false' },
+  })
+  const job = await up.json()
+  try {
+    await expect.poll(async () => (await (await request.get(`/api/stems/${job.id}`)).json()).status, { timeout: 30_000 }).toBe('listo')
+    await page.addInitScript(() => localStorage.setItem('armonia:instrumento', 'guitarra'))
+    await page.goto('/pistas', { waitUntil: 'networkidle' })
+    await page.locator('.list-item', { hasText: title }).click()
+    await page.getByRole('button', { name: /3 · Tutorial de guitarra/ }).click()
+    const tut = page.locator('.song-tutorial')
+    await expect(tut.locator('.lane-chip').first()).toBeVisible()
+    await tut.getByLabel('Cejilla').selectOption('0')
+    await expect(tut.getByRole('img', { name: /^C x32010/ }).first()).toBeVisible()
+    await tut.getByLabel('Modo espera').check()
+    await page.mouse.click(10, 10)
+    await tut.getByRole('button', { name: 'Reproducir' }).click()
+    await expect(tut.getByText('Toca C para seguir')).toBeVisible({ timeout: 10_000 })
+    for (const k of ['a', 'd', 'g']) await page.keyboard.down(k)
+    await page.waitForTimeout(150)
+    for (const k of ['a', 'd', 'g']) await page.keyboard.up(k)
+    await expect(tut.getByText('Toca C para seguir')).toBeHidden()
+  } finally {
+    await request.delete(`/api/stems/${job.id}`)
+  }
+})

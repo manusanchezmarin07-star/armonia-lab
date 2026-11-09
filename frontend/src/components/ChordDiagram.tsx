@@ -22,7 +22,7 @@ export default function ChordDiagram({ shape, size = 1, active, onClick }: { sha
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width={W * size} height={H * size} className={`chord-diagram ${active ? 'on' : ''}`}
          onClick={onClick} style={{ cursor: onClick ? 'pointer' : undefined }} role="img" aria-label={`${shape.symbol} ${shape.diagram}`}>
-      <text x={W / 2} y={13} textAnchor="middle" fontSize={14} fontWeight={700} fill="var(--text)" style={{ fontFamily: 'var(--serif)' }}>{shape.symbol}</text>
+      <text x={W / 2} y={13} textAnchor="middle" fontSize={14} fontWeight={700} fill="var(--text)" style={{ fontFamily: 'var(--serif)' }}>{shape.shape_of ?? shape.symbol}</text>
       {base > 1 && <text x={2} y={fy(base) + 4} fontSize={10} fill="var(--text-2)">{ROMAN[base] ?? base}</text>}
       <rect x={left} y={topY} width={right - left} height={rows * fretH} fill="none" />
       {Array.from({ length: rows + 1 }, (_, r) => (

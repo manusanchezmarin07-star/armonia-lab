@@ -41,3 +41,12 @@ test('en una tablet tampoco hay desbordes', async ({ page }) => {
     expect(await overflowing(page), `desborde en ${path}`).toEqual([])
   }
 })
+
+test('en el móvil y en modo guitarra tampoco se sale nada (mástil y tutor incluidos)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('armonia:instrumento', 'guitarra'))
+  for (const path of PAGES) {
+    await page.goto(path, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(250)
+    expect(await overflowing(page), `desborde en ${path}`).toEqual([])
+  }
+})
