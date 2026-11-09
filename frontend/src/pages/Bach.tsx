@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import { IconPlay, IconStop } from '../components/Icons'
 import { api } from '../lib/api'
 import { Tone, ensureAudio } from '../lib/audio'
@@ -137,7 +138,7 @@ export default function Bach() {
             </div>
             <div className="grid grid-2">
               <div className="card">
-                <Piano from={36} to={84} marks={marks} height={120} showNames />
+                <Keys from={36} to={84} marks={marks} height={120} showNames />
               </div>
               {chord && (
                 <div className="card fade-in" key={cur}>

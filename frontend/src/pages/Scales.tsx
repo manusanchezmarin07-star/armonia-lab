@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import PcCircle from '../components/PcCircle'
 import { IconPlay } from '../components/Icons'
 import { api, type ScaleInfo, type ScaleSummary } from '../lib/api'
@@ -122,7 +123,7 @@ export default function Scales() {
                 <div className="spacer" />
                 <span className="small muted">Punto rojo = nota que define el color del modo</span>
               </div>
-              <Piano from={base - (base % 12) - 0} to={base - (base % 12) + 36} marks={marks} labels={labels} height={140} />
+              <Keys from={base - (base % 12) - 0} to={base - (base % 12) + 36} marks={marks} labels={labels} height={140} />
             </div>
             {info.chords.length > 0 && (
               <div className="card">
