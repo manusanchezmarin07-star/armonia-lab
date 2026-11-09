@@ -30,6 +30,10 @@ def load_chorale(chorale_id: str) -> dict:
     """Devuelve notas por voz, acordes (chordify) con la cifra romana de music21 y el MusicXML."""
     if not _CHORALE_RE.match(chorale_id):
         raise ValueError("Identificador de coral no válido")
+    # Se comprueba contra la lista antes de parsear: music21 lanza su propia excepción
+    # (no ValueError) para obras inexistentes, y acababa en un error 500.
+    if chorale_id not in {c["id"] for c in list_chorales()}:
+        raise ValueError(f"No existe el coral {chorale_id}")
     score = corpus.parse(f"bach/{chorale_id}")
     key = score.analyze("key")
     title = (score.metadata.title if score.metadata and score.metadata.title else None) or chorale_id.upper()
