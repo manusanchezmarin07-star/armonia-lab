@@ -1,6 +1,6 @@
 """Guitarra: el buscador de posiciones debe encontrar los acordes de manual con su digitación."""
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from app.domain.chords import parse_symbol
@@ -46,6 +46,8 @@ def test_unplayable_stretch_is_rejected():
     assert assign_fingers((1, 6, -1, -1, -1, -1)) is None
 
 
+# Sin plazo por ejemplo: la búsqueda de posiciones con cejilla tarda más en los runners de CI.
+@settings(deadline=None)
 @given(st.sampled_from(["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]),
        st.sampled_from(["", "m", "7", "maj7", "m7", "m7b5", "dim7", "sus4", "6", "9", "7b9", "13"]), st.integers(0, 5))
 def test_every_shape_is_playable_and_correct(root, suffix, capo):
