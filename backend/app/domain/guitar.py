@@ -197,7 +197,16 @@ def chord_shapes(symbol: str, capo: int = 0, limit: int = 8, tuning: tuple[int, 
         chosen.append(sh)
         if len(chosen) >= limit:
             break
-    return [_describe(sh, chord, open_tuning, capo) for sh in chosen]
+    out = [_describe(sh, chord, open_tuning, capo) for sh in chosen]
+    # Con cejilla, el guitarrista piensa en la forma que hace (con cejilla en III, un Bb
+    # se toca «con forma de Sol»); el nombre del acorde y las notas siguen siendo lo que suena.
+    shape_of = chord.symbol
+    if capo:
+        from .transpose import transpose
+        shape_of = transpose(chord.symbol, semitones=-capo)["chords"][0]
+    for d in out:
+        d["shape_of"] = shape_of
+    return out
 
 
 def _position(frets: tuple[int, ...]) -> int:
@@ -242,18 +251,14 @@ def fretboard(pcs: list[int], root_pc: int | None = None, frets: int = 15, tunin
 
 
 def _shape_for(symbol: str, capo: int) -> list[dict]:
-    """Posiciones del acorde tal y como se pisan con la cejilla puesta (se busca el
-    acorde transportado hacia abajo: con cejilla en III, un Bb se toca con forma de G)."""
-    from .transpose import transpose
+    """Posiciones del acorde tal y como se pisan con la cejilla puesta (trastes relativos
+    a la cejilla y notas como suenan; `shape_of` dice qué forma se hace)."""
     symbol = symbol.strip()
     if not symbol:
         raise ValueError("Acorde vacío")
-    shape_symbol = transpose(symbol, semitones=-capo)["chords"][0] if capo else symbol
-    shapes = chord_shapes(shape_symbol, limit=6)
+    shapes = chord_shapes(symbol, capo=capo, limit=6)
     for s in shapes:
-        s["sounds_as"] = parse_symbol(symbol).symbol
-        s["shape_of"] = shape_symbol
-        s["capo"] = capo
+        s["sounds_as"] = s["symbol"]
     return shapes
 
 

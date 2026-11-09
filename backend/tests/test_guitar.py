@@ -76,3 +76,12 @@ def test_arrange_song_keeps_hand_close():
     arr = arrange_song(["C", "Am", "F", "G", "N", "C"])
     assert arr[4] == {} and [a["diagram"] for a in arr if a][:2] == ["x32010", "x02210"]
     assert max(a["position"] for a in arr if a) <= 3
+
+
+def test_capo_shapes_sound_as_the_real_chord():
+    """Con cejilla, las notas devueltas deben ser las que suenan (para el modo espera)."""
+    from app.domain.guitar import arrange_song
+    sh = arrange_song(["Bb"], capo=3)[0]
+    assert sh["shape_of"] == "G" and sh["diagram"] == "320003"
+    assert {n["midi"] % 12 for n in sh["notes"]} == {10, 2, 5}  # Si♭, Re, Fa
+    assert chord_shapes("A", capo=2)[0]["shape_of"] == "G"
