@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 librosa = pytest.importorskip("librosa")
@@ -121,3 +122,39 @@ def test_realistic_benchmark_with_sampled_instruments():
     res = chord_bench_real.run(n=3, offset=700)
     assert res["pistas.exacto"] >= 75, res
     assert res["mezcla.raiz"] >= 75, res
+
+
+def test_background_job_does_not_overwrite_user_corrections(tmp_path, monkeypatch):
+    """Mientras se reconocen los instrumentos (en segundo plano) el usuario corrige un acorde:
+    la corrección no puede perderse cuando el trabajo de fondo guarda sus resultados."""
+    import json
+    import threading
+    import time
+
+    import soundfile as sf
+
+    from app.application import stems_service as svc
+    from app.infrastructure import instrument_tagger
+    monkeypatch.setattr(svc, "ROOT", tmp_path)
+    folder = tmp_path / "job1"
+    folder.mkdir()
+    sr = 22050
+    sf.write(folder / "original.wav", 0.3 * np.sin(2 * np.pi * 220 * np.arange(sr * 3) / sr), sr)
+    meta = {"id": "job1", "stems": [{"id": "mezcla", "name": "Mezcla original", "file": "original.wav"}],
+            "analysis": {"duration": 3, "key": "C", "segments": [{"start": 0, "end": 3, "symbol": "C", "pcs": [0, 4, 7],
+                                                                  "confidence": 0.5, "edited": False}]}}
+    (folder / "meta.json").write_text(json.dumps(meta))
+    started = threading.Event()
+
+    def slow_tag(path):
+        started.set()
+        time.sleep(0.6)  # el clasificador tarda: da tiempo a que el usuario edite
+        return []
+    monkeypatch.setattr(instrument_tagger, "available", lambda: True)
+    monkeypatch.setattr(instrument_tagger, "tag_windows", slow_tag)
+    th = threading.Thread(target=svc._detect_instruments, args=("job1",))
+    th.start()
+    started.wait(2)
+    svc.correct_segment("job1", 0, "Am", None)
+    th.join()
+    assert svc.load("job1")["analysis"]["segments"][0]["symbol"] == "Am"
