@@ -336,3 +336,19 @@ def detect_instruments(job_id: str) -> dict:
 def instrument_capabilities() -> dict:
     from app.infrastructure import instrument_tagger
     return {"tagger": instrument_tagger.available(), "model": instrument_tagger.MODEL}
+
+
+def guitar_arrangement(job_id: str, capo: int | None = None) -> dict:
+    """Posición de guitarra para cada acorde de la canción (con la cejilla indicada o la recomendada)."""
+    from app.domain.guitar import arrange_song, suggest_capo
+    segs = (load(job_id).get("analysis") or {}).get("segments", [])
+    symbols = [s["symbol"].split(" ")[0] if s["symbol"] != "N" else "N" for s in segs]
+    suggestions = suggest_capo(symbols)[:4]
+    if capo is None:
+        capo = suggestions[0]["capo"] if suggestions else 0
+    if not 0 <= capo <= 12:
+        raise ValueError("La cejilla debe estar entre 0 y 12")
+    shapes = arrange_song(symbols, capo)
+    items = [{"index": i, "start": s["start"], "end": s["end"], "symbol": s["symbol"], "shape": sh or None}
+             for i, (s, sh) in enumerate(zip(segs, shapes))]
+    return {"capo": capo, "suggestions": suggestions, "items": items}

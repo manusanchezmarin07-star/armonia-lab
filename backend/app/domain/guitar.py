@@ -239,3 +239,74 @@ def fretboard(pcs: list[int], root_pc: int | None = None, frets: int = 15, tunin
             if m % 12 in target:
                 out.append({"string": 6 - s, "fret": f, "midi": m, "pc": m % 12, "root": m % 12 == root_pc})
     return out
+
+
+def _shape_for(symbol: str, capo: int) -> list[dict]:
+    """Posiciones del acorde tal y como se pisan con la cejilla puesta (se busca el
+    acorde transportado hacia abajo: con cejilla en III, un Bb se toca con forma de G)."""
+    from .transpose import transpose
+    symbol = symbol.strip()
+    if not symbol:
+        raise ValueError("Acorde vacío")
+    shape_symbol = transpose(symbol, semitones=-capo)["chords"][0] if capo else symbol
+    shapes = chord_shapes(shape_symbol, limit=6)
+    for s in shapes:
+        s["sounds_as"] = parse_symbol(symbol).symbol
+        s["shape_of"] = shape_symbol
+        s["capo"] = capo
+    return shapes
+
+
+def suggest_capo(symbols: list[str], max_capo: int = 7) -> list[dict]:
+    """Cejillas posibles ordenadas por facilidad: media de la mejor posición de cada acorde
+    (con penalización si alguno exige cejilla con el dedo). Igual que buscaría un guitarrista
+    la cejilla que deja la canción en formas de Do, Sol, Re, La o Mi."""
+    uniq = list(dict.fromkeys(s.strip() for s in symbols if s and s.strip() and s.strip() != "N"))
+    out = []
+    for capo in range(0, max_capo + 1):
+        tops, barres, names = [], 0, []
+        for sym in uniq:
+            try:
+                shapes = _shape_for(sym, capo)
+            except ValueError:
+                continue
+            if not shapes:
+                tops.append(0.0)
+                names.append(sym)
+                continue
+            tops.append(shapes[0]["score"])
+            names.append(shapes[0]["shape_of"])
+            barres += 1 if shapes[0]["barre"] else 0
+        if not tops:
+            continue
+        ease = sum(tops) / len(tops) - 1.5 * barres / max(1, len(uniq)) - 0.3 * capo
+        out.append({"capo": capo, "ease": round(ease, 2), "barre_chords": barres, "shapes": names})
+    return sorted(out, key=lambda c: -c["ease"])
+
+
+def arrange_song(symbols: list[str], capo: int = 0) -> list[dict]:
+    """Una posición por acorde, encadenadas para mover poco la mano (como `hands.arrange` en piano)."""
+    result: list[dict] = []
+    prev_pos: float | None = None
+    cache: dict[str, list[dict]] = {}
+    for sym in symbols:
+        if not sym or sym == "N":
+            result.append({})
+            continue
+        if sym not in cache:
+            try:
+                cache[sym] = _shape_for(sym, capo)
+            except ValueError:
+                cache[sym] = []
+        opts = cache[sym]
+        if not opts:
+            result.append({})
+            continue
+        if prev_pos is None:
+            best = opts[0]
+        else:
+            # Facilidad de la posición menos el salto de la mano por el mástil.
+            best = max(opts, key=lambda s: s["score"] - 0.9 * abs(s["position"] - prev_pos))
+        prev_pos = best["position"]
+        result.append(best)
+    return result
