@@ -21,7 +21,7 @@ keyish = st.one_of(st.sampled_from(["C", "Am", "F#", "Bbm", "Cb", "E#m", "H", ""
 ints = st.integers(-10_000, 10_000)
 notes = st.lists(st.integers(-50, 200), max_size=25)
 
-SETTINGS = settings(max_examples=60, deadline=None, suppress_health_check=[HealthCheck.too_slow])
+SETTINGS = settings(max_examples=int(__import__("os").environ.get("FUZZ_EXAMPLES", "60")), deadline=None, suppress_health_check=[HealthCheck.too_slow])
 
 
 def ok(r):
