@@ -114,3 +114,12 @@ def test_guitar(sym, capo, limit, scale_id):
 @given(st.lists(text, max_size=12))
 def test_guitar_capo(chords):
     ok(client.post("/api/guitar/capo", json={"chords": chords}))
+
+
+@SETTINGS
+@given(st.one_of(st.sampled_from(["solea", "buleria", "alegrias", "seguiriya", "tangos", "sevillanas"]), st.text(max_size=10)),
+       st.one_of(st.sampled_from(["arriba", "medio", "granaina", "taranta"]), st.text(max_size=10)),
+       st.one_of(st.sampled_from(["basico", "continuo", "abanico", "pulgar"]), st.text(max_size=10)), ints)
+def test_flamenco(palo, tono, style, capo):
+    ok(client.get("/api/flamenco"))
+    ok(client.get("/api/flamenco/compas", params={"palo": palo, "tono": tono, "style": style, "capo": capo}))
