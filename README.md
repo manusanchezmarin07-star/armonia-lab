@@ -1,9 +1,13 @@
-# Armonía Lab 🎹
+# Armonía Lab 🎹🎸
 
 App gratuita y 100 % local para estudiar armonía como la estudian los grandes: entender **por qué** un cambio
 de tonalidad suena suave, ver las notas que se mantienen y las que se mueven, reflejar progresiones en
 **armonía negativa**, explorar modos y **escalas simétricas**, y practicar **compás flamenco** y amalgamas.
 Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón o con el teclado del ordenador.
+
+**Piano o guitarra**: el interruptor 🎹 Piano / 🎸 Guitarra de la pantalla de inicio (y del menú) cambia toda la app
+a guitarra clásica/flamenca: suena una guitarra de nylon, los teclados pasan a ser un mástil interactivo, los acordes
+se muestran con diagramas y digitación de mano izquierda, y aparece la pantalla de **Guitarra flamenca**.
 
 ## Instalación (Windows 11)
 
@@ -26,9 +30,11 @@ Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón 
 | **Rearmonizar** | Sustitutos para cualquier acorde (tritono, backdoor, negativa, disminuidos, mediantes, preparaciones) ordenados por suavidad, todos los acordes posibles bajo una nota de la melodía y estilos de rearmonización (jazz, Collier/negativa, góspel). |
 | **Tutor de acordes** | En Rearmonizar y en el Laboratorio, botón «🎹 Cómo se toca»: notas de cada mano con **digitación sugerida** en el teclado y en el pentagrama, inversiones y estilos (básico, jazz, abierto), paso a paso con **modo espera**, 6 patrones de **arpegio**, y **grabación** de tu toma con evaluación (notas, simultaneidad, orden, regularidad) y exportación a MIDI. |
 | **Analizador** | Grados romanos, funciones, dominantes secundarias, sustitutos tritonales, préstamos modales y detección de modulaciones. Transporta a cualquier tonalidad con deletreo correcto, practica en bucle con metrónomo y exporta a `.mid`. |
+| **Guitarra flamenca** | El compás de cada palo tocado con rasgueo (básico, continuo c-a-m-i, abanico o pulgar) con golpe en los acentos, palmas y **tablatura** tiempo a tiempo; técnicas de rasgueo con su notación; **cadencia andaluza** por arriba (Mi), por medio (La), por granaína y por taranta; cejilla. Los patrones por palo son ejercicios didácticos y así se indica. |
 | **Compás y palos** | Soleá, alegrías, bulería, seguiriya, tangos, sevillanas y compases de amalgama, en reloj y en línea, con metrónomo de palmas. |
 | **Oído** | Intervalos, tipos de acorde, grados con cadencia y progresiones. Respondes con botones, números o **tocando en el MIDI**; lo que más fallas sale más. |
-| **Lectura** | Entrenador de lectura por niveles: clave de Sol, de Fa, líneas adicionales, alteraciones, tríadas y armaduras. Tocas la nota que ves. |
+| **Lectura** | Entrenador de lectura por niveles: clave de Sol, de Fa, líneas adicionales, alteraciones, tríadas y armaduras. Tocas la nota que ves. En guitarra: clave de Sol con 8 (suena una octava más grave) y niveles por cuerdas y posiciones. |
+| **Modo guitarra** | Posiciones de cualquier acorde con digitación (las de manual primero: C x32010, F con cejilla…), tutor para montar el acorde dedo a dedo con modo espera, rasgueos y arpegios p-i-m-a, **cejilla recomendada** para cada canción y tutorial de canción con pista de acordes y diagramas. |
 | **Mi biblioteca** | Tus transcripciones por artista (Jacob Collier, Bach, Vicente Marín Trío, Emily Bear...). Se guardan en `data/`. |
 | **Pistas y acordes (modo canción)** | 1) Demucs separa voz, bajo, piano, guitarra y batería; el **mezclador se adapta a la canción** (oculta pistas vacías y nombra cada una por lo que suena: «Cuerdas frotadas: violín, chelo»…); los acordes se detectan combinando el cromagrama con el modelo de notas de basic-pitch y se muestran en una **tabla por compases** (con alternativas para corregir con un clic o tocando en el MIDI). 2) **Letra y acordes**: transcripción de la voz con Whisper o letra pegada alineada con la voz; cada acorde encima de su palabra, karaoke y validación. 3) **Tutorial de piano** tipo vídeo: notas que caen con el número de dedo, las dos manos en el teclado, acorde siguiente, letra y modo espera. |
 | **Corales de Bach** | Los corales del corpus de music21 con su partitura, voces silenciables y análisis acorde a acorde (con music21 como segunda opinión). |
