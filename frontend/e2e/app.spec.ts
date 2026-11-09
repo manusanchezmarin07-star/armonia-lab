@@ -155,3 +155,17 @@ test('grabadora: grabar dos acordes y sacar la progresión', async ({ page }) =>
   await page.getByRole('button', { name: 'Abrir en el Analizador →' }).click()
   await expect(page.locator('textarea')).toHaveValue('C F')
 })
+
+test('teclado del ordenador: cambiar de octava o de ventana no deja notas colgadas', async ({ page }) => {
+  await open(page, '/laboratorio')
+  const notes = page.locator('.card').first().locator('.small.muted').last()
+  await page.keyboard.down('a') // Do4
+  await page.keyboard.press('x') // octava arriba con la tecla aún pulsada
+  await page.keyboard.up('a')
+  await page.keyboard.down('d') // Mi5: si Do4 se hubiera quedado colgado, saldría «C4 · E5»
+  await expect(notes).toHaveText('E5')
+  await page.evaluate(() => window.dispatchEvent(new Event('blur'))) // cambiar de ventana con Mi5 pulsado
+  await page.keyboard.down('g')
+  await expect(notes).toHaveText('G5')
+  await page.keyboard.up('g')
+})

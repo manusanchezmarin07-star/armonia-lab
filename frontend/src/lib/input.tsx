@@ -71,6 +71,9 @@ export function InputProvider({ children }: { children: ReactNode }) {
     emit({ type, note, velocity: vel, source: 'midi' })
   }), [update])
 
+  // Nota que suena por cada tecla del ordenador pulsada: al soltar se libera esa
+  // misma nota aunque entretanto haya cambiado la octava (si no, quedaba colgada).
+  const pcHeld = useRef(new Map<string, number>())
   useEffect(() => {
     const isTyping = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement
@@ -81,16 +84,23 @@ export function InputProvider({ children }: { children: ReactNode }) {
       const k = e.key.toLowerCase()
       if (k === 'z') return setOctave((o) => Math.max(1, o - 1))
       if (k === 'x') return setOctave((o) => Math.min(7, o + 1))
-      if (k in PC_KEYS) press((octave + 1) * 12 + PC_KEYS[k])
+      if (k in PC_KEYS && !pcHeld.current.has(k)) {
+        const m = (octave + 1) * 12 + PC_KEYS[k]
+        pcHeld.current.set(k, m)
+        press(m)
+      }
     }
     const up = (e: KeyboardEvent) => {
-      if (isTyping(e)) return
       const k = e.key.toLowerCase()
-      if (k in PC_KEYS) release((octave + 1) * 12 + PC_KEYS[k])
+      const m = pcHeld.current.get(k)
+      if (m !== undefined) { pcHeld.current.delete(k); release(m) }
     }
+    // Al cambiar de ventana no llega el keyup: se sueltan todas para no dejar notas colgadas.
+    const blur = () => { pcHeld.current.forEach((m) => release(m)); pcHeld.current.clear() }
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
-    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
+    window.addEventListener('blur', blur)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur) }
   }, [octave, press, release])
 
   const value = useMemo(() => ({ pressed, midi, soundOnMidi, setSoundOnMidi, press, release, octave, lastChord }),
