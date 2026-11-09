@@ -3,8 +3,8 @@ import { setInstrumentKind, type InstrumentKind } from './audio'
 
 // Instrumento con el que se estudia: cambia el sonido y la forma de mostrar las
 // cosas (teclado de piano o mástil de guitarra) en toda la app.
-interface Ctx { instrument: InstrumentKind; setInstrument: (k: InstrumentKind) => void; isGuitar: boolean }
-const InstrumentCtx = createContext<Ctx>({ instrument: 'piano', setInstrument: () => {}, isGuitar: false })
+interface Ctx { instrument: InstrumentKind; setInstrument: (k: InstrumentKind) => void; isGuitar: boolean; icon: string }
+const InstrumentCtx = createContext<Ctx>({ instrument: 'piano', setInstrument: () => {}, isGuitar: false, icon: '🎹' })
 const KEY = 'armonia:instrumento'
 
 export function InstrumentProvider({ children }: { children: ReactNode }) {
@@ -17,7 +17,7 @@ export function InstrumentProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.instrument = instrument
   }, [instrument])
   const setInstrument = useCallback((k: InstrumentKind) => setState(k), [])
-  return <InstrumentCtx.Provider value={{ instrument, setInstrument, isGuitar: instrument === 'guitarra' }}>{children}</InstrumentCtx.Provider>
+  return <InstrumentCtx.Provider value={{ instrument, setInstrument, isGuitar: instrument === 'guitarra', icon: instrument === 'guitarra' ? '🎸' : '🎹' }}>{children}</InstrumentCtx.Provider>
 }
 
 export const useInstrument = () => useContext(InstrumentCtx)
