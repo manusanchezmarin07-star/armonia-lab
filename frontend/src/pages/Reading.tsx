@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import ReadStaff, { type ReadNote } from '../components/ReadStaff'
 import { IconPlay } from '../components/Icons'
 import { playChord } from '../lib/audio'
@@ -225,7 +226,7 @@ export default function Reading() {
           </div>
           {!level.keysig && (
             <div className="card">
-              <Piano from={36} to={96} marks={marks} labels={keyLabels} height={130} onDown={press} onUp={release} />
+              <Keys from={36} to={96} marks={marks} labels={keyLabels} height={130} onDown={press} onUp={release} />
             </div>
           )}
         </div>

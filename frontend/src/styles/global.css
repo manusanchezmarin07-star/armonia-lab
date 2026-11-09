@@ -409,3 +409,17 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
   .chart { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
   .page-head .stat { min-width: 76px; }
 }
+
+/* ---------- Interruptor piano / guitarra ---------- */
+.instrument-switch { display: inline-flex; background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
+.instrument-switch button { border: 0; background: transparent; color: var(--text-2); padding: 6px 12px; border-radius: 9px; cursor: pointer;
+  font-size: 13px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; transition: all 0.15s; }
+.instrument-switch button.on { background: var(--accent); color: #1a1408; }
+.instrument-switch.big { padding: 4px; border-radius: 14px; }
+.instrument-switch.big button { padding: 10px 20px; font-size: 16px; border-radius: 11px; }
+
+/* ---------- Mástil y diagramas de guitarra ---------- */
+.fretboard-wrap { overflow-x: auto; padding: 4px 0; }
+.fretboard { display: block; user-select: none; touch-action: none; min-width: 560px; }
+.chord-diagram { display: block; border-radius: 10px; transition: background 0.15s; }
+.chord-diagram.on { background: var(--accent-soft); }

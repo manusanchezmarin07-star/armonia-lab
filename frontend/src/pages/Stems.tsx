@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import { IconPlay, IconStop, IconTrash } from '../components/Icons'
 import { api } from '../lib/api'
 import { useInput } from '../lib/input'
@@ -305,7 +306,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
                 <span className="pill">{fmt(shownSeg.start)}–{fmt(shownSeg.end)}</span>
                 <span className={`pill ${shownSeg.confidence > 0.7 ? 'teal' : 'coral'}`}>{Math.round(shownSeg.confidence * 100)}% seguro</span>
               </div>
-              <Piano from={48} to={83} marks={marks} height={95} />
+              <Keys from={48} to={83} marks={marks} height={95} />
               {sel !== null && (
                 <div className="stack" style={{ gap: 8 }}>
                   {shownSeg.alternatives && shownSeg.alternatives.length > 0 && (

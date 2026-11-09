@@ -169,3 +169,16 @@ test('teclado del ordenador: cambiar de octava o de ventana no deja notas colgad
   await expect(notes).toHaveText('G5')
   await page.keyboard.up('g')
 })
+
+test('interruptor piano/guitarra: cambia el instrumento en toda la app y se recuerda', async ({ page }) => {
+  await open(page, '/')
+  await page.locator('.instrument-switch.big').getByRole('radio', { name: /Guitarra/ }).click()
+  await page.getByRole('link', { name: 'Laboratorio', exact: true }).first().click()
+  await expect(page.locator('svg.fretboard')).toBeVisible()
+  await playChord(page, ['a', 'd', 'g'])
+  await expect(page.locator('.chord-big').first()).toHaveText('C')
+  await page.reload({ waitUntil: 'networkidle' })
+  await expect(page.locator('svg.fretboard')).toBeVisible() // se recuerda
+  await page.locator('.sidebar .instrument-switch').getByRole('radio', { name: /Piano/ }).click()
+  await expect(page.locator('svg.piano')).toBeVisible()
+})

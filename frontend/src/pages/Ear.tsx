@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import { IconPlay } from '../components/Icons'
 import { MODES, matchesShape, pickWeighted, type EarItem, type EarMode } from '../lib/ear'
 import { playChord, playSequence } from '../lib/audio'
@@ -181,7 +182,7 @@ export default function Ear() {
                     <button className="btn primary" onClick={next}>Siguiente <span className="kbd">Espacio</span></button>
                   </div>
                 )}
-                {answer && <Piano from={36} to={84} marks={marks} height={90} />}
+                {answer && <Keys from={36} to={84} marks={marks} height={90} />}
               </>
             )}
           </div>

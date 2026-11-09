@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import Staff from '../components/Staff'
 import ChordTutor from '../components/ChordTutor'
 import RecorderCard from '../components/RecorderCard'
@@ -88,7 +89,7 @@ export default function Lab() {
           <div className="spacer" />
           <span className="small muted">{notes.map(midiName).join(' · ') || 'Sin notas'}</span>
         </div>
-        <Piano from={36} to={96} pressed={pressed} marks={marks} onDown={press} onUp={release} height={170} showNames />
+        <Keys from={36} to={96} pressed={pressed} marks={marks} onDown={press} onUp={release} height={170} showNames />
       </div>
 
       <div className="grid grid-side mt">
