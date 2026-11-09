@@ -59,6 +59,27 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] feature/revision-ui — tabla de acordes por compases, auditoría automática de desbordes (5 tamaños) y correcciones en móvil/tablet
 - [x] PR develop → main (Sprint 6)
 
+## Sprint 7 — Caza de bugs ✅
+- [x] feature/fuzz-api — fuzzing de todos los endpoints (ninguna entrada debe dar error 500)
+- [x] feature/robot-ui — recorrido automático de la interfaz pulsando todo, sin errores de consola ni peticiones fallidas
+- [x] fix/* — una rama por bug encontrado
+- [x] PR develop → main (Sprint 7)
+
+## Sprint 8 — Base de guitarra
+- [ ] feature/modo-instrumento — interruptor piano/guitarra global (Inicio y menú)
+- [ ] feature/guitarra-dominio — afinación, mástil, acordes con digitación, cejilla y tocabilidad (backend + tests)
+- [ ] feature/guitarra-sonido — muestras de guitarra de nailon (FluidR3, MIT)
+- [ ] feature/mastil — componentes de mástil y diagrama de acorde
+- [ ] PR develop → main (Sprint 8)
+
+## Sprint 9 — La app en guitarra
+- [ ] Laboratorio, Escalas, Tutor de acordes, Rearmonizar, Tutorial de canción y Lectura adaptados a guitarra
+- [ ] PR develop → main (Sprint 9)
+
+## Sprint 10 — Guitarra flamenca
+- [ ] Rasgueos y su notación, compás con rasgueo, cadencia andaluza, por arriba / por medio, cejilla y tablatura
+- [ ] PR develop → main (Sprint 10)
+
 ## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
 - Exportar a MusicXML lo transcrito

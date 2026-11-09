@@ -70,3 +70,10 @@ def test_arrange_moves_less_than_root_position():
         return sum(movement(a, b) for a, b in zip(rhs, rhs[1:]))
     assert total(smooth) < total(naive)
     assert all(v["left"] and v["right"] for v in smooth)
+
+
+def test_invalid_inversion_is_rejected():
+    import pytest
+    for inv in (-4, -1, 4, 99):
+        with pytest.raises(ValueError):
+            two_hands("C", "basico", inv)

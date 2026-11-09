@@ -18,7 +18,8 @@ ROOT = DATA_DIR / "stems"
 ROOT.mkdir(parents=True, exist_ok=True)
 # Un solo trabajo a la vez: la GPU de 8 GB no da para dos separaciones simultáneas.
 _pool = ThreadPoolExecutor(max_workers=1)
-_lock = threading.Lock()
+# RLock: _mutate guarda (y por tanto vuelve a tomar el candado) dentro de su propia sección.
+_lock = threading.RLock()
 HARMONIC_EXCLUDE = {"drums", "vocals"}
 STEM_NAMES = {"vocals": "Voz", "drums": "Batería", "bass": "Bajo", "guitar": "Guitarra", "piano": "Piano",
               "other": "Otros", "mezcla": "Mezcla original"}
@@ -43,11 +44,22 @@ def _save(meta: dict) -> None:
         tmp.replace(p)
 
 
+def _mutate(job_id: str, fn) -> dict:
+    """Leer → modificar → guardar de forma atómica.
+
+    Los trabajos en segundo plano (separación, letra, instrumentos) y las
+    ediciones del usuario escriben en el mismo meta.json: sin esto, un trabajo
+    que leyó el fichero antes de una corrección la borraba al guardar.
+    """
+    with _lock:
+        meta = load(job_id)
+        fn(meta)
+        _save(meta)
+        return meta
+
+
 def _update(job_id: str, **kw) -> dict:
-    meta = load(job_id)
-    meta.update(kw)
-    _save(meta)
-    return meta
+    return _mutate(job_id, lambda meta: meta.update(kw))
 
 
 def create(filename: str, data: bytes, model: str, separate: bool = True) -> dict:
@@ -122,10 +134,6 @@ def stem_path(job_id: str, stem_id: str) -> Path:
 
 def correct_segment(job_id: str, index: int, symbol: str | None, notes: list[int] | None) -> dict:
     """Corrige un acorde detectado, escribiéndolo o tocándolo en el MIDI."""
-    meta = load(job_id)
-    segs = meta["analysis"]["segments"]
-    if not 0 <= index < len(segs):
-        raise KeyError("Segmento fuera de rango")
     if notes:
         readings = identify(notes)
         if not readings:
@@ -140,10 +148,14 @@ def correct_segment(job_id: str, index: int, symbol: str | None, notes: list[int
             symbol, pcs = p.symbol, p.pcs
     else:
         raise ValueError("Indica un acorde o unas notas")
-    segs[index].update(symbol=symbol, pcs=pcs, edited=True, confidence=1.0)
-    _attach_roman(meta["analysis"])
-    _save(meta)
-    return meta
+
+    def apply(meta: dict) -> None:
+        segs = meta["analysis"]["segments"]
+        if not 0 <= index < len(segs):
+            raise KeyError("Segmento fuera de rango")
+        segs[index].update(symbol=symbol, pcs=pcs, edited=True, confidence=1.0)
+        _attach_roman(meta["analysis"])
+    return _mutate(job_id, apply)
 
 
 def delete(job_id: str) -> None:
@@ -221,14 +233,16 @@ def set_lyrics(job_id: str, text: str) -> dict:
 
 def shift_line(job_id: str, index: int, seconds: float) -> dict:
     """Ajuste fino: adelanta o retrasa un verso entero."""
-    meta = load(job_id)
-    line = meta["lyrics"]["lines"][index]
-    for w in line["words"]:
-        w["start"] = round(max(0.0, w["start"] + seconds), 3)
-        w["end"] = round(max(0.0, w["end"] + seconds), 3)
-    line["start"], line["end"] = line["words"][0]["start"], line["words"][-1]["end"]
-    _save(meta)
-    return meta
+    def apply(meta: dict) -> None:
+        lines = (meta.get("lyrics") or {}).get("lines", [])
+        if not 0 <= index < len(lines):
+            raise KeyError("Verso fuera de rango")
+        line = lines[index]
+        for w in line["words"]:
+            w["start"] = round(max(0.0, w["start"] + seconds), 3)
+            w["end"] = round(max(0.0, w["end"] + seconds), 3)
+        line["start"], line["end"] = line["words"][0]["start"], line["words"][-1]["end"]
+    return _mutate(job_id, apply)
 
 
 def sheet(job_id: str) -> list[dict]:
@@ -295,12 +309,21 @@ def _detect_instruments(job_id: str) -> dict:
                 meta["instruments_error"] = str(e)[:300]
                 tagger = False
         st["name"] = stem_label(st["id"], st["instruments"])
-    # Pistas con contenido primero; la mezcla original al final.
-    meta["stems"].sort(key=lambda st: (st["id"] == "mezcla", not st["active"]))
-    meta["instruments"] = summarize(song_windows) if song_windows else []
-    meta["instruments_method"] = "AST (AudioSet)" if tagger else "actividad de las pistas"
-    _save(meta)
-    return meta
+    results = {st["id"]: {k: st[k] for k in ("activity", "active", "instruments", "name")} for st in meta["stems"]}
+    error = meta.get("instruments_error")
+
+    # El análisis ha tardado: se aplican solo sus campos sobre la versión actual del
+    # fichero, para no pisar lo que el usuario haya cambiado mientras tanto.
+    def apply(current: dict) -> None:
+        for st in current["stems"]:
+            st.update(results.get(st["id"], {}))
+        # Pistas con contenido primero; la mezcla original al final.
+        current["stems"].sort(key=lambda st: (st["id"] == "mezcla", not st.get("active", True)))
+        current["instruments"] = summarize(song_windows) if song_windows else []
+        current["instruments_method"] = "AST (AudioSet)" if tagger else "actividad de las pistas"
+        if error:
+            current["instruments_error"] = error
+    return _mutate(job_id, apply)
 
 
 def detect_instruments(job_id: str) -> dict:

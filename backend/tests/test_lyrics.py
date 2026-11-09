@@ -53,3 +53,10 @@ def test_sheet_puts_chords_on_words_and_keeps_intro():
 def test_lines_from_whisper_segments():
     segs = [{"start": 0, "end": 2, "words": [{"word": " Hola", "start": 0.1, "end": 0.5}, {"word": " mundo", "start": 0.6, "end": 1.0}]}]
     assert lines_from_asr(segs)[0]["words"][1] == {"text": "mundo", "start": 0.6, "end": 1.0}
+
+
+def test_sheet_keeps_real_line_index_after_reordering():
+    lines = [{"start": 5.0, "end": 6.0, "words": [{"text": "segunda", "start": 5.0, "end": 6.0}]},
+             {"start": 1.0, "end": 2.0, "words": [{"text": "adelantada", "start": 1.0, "end": 2.0}]}]
+    sheet = build_sheet(lines, [], duration=7)
+    assert [(r["words"][0]["text"], r["line"]) for r in sheet] == [("adelantada", 1), ("segunda", 0)]

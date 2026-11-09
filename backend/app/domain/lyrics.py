@@ -141,7 +141,7 @@ def build_sheet(lines: list[Line], segments: list[dict], duration: float) -> lis
                           "chords": [{"symbol": c["symbol"], "time": c["start"], "segment": segments.index(c)} for _, c in ch]})
 
     prev_end = 0.0
-    for line in lines:
+    for line_index, line in enumerate(lines):
         # Un acorde que empieza un poco antes del verso (anacrusa) pertenece al verso.
         instrumental(prev_end, line["start"] - 0.35)
         words = [dict(w, chord=None) for w in line["words"]]
@@ -159,7 +159,9 @@ def build_sheet(lines: list[Line], segments: list[dict], duration: float) -> lis
             else:  # dos cambios sobre la misma palabra: se encadenan
                 target["chord"]["symbol"] += " " + c["symbol"]
             used.add(i)
-        sheet.append({"type": "verse", "start": line["start"], "end": line["end"], "words": words})
+        # "line" es el índice real del verso: tras reordenar por tiempo (un verso adelantado
+        # puede quedar antes que el anterior) la posición en la hoja ya no coincide.
+        sheet.append({"type": "verse", "line": line_index, "start": line["start"], "end": line["end"], "words": words})
         prev_end = line["end"]
     instrumental(prev_end, duration + 1)
     sheet.sort(key=lambda r: r["start"])

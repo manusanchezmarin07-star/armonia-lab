@@ -5,7 +5,7 @@ import ChordTutor from './ChordTutor'
 
 interface SheetWord { text: string; start: number; end: number; chord: { symbol: string; segment: number } | null }
 type Row =
-  | { type: 'verse'; start: number; end: number; words: SheetWord[] }
+  | { type: 'verse'; line: number; start: number; end: number; words: SheetWord[] }
   | { type: 'instrumental'; start: number; end: number; chords: { symbol: string; time: number; segment: number }[] }
 
 export interface LyricsJob {
@@ -54,7 +54,6 @@ export default function LyricsSheet({ job, time, onSeek, onJob }: {
   const validate = (v: boolean) => api.put(`/api/stems/${job.id}/validated`, { validated: v }).then((j) => { onJob(j as never); if (v) toast('Canción validada: ya puedes abrir el tutorial') })
 
   const hasLyrics = !!job.lyrics?.lines?.length
-  let verseIndex = -1
   const editingSeg = editing !== null ? job.analysis?.segments[editing] : null
 
   return (
@@ -101,8 +100,7 @@ export default function LyricsSheet({ job, time, onSeek, onJob }: {
               </div>
             )
           }
-          verseIndex++
-          const vi = verseIndex
+          const vi = row.line
           return (
             <div key={r} className={`sheet-row ${active ? 'on' : ''}`}>
               <div className="sheet-words">
