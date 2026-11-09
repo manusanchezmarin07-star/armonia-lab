@@ -81,9 +81,13 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] Arreglo: con cejilla, las notas de la posición son las que suenan (el modo espera esperaba otras)
 - [x] PR develop → main (Sprint 9)
 
-## Sprint 10 — Guitarra flamenca
-- [ ] Rasgueos y su notación, compás con rasgueo, cadencia andaluza, por arriba / por medio, cejilla y tablatura
-- [ ] PR develop → main (Sprint 10)
+## Sprint 10 — Guitarra flamenca ✅
+- [x] Pantalla «Guitarra flamenca»: compás de cada palo con rasgueo (básico, continuo, abanico o pulgar), golpe en los acentos, palmas de metrónomo y tablatura tiempo a tiempo
+- [x] Técnicas de rasgueo con su notación (p i m a c, ↓ ↑, +G) y escucha en bucle
+- [x] Tonos: por arriba (Mi), por medio (La), granaína (Si) y taranta (Fa♯) con la cadencia andaluza y sus posiciones
+- [x] Cejilla en todo el compás (diagramas con la forma que haces y lo que suena)
+- [x] Arreglos: el «?» del tour abría el de la pantalla anterior durante la carga; palma y golpe a la vez rompían el audio
+- [x] PR develop → main (Sprint 10)
 
 ## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll

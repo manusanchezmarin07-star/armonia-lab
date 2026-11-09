@@ -24,3 +24,5 @@ export const IconSpark = P(['M12 3v4', 'M12 17v4', 'M3 12h4', 'M17 12h4', 'm6 6 
 export const IconHome = P(['M3 11 12 4l9 7', 'M5 10v10h14V10', 'M10 20v-6h4v6'])
 export const IconEar = P(['M7 9a5 5 0 1 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0', 'M10 9a2 2 0 1 1 4 0'])
 export const IconScore = P(['M3 6h18', 'M3 10h18', 'M3 14h18', 'M3 18h18', 'M9 4v12', 'M9 16a2 2 0 1 1-4 0 2 2 0 0 1 4 0'])
+// Guitarra: cuerpo en ocho, boca y mástil.
+export const IconGuitar = P(['M14.5 9.5 20 4', 'M18.5 2.5l3 3', 'M10 8.5a3.5 3.5 0 0 0-5.6 1.2A3.6 3.6 0 0 0 3 14.5 4.6 4.6 0 0 0 9.5 21a3.6 3.6 0 0 0 4.8-1.4 3.5 3.5 0 0 0 1.2-5.6', 'M10.5 13.5a1 1 0 1 0 0 .01'])
