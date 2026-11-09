@@ -100,3 +100,11 @@ def test_unknown_resources_are_404_not_500():
         ok(client.get(url))
     ok(client.put("/api/stems/abc/segments/0", json={"symbol": "C"}))
     ok(client.delete("/api/library/noexiste"))
+
+
+@SETTINGS
+@given(text, ints, ints, st.text(max_size=12))
+def test_guitar(sym, capo, limit, scale_id):
+    ok(client.get("/api/guitar/chord", params={"symbol": sym, "capo": capo, "limit": limit}))
+    ok(client.get("/api/guitar/chord-tones", params={"symbol": sym}))
+    ok(client.get("/api/guitar/scale", params={"scale_id": scale_id, "tonic": sym[:2] or "C"}))

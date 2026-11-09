@@ -4,6 +4,7 @@ import AudioBanner from './components/AudioBanner'
 import Palette from './components/Palette'
 import { TourHelpButton } from './components/Tour'
 import MidiPanel from './components/MidiPanel'
+import InstrumentSwitch from './components/InstrumentSwitch'
 import { startMidiControls, useControls } from './lib/midiControls'
 import { IconHome } from './components/Icons'
 import { useInput } from './lib/input'
@@ -41,6 +42,7 @@ export default function App() {
           <img className="brand-mark" src="/favicon.svg" alt="" />
           <div className="brand-name">Armonía <em>Lab</em></div>
         </NavLink>
+        <div style={{ padding: '0 8px 10px' }}><InstrumentSwitch /></div>
         <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}><IconHome /> Inicio</NavLink>
         {sections.map((s) => (
           <div key={s}>

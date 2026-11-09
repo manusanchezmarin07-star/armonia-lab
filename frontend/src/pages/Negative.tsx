@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import PcCircle from '../components/PcCircle'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
@@ -98,7 +99,7 @@ export default function Negative() {
               </div>
             </div>
             <div className="card">
-              <Piano from={36} to={84} marks={marks} height={140} showNames />
+              <Keys from={36} to={84} marks={marks} height={140} showNames />
               <div className="row small text-2" style={{ marginTop: 10, gap: 16 }}>
                 <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: 'var(--accent)' }} /> {pair.original}</span>
                 <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: 'var(--violet)' }} /> {pair.negative} (reflejo exacto, en espejo)</span>

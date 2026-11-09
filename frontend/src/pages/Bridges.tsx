@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import KeySelect from '../components/KeySelect'
 import CircleOfFifths from '../components/CircleOfFifths'
 import { usePersistentState } from '../lib/prefs'
@@ -119,7 +120,7 @@ export default function Bridges() {
                     </div>
                   ))}
                 </div>
-                <Piano from={36} to={84} marks={marks} height={150} showNames />
+                <Keys from={36} to={84} marks={marks} height={150} showNames />
                 <div className="row small text-2" style={{ marginTop: 10, gap: 16 }}>
                   <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: 'var(--teal)' }} /> se mantiene</span>
                   <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: 'var(--coral)' }} /> se mueve</span>

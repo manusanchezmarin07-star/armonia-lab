@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useInput } from '../lib/input'
 import { useTour } from '../components/Tour'
+import InstrumentSwitch from '../components/InstrumentSwitch'
+import { useInstrument } from '../lib/instrument'
 import { MODULES } from '../routes'
 
 // Una idea de estudio por día: recursos concretos que se pueden probar en la app.
@@ -18,6 +20,7 @@ const TIPS = [
 export default function Home() {
   const { midi } = useInput()
   const { start } = useTour()
+  const { isGuitar } = useInstrument()
   const tip = TIPS[Math.floor(Date.now() / 86_400_000) % TIPS.length]
   const sections = [...new Set(MODULES.map((m) => m.section))]
   const progress = useMemo(() => {
@@ -36,10 +39,11 @@ export default function Home() {
     <div className="page fade-in">
       <div className="hero">
         <div>
-          <div className="eyebrow">Armonía Lab</div>
+          <div className="row" style={{ marginBottom: 14 }}><InstrumentSwitch big /></div>
+          <div className="eyebrow">Armonía Lab · {isGuitar ? 'guitarra' : 'piano'}</div>
           <h1 className="hero-title">Entiende lo que tocas de oído.</h1>
           <p className="lead">Un laboratorio para estudiar la armonía de los grandes: por qué un cambio "imposible" suena natural,
-            cómo viajar entre tonalidades y cómo leer, oír y tocar cada idea en tu piano.</p>
+            cómo viajar entre tonalidades y cómo leer, oír y tocar cada idea en tu {isGuitar ? 'guitarra' : 'piano'}.</p>
           <div className="row" style={{ marginTop: 20 }}>
             <button className="btn primary" onClick={() => start('general')}>▶ Tour guiado</button>
             <Link to="/laboratorio" className="btn">Empezar a tocar</Link>

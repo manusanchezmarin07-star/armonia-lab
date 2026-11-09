@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import Piano, { type Mark } from '../components/Piano'
+import Keys from '../components/Keys'
+import type { Mark } from '../components/Piano'
 import KeySelect from '../components/KeySelect'
 import PracticeBar from '../components/PracticeBar'
 import { useToast } from '../components/Toast'
@@ -127,7 +128,7 @@ export default function Analyzer() {
                 <p className="explain" style={{ margin: 0 }}>{cur.analysis.explanation}</p>
               </div>
               <div className="card">
-                <Piano from={36} to={84} marks={marks} height={130} showNames />
+                <Keys from={36} to={84} marks={marks} height={130} showNames />
               </div>
             </div>
           )}

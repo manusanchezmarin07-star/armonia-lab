@@ -65,12 +65,12 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] fix/* — una rama por bug encontrado
 - [x] PR develop → main (Sprint 7)
 
-## Sprint 8 — Base de guitarra
-- [ ] feature/modo-instrumento — interruptor piano/guitarra global (Inicio y menú)
-- [ ] feature/guitarra-dominio — afinación, mástil, acordes con digitación, cejilla y tocabilidad (backend + tests)
-- [ ] feature/guitarra-sonido — muestras de guitarra de nailon (FluidR3, MIT)
-- [ ] feature/mastil — componentes de mástil y diagrama de acorde
-- [ ] PR develop → main (Sprint 8)
+## Sprint 8 — Base de guitarra ✅
+- [x] feature/modo-instrumento — interruptor piano/guitarra global (Inicio y menú)
+- [x] feature/guitarra-dominio — afinación, mástil, acordes con digitación, cejilla y tocabilidad (backend + tests)
+- [x] feature/guitarra-sonido — muestras de guitarra de nailon (FluidR3, MIT)
+- [x] feature/modo-instrumento — incluye mástil interactivo, diagrama de acorde y adaptador Keys (piano o mástil)
+- [x] PR develop → main (Sprint 8)
 
 ## Sprint 9 — La app en guitarra
 - [ ] Laboratorio, Escalas, Tutor de acordes, Rearmonizar, Tutorial de canción y Lectura adaptados a guitarra

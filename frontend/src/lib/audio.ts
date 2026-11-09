@@ -1,25 +1,42 @@
 import * as Tone from 'tone'
 
-// Motor de audio. Se intenta cargar el piano de cola Salamander (samples reales,
-// licencia CC-BY) desde /samples/salamander; el instalador los descarga. Si no
-// están, se usa un sintetizador con envolvente de piano para que la app nunca se
-// quede muda.
+// Motor de audio con dos instrumentos: piano de cola Salamander (samples reales,
+// CC-BY, los descarga el instalador) y guitarra de nailon (FluidR3, MIT, incluida
+// en la app). Si las muestras no están, se usa un sintetizador para que la app
+// nunca se quede muda.
 const SAMPLE_NOTES = ['A0', 'C1', 'Ds1', 'Fs1', 'A1', 'C2', 'Ds2', 'Fs2', 'A2', 'C3', 'Ds3', 'Fs3', 'A3', 'C4',
   'Ds4', 'Fs4', 'A4', 'C5', 'Ds5', 'Fs5', 'A5', 'C6', 'Ds6', 'Fs6', 'A6', 'C7', 'Ds7', 'Fs7', 'A7', 'C8']
+const GUITAR_NOTES = ['E2', 'G2', 'As2', 'Cs3', 'E3', 'G3', 'As3', 'Cs4', 'E4', 'G4', 'As4', 'Cs5', 'E5', 'G5', 'As5', 'Cs6']
+
+export type InstrumentKind = 'piano' | 'guitarra'
+const SOURCES: Record<InstrumentKind, { base: string; notes: string[]; probe: string; release: number; reverb: number }> = {
+  piano: { base: '/samples/salamander/', notes: SAMPLE_NOTES, probe: 'C4.mp3', release: 1.2, reverb: 0.12 },
+  guitarra: { base: '/samples/guitar-nylon/', notes: GUITAR_NOTES, probe: 'E4.mp3', release: 0.9, reverb: 0.16 },
+}
 
 type Inst = { triggerAttack: Function; triggerRelease: Function; triggerAttackRelease: Function; releaseAll?: Function }
 
-let instrument: Inst | null = null
-let loading: Promise<Inst> | null = null
-let mode: 'piano' | 'synth' = 'synth'
+let kind: InstrumentKind = 'piano'
+const loaded: Partial<Record<InstrumentKind, { inst: Inst; real: boolean }>> = {}
+const loading: Partial<Record<InstrumentKind, Promise<{ inst: Inst; real: boolean }>>> = {}
 let clickHi: Tone.MembraneSynth | null = null
 let clickLo: Tone.NoiseSynth | null = null
 
-export const audioMode = () => mode
+/** "piano" si suenan muestras reales del instrumento actual, "synth" si es el sintetizador de reserva. */
+export const audioMode = () => (loaded[kind]?.real ? 'piano' : 'synth')
+export const currentInstrument = () => kind
 
-async function samplesAvailable(): Promise<boolean> {
+/** Cambia el instrumento que suena en toda la app (piano o guitarra). */
+export function setInstrumentKind(k: InstrumentKind) {
+  if (k === kind) return
+  loaded[kind]?.inst.releaseAll?.()
+  kind = k
+  ensureAudio()
+}
+
+async function samplesAvailable(base: string, probe: string): Promise<boolean> {
   try {
-    const r = await fetch('/samples/salamander/C4.mp3')
+    const r = await fetch(base + probe)
     return r.ok && (r.headers.get('content-type') || '').includes('audio')
   } catch {
     return false
@@ -70,27 +87,43 @@ if (typeof window !== 'undefined') {
   ;['pointerdown', 'keydown', 'touchstart'].forEach((e) => window.addEventListener(e, gesture, true))
 }
 
-/** Prepara el instrumento (piano con samples o sintetizador). No requiere gesto. */
+/** Prepara el instrumento actual (muestras reales o sintetizador). No requiere gesto. */
 export async function ensureAudio(): Promise<Inst> {
-  if (instrument) return instrument
-  if (loading) return loading
-  loading = (async () => {
-    if (await samplesAvailable()) {
-      const urls: Record<string, string> = {}
-      SAMPLE_NOTES.forEach((n) => (urls[n.replace('s', '#')] = `${n}.mp3`))
-      const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.12 }).toDestination()
-      const sampler = await new Promise<Tone.Sampler>((resolve) => {
-        const s: Tone.Sampler = new Tone.Sampler({ urls, baseUrl: '/samples/salamander/', release: 1.2,
-          onload: () => resolve(s) }).connect(reverb)
-      })
-      mode = 'piano'
-      instrument = sampler as unknown as Inst
-    } else {
-      instrument = makeSynth()
-    }
-    return instrument
-  })()
-  return loading
+  const k = kind
+  if (loaded[k]) return loaded[k]!.inst
+  if (!loading[k]) {
+    loading[k] = (async () => {
+      const src = SOURCES[k]
+      let entry: { inst: Inst; real: boolean }
+      if (await samplesAvailable(src.base, src.probe)) {
+        const urls: Record<string, string> = {}
+        src.notes.forEach((n) => (urls[n.replace('s', '#')] = `${n}.mp3`))
+        const reverb = new Tone.Reverb({ decay: 2.5, wet: src.reverb }).toDestination()
+        const sampler = await new Promise<Tone.Sampler>((resolve) => {
+          const s: Tone.Sampler = new Tone.Sampler({ urls, baseUrl: src.base, release: src.release,
+            onload: () => resolve(s) }).connect(reverb)
+        })
+        entry = { inst: sampler as unknown as Inst, real: true }
+      } else {
+        entry = { inst: makeSynth(), real: false }
+      }
+      loaded[k] = entry
+      return entry
+    })()
+  }
+  return (await loading[k]!).inst
+}
+
+/**
+ * Rasgueo: las notas de un acorde suenan escalonadas, como al pasar la mano por las
+ * cuerdas. Hacia abajo (de la 6ª a la 1ª) empieza por la grave; hacia arriba, por la aguda.
+ */
+export async function strum(notes: number[], direction: 'down' | 'up' = 'down', spreadMs = 18, dur = 1.8, velocity = 0.75, time?: number) {
+  const i = await ensureAudio()
+  const order = [...notes].sort((a, b) => a - b)
+  if (direction === 'up') order.reverse()
+  const t0 = time ?? Tone.now() + 0.02
+  order.forEach((n, k) => i.triggerAttackRelease(freq(n), dur, t0 + (k * spreadMs) / 1000, velocity * (direction === 'up' ? 0.85 : 1)))
 }
 
 const freq = (m: number) => Tone.Frequency(m, 'midi').toFrequency()
@@ -117,7 +150,7 @@ let seqTimers: number[] = []
 export function stopSequence() {
   seqTimers.forEach(clearTimeout)
   seqTimers = []
-  instrument?.releaseAll?.()
+  loaded[kind]?.inst.releaseAll?.()
 }
 
 /** Toca una secuencia de acordes llamando a onStep para sincronizar la animación. */
@@ -177,11 +210,12 @@ export function setModulation(v: number) {
 }
 
 /**
- * Pitch bend en semitonos. Solo funciona con el sintetizador: un piano (y sus
- * samples) no puede doblar la afinación, igual que un piano real.
+ * Pitch bend en semitonos. Solo funciona con el sintetizador: con muestras reales
+ * (piano o guitarra) no se dobla la afinación, igual que en un piano real.
  */
 export function setBend(semitones: number): boolean {
-  if (mode === 'piano' || !instrument) return false
-  ;(instrument as unknown as Tone.PolySynth).set({ detune: semitones * 100 })
+  const cur = loaded[kind]
+  if (!cur || cur.real) return false
+  ;(cur.inst as unknown as Tone.PolySynth).set({ detune: semitones * 100 })
   return true
 }
