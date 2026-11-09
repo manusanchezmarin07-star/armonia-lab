@@ -88,6 +88,8 @@ def two_hands(symbol: str, style: str = "basico", inversion: int = 0) -> dict:
     """Voicing a dos manos con digitación e instrucciones paso a paso."""
     if style not in STYLES:
         raise ValueError(f"Estilo desconocido: {style}")
+    if not 0 <= inversion <= 3:
+        raise ValueError("La inversión debe estar entre 0 (fundamental) y 3")
     c: ParsedChord = parse_symbol(symbol)
     root = c.root.pc
     labels = c.labels
