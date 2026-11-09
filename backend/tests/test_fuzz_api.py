@@ -108,3 +108,9 @@ def test_guitar(sym, capo, limit, scale_id):
     ok(client.get("/api/guitar/chord", params={"symbol": sym, "capo": capo, "limit": limit}))
     ok(client.get("/api/guitar/chord-tones", params={"symbol": sym}))
     ok(client.get("/api/guitar/scale", params={"scale_id": scale_id, "tonic": sym[:2] or "C"}))
+
+
+@SETTINGS
+@given(st.lists(text, max_size=12))
+def test_guitar_capo(chords):
+    ok(client.post("/api/guitar/capo", json={"chords": chords}))

@@ -5,6 +5,7 @@ import ReadStaff, { type ReadNote } from '../components/ReadStaff'
 import { IconPlay } from '../components/Icons'
 import { playChord } from '../lib/audio'
 import { useInput } from '../lib/input'
+import { useInstrument } from '../lib/instrument'
 import { usePersistentState } from '../lib/prefs'
 
 const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
@@ -36,6 +37,22 @@ const LEVELS: Level[] = [
     help: 'Sostenidos: la tonalidad está medio tono por encima del último sostenido. Bemoles: es el penúltimo bemol.' },
 ]
 
+// Niveles para guitarra. Los rangos son de nota ESCRITA: la guitarra se escribe en clave
+// de Sol una octava por encima de lo que suena, así que la 6ª al aire (Mi2) se escribe Mi3.
+const GUITAR_LEVELS: Level[] = [
+  { id: 'g-agudas', name: '1 · Cuerdas 1ª a 3ª (primera posición)', clefs: ['treble'], low: 64, high: 79, accidentals: false, chord: false,
+    help: 'Al aire: 1ª = Mi del 4º espacio, 2ª = Si de la 3ª línea, 3ª = Sol de la 2ª línea. Cada traste sube medio tono.' },
+  { id: 'g-graves', name: '2 · Cuerdas 4ª a 6ª (líneas adicionales)', clefs: ['treble'], low: 52, high: 64, accidentals: false, chord: false,
+    help: 'Al aire: 4ª = Re bajo el pentagrama, 5ª = La en la 2ª línea adicional, 6ª = Mi en la 3ª línea adicional por debajo.' },
+  { id: 'g-primera', name: '3 · Primera posición completa', clefs: ['treble'], low: 52, high: 79, accidentals: false, chord: false,
+    help: 'Primera posición: dedo 1 en el traste 1, dedo 2 en el 2… Así cada nota del pentagrama tiene un dedo fijo.' },
+  { id: 'g-alter', name: '4 · Con sostenidos y bemoles', clefs: ['treble'], low: 52, high: 79, accidentals: true, chord: false,
+    help: 'El sostenido (♯) es un traste más hacia el cuerpo; el bemol (♭), un traste hacia la cabeza (o la cuerda al aire anterior).' },
+  { id: 'g-altas', name: '5 · Notas agudas (posiciones V a XII)', clefs: ['treble'], low: 76, high: 88, accidentals: false, chord: false,
+    help: 'En el traste 5 de la 1ª cuerda está el La de la 1ª línea adicional; en el 12, el Mi una octava sobre la cuerda al aire.' },
+  LEVELS[5],
+]
+
 interface Q { clef: 'treble' | 'bass'; notes: ReadNote[]; keySig?: (typeof KEY_SIGS)[number]; t0: number }
 
 function randomNote(level: Level, clef: 'treble' | 'bass'): ReadNote {
@@ -54,7 +71,7 @@ function randomNote(level: Level, clef: 'treble' | 'bass'): ReadNote {
   return n
 }
 
-function randomTriad(): ReadNote[] {
+function randomTriad(): ReadNote[] {  // (solo piano)
   const root = randomNote(LEVELS[4], 'treble')
   const i = LETTERS.indexOf(root.letter)
   // Tríada diatónica de Do mayor (todas naturales) apilando terceras por letras.
@@ -69,7 +86,12 @@ export default function Reading() {
   const [exact, setExact] = usePersistentState('read.exact', false)
   const [labels, setLabels] = usePersistentState('read.labels', false)
   const [best, setBest] = usePersistentState<Record<string, number>>('read.best', {})
-  const level = LEVELS.find((l) => l.id === levelId) ?? LEVELS[0]
+  const { isGuitar } = useInstrument()
+  const levels = isGuitar ? GUITAR_LEVELS : LEVELS
+  const level = levels.find((l) => l.id === levelId) ?? levels[0]
+  // Lo que hay que tocar suena una octava por debajo de lo escrito en guitarra.
+  const shift = isGuitar ? -12 : 0
+  const soundOf = (n: ReadNote) => midiOf(n) + shift
   const [q, setQ] = useState<Q | null>(null)
   const [result, setResult] = useState<{ ok: boolean; played: number[]; ms: number } | null>(null)
   const [streak, setStreak] = useState(0)
@@ -96,7 +118,7 @@ export default function Reading() {
 
   const evaluate = useCallback((played: number[]) => {
     if (!q || result || q.keySig) return
-    const target = q.notes.map(midiOf)
+    const target = q.notes.map(soundOf)
     const norm = (ms: number[]) => [...new Set(ms.map((m) => (exact ? m : ((m % 12) + 12) % 12)))].sort((a, b) => a - b)
     const ok = JSON.stringify(norm(played)) === JSON.stringify(norm(target))
     const ms = performance.now() - q.t0
@@ -108,7 +130,7 @@ export default function Reading() {
       return n
     })
     if (ok) setTimes((t) => [...t.slice(-19), ms])
-  }, [q, result, exact, best, level.id, setBest])
+  }, [q, result, exact, best, level.id, setBest, shift])
 
   // Escucha el MIDI / teclado: notas sueltas se evalúan al pulsar; los acordes, al soltar todo.
   useEffect(() => {
@@ -139,7 +161,7 @@ export default function Reading() {
     setStreak((s) => (ok ? s + 1 : 0))
   }
 
-  const target = q?.notes.map(midiOf) ?? []
+  const target = q?.notes.map(soundOf) ?? []
   const marks: Record<number, Mark> = {}
   if (result) {
     target.forEach((m) => (marks[m] = 'held'))
@@ -159,8 +181,11 @@ export default function Reading() {
         <div>
           <div className="eyebrow">Lectura</div>
           <h1>Lee partituras sin pensar</h1>
-          <p className="lead">Aparece una nota en el pentagrama y la tocas en tu piano, en el Alesis, en el teclado de abajo o en el del
-            ordenador. Por niveles, de la clave de Sol a las armaduras. El objetivo es reconocerla sin contar líneas.</p>
+          {isGuitar
+            ? <p className="lead">Aparece una nota en el pentagrama y la tocas en el mástil de abajo o en tu teclado MIDI. La guitarra se
+                escribe en clave de Sol con un 8 debajo: suena una octava más grave de lo escrito. Por niveles, de las cuerdas agudas a las posiciones altas.</p>
+            : <p className="lead">Aparece una nota en el pentagrama y la tocas en tu piano, en el Alesis, en el teclado de abajo o en el del
+                ordenador. Por niveles, de la clave de Sol a las armaduras. El objetivo es reconocerla sin contar líneas.</p>}
         </div>
         <div className="row">
           <div className="stat"><div className="stat-n">{streak}</div><div className="stat-l">racha</div></div>
@@ -171,7 +196,7 @@ export default function Reading() {
 
       <div className="grid grid-side-l" style={{ ['--side' as string]: '300px' }}>
         <div className="stack" data-tour="read-levels">
-          {LEVELS.map((l) => (
+          {levels.map((l) => (
             <div key={l.id} className={`card mode-card ${l.id === level.id ? 'on' : ''}`} onClick={() => setLevelId(l.id)}>
               <b>{l.name}</b>
             </div>
@@ -180,15 +205,15 @@ export default function Reading() {
             <input type="checkbox" checked={exact} onChange={(e) => setExact(e.target.checked)} /> Exigir la octava exacta
           </label>
           <label className="row small text-2" style={{ cursor: 'pointer' }}>
-            <input type="checkbox" checked={labels} onChange={(e) => setLabels(e.target.checked)} /> Mostrar nombres en el teclado (ayuda)
+            <input type="checkbox" checked={labels} onChange={(e) => setLabels(e.target.checked)} /> Mostrar nombres en el {isGuitar ? 'mástil' : 'teclado'} (ayuda)
           </label>
         </div>
 
         <div className="stack">
           <div className="card read-stage">
             <div className="read-paper">
-              {q ? <ReadStaff clef={q.clef} notes={q.notes} keySig={q.keySig?.[0]} color={color} width={staffW} />
-                 : <ReadStaff clef={level.clefs[0]} width={staffW} />}
+              {q ? <ReadStaff clef={q.clef} notes={q.notes} keySig={q.keySig?.[0]} color={color} width={staffW} octaveDown={isGuitar} />
+                 : <ReadStaff clef={level.clefs[0]} width={staffW} octaveDown={isGuitar} />}
             </div>
             <div className="stack" style={{ flex: 1, minWidth: 260 }}>
               {!q && (

@@ -66,5 +66,7 @@ export function layout(notes: number[]): Pos[] {
 export interface Shape {
   symbol: string; frets: number[]; fingers: number[]; barre: { fret: number; from_string: number; to_string: number } | null
   base_fret: number; position: number; name: string; capo: number; diagram: string
+  /** Con cejilla, la forma que se hace (Bb con cejilla en III → «G»); sin cejilla, el propio acorde. */
+  shape_of?: string
   notes: { string: number; fret: number; midi: number; note: string; role: string; finger: number }[]
 }

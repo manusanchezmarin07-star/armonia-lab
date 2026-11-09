@@ -72,9 +72,14 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] feature/modo-instrumento — incluye mástil interactivo, diagrama de acorde y adaptador Keys (piano o mástil)
 - [x] PR develop → main (Sprint 8)
 
-## Sprint 9 — La app en guitarra
-- [ ] Laboratorio, Escalas, Tutor de acordes, Rearmonizar, Tutorial de canción y Lectura adaptados a guitarra
-- [ ] PR develop → main (Sprint 9)
+## Sprint 9 — La app en guitarra ✅
+- [x] Tutor de acordes de guitarra: posiciones con diagrama, cejilla, montar el acorde dedo a dedo con modo espera, rasgueos y arpegios p-i-m-a, práctica con grabación (vale el mástil o un teclado MIDI en cualquier octava)
+- [x] «Cómo se toca» elige piano o guitarra según el modo (Laboratorio, Rearmonizar, Letra y acordes)
+- [x] Tutorial de canción en guitarra: pista de acordes, diagrama actual y siguiente, cejillas recomendadas, posiciones que minimizan el movimiento de la mano, modo espera y karaoke
+- [x] Lectura en guitarra: clave de Sol octavada y niveles por cuerdas y posiciones
+- [x] Rearmonizar con mini diagramas; textos e iconos según el instrumento
+- [x] Arreglo: con cejilla, las notas de la posición son las que suenan (el modo espera esperaba otras)
+- [x] PR develop → main (Sprint 9)
 
 ## Sprint 10 — Guitarra flamenca
 - [ ] Rasgueos y su notación, compás con rasgueo, cadencia andaluza, por arriba / por medio, cejilla y tablatura

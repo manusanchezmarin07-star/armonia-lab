@@ -423,3 +423,15 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
 .fretboard { display: block; user-select: none; touch-action: none; min-width: 560px; }
 .chord-diagram { display: block; border-radius: 10px; transition: background 0.15s; }
 .chord-diagram.on { background: var(--accent-soft); }
+.diagram-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.diagram-pick { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 0 0 auto; max-width: 104px; text-align: center; }
+.diagram-pick .small { font-size: 11px; line-height: 1.2; }
+/* Pista de acordes del tutorial de guitarra: las tarjetas avanzan hacia la línea «ahora». */
+.chord-lane { position: relative; height: 54px; border-radius: 12px; background: var(--bg-2, rgba(255,255,255,0.03)); border: 1px solid var(--line-soft); overflow: hidden; }
+.chord-lane-now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--coral); z-index: 2; }
+.lane-chip { position: absolute; top: 7px; bottom: 7px; display: flex; align-items: center; gap: 4px; padding: 0 8px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface, #1d2030); color: var(--text); font-family: var(--serif); font-size: 16px; overflow: hidden; white-space: nowrap; cursor: pointer; }
+.lane-chip.on { background: var(--accent); color: #14161d; border-color: var(--accent); }
+.lane-chip .small { font-family: var(--sans, inherit); opacity: 0.75; }
+.guitar-now { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+@media (max-width: 760px) { .guitar-now > .stack:last-child { flex-basis: 100%; } }

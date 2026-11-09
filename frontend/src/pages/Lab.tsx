@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom'
 import Keys from '../components/Keys'
 import type { Mark } from '../components/Piano'
 import Staff from '../components/Staff'
-import ChordTutor from '../components/ChordTutor'
+import HowToPlay from '../components/HowToPlay'
 import RecorderCard from '../components/RecorderCard'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
 import { api, type Reading, type Transition } from '../lib/api'
 import { playSequence } from '../lib/audio'
 import { useInput } from '../lib/input'
+import { useInstrument } from '../lib/instrument'
 import { fnColor, midiName } from '../lib/music'
 import { usePersistentState } from '../lib/prefs'
 
@@ -18,6 +19,7 @@ interface IdentifyResult { notes: { midi: number; name: string }[]; readings: Re
 
 export default function Lab() {
   const { pressed, press, release, lastChord, midi, soundOnMidi, setSoundOnMidi } = useInput()
+  const { isGuitar, icon } = useInstrument()
   const [key, setKey] = usePersistentState('key', 'C')
   const [result, setResult] = useState<IdentifyResult | null>(null)
   const [slotA, setSlotA] = useState<string | null>(null)
@@ -68,7 +70,9 @@ export default function Lab() {
         <div>
           <div className="eyebrow">Laboratorio</div>
           <h1>Toca y entiende cada acorde</h1>
-          <p className="lead">Toca en tu piano o en el Alesis, con el ratón o con el teclado del ordenador. Te digo qué acorde es,
+          <p className="lead">{isGuitar
+            ? 'Toca en el mástil de abajo (cada casilla suena), en tu teclado MIDI o con el teclado del ordenador.'
+            : 'Toca en tu piano o en el Alesis, con el ratón o con el teclado del ordenador.'} Te digo qué acorde es,
             qué función tiene en la tonalidad y cómo conecta con el siguiente.</p>
         </div>
         <div className="row">
@@ -84,7 +88,7 @@ export default function Lab() {
           </span>
           <label className="row small text-2" style={{ gap: 6, cursor: 'pointer' }}>
             <input type="checkbox" checked={soundOnMidi} onChange={(e) => setSoundOnMidi(e.target.checked)} />
-            Sonido para el teclado MIDI (desactívalo si tu piano ya suena)
+            Sonido para el teclado MIDI (desactívalo si tu {isGuitar ? 'teclado' : 'piano'} ya suena)
           </label>
           <div className="spacer" />
           <span className="small muted">{notes.map(midiName).join(' · ') || 'Sin notas'}</span>
@@ -105,7 +109,7 @@ export default function Lab() {
                     <span className="pill">{best.inversion}</span>
                     {best.tensions.length > 0 && <span className="pill coral">tensiones: {best.tensions.join(', ')}</span>}
                     {best.omitted.length > 0 && <span className="pill">sin {best.omitted.join(', ')}</span>}
-                    <button className="btn sm" onClick={() => setTutor(best.symbol)}>🎹 Cómo se toca</button>
+                    <button className="btn sm" onClick={() => setTutor(best.symbol)}>{icon} Cómo se toca</button>
                   </div>
                   <div className="row">
                     {best.tones.map((t) => (
@@ -190,7 +194,7 @@ export default function Lab() {
         <RecorderCard />
         </div>
       </div>
-      {tutor && <ChordTutor symbol={tutor} onClose={() => setTutor(null)} />}
+      {tutor && <HowToPlay symbol={tutor} onClose={() => setTutor(null)} />}
     </div>
   )
 }
