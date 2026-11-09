@@ -130,5 +130,8 @@ export function TourHelpButton() {
   const { start, active } = useTour()
   const { pathname } = useLocation()
   if (active || stepsFor(pathname).length === 0) return null
-  return <button className="tour-help" onClick={() => start(pathname)} title="Tour de esta pantalla" aria-label="Tour de esta pantalla">?</button>
+  // Al hacer clic se lee la ruta de la barra de direcciones y no la de useLocation: mientras
+  // carga una pantalla perezosa, React Router mantiene el árbol anterior (con la ruta vieja)
+  // y el «?» abría el tour de la pantalla de la que venías.
+  return <button className="tour-help" onClick={() => start(window.location.pathname)} title="Tour de esta pantalla" aria-label="Tour de esta pantalla">?</button>
 }
