@@ -13,6 +13,7 @@ const Bach = lazy(() => import('./pages/Bach'))
 const Assistant = lazy(() => import('./pages/Assistant'))
 const Ear = lazy(() => import('./pages/Ear'))
 const Reading = lazy(() => import('./pages/Reading'))
+const Flamenco = lazy(() => import('./pages/Flamenco'))
 
 export interface Module {
   path: string
@@ -36,6 +37,7 @@ export const MODULES: Module[] = [
   { section: 'Armonía', path: '/negativa', label: 'Armonía negativa', icon: I.IconMirror, element: Negative, blurb: 'Refleja progresiones sobre el eje de la tónica.' },
   { section: 'Armonía', path: '/analizador', label: 'Analizador', icon: I.IconAnalyze, element: Analyzer, blurb: 'Grados, funciones y modulaciones de cualquier progresión.' },
   { section: 'Ritmo', path: '/ritmo', label: 'Compás y palos', icon: I.IconRhythm, element: Rhythm, blurb: 'Soleá, bulería, seguiriya y amalgamas con palmas.' },
+  { section: 'Ritmo', path: '/flamenco', label: 'Guitarra flamenca', icon: I.IconGuitar, element: Flamenco, blurb: 'Rasgueos, compás con golpe, tablatura y cadencia andaluza por arriba y por medio.' },
   { section: 'Entrenamiento', path: '/oido', label: 'Oído', icon: I.IconEar, element: Ear, blurb: 'Intervalos, acordes, grados y progresiones, respondiendo con tu MIDI.' },
   { section: 'Entrenamiento', path: '/lectura', label: 'Lectura', icon: I.IconScore, element: Reading, blurb: 'Lee notas, acordes y armaduras y tócalos en el piano.' },
   { section: 'Estudio', path: '/pistas', label: 'Pistas y acordes', icon: I.IconStems, element: Stems, blurb: 'Separa una canción en instrumentos y saca sus acordes.' },

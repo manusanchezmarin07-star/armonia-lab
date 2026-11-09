@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 const PAGES = ['/', '/laboratorio', '/puentes', '/rearmonizar', '/escalas', '/negativa', '/analizador', '/ritmo', '/oido',
-  '/lectura', '/pistas', '/bach', '/biblioteca', '/asistente']
+  '/lectura', '/pistas', '/bach', '/biblioteca', '/asistente', '/flamenco']
 
 /** Falla el test si la página escribe errores en consola o lanza excepciones. */
 function watchErrors(page: Page) {
@@ -228,4 +228,22 @@ test('rearmonizar en guitarra: cada sustituto lleva su diagrama', async ({ page 
   await page.getByRole('button', { name: 'Sustituir un acorde' }).click()
   await page.getByRole('button', { name: 'Buscar sustitutos' }).click()
   await expect(page.locator('svg.chord-diagram').first()).toBeVisible()
+})
+
+test('guitarra flamenca: compás con golpes, tablatura y bulería contando desde el 12', async ({ page }) => {
+  const errors = watchErrors(page)
+  await asGuitar(page)
+  await open(page, '/flamenco')
+  const compas = page.getByRole('list', { name: 'Compás' })
+  await expect(compas.locator('.compas-beat.acc .compas-n')).toHaveText(['3', '6', '8', '10', '12'])
+  await expect(page.getByRole('img', { name: 'Tablatura' })).toBeVisible()
+  await page.getByLabel('Palo').selectOption('buleria')
+  await expect(compas.locator('.compas-n').first()).toHaveText('12')
+  await page.getByLabel('Tono').selectOption('medio')
+  await expect(page.getByRole('button', { name: 'Escuchar Dm – C – Bb – A' })).toBeVisible()
+  await page.mouse.click(10, 10)
+  await page.getByRole('button', { name: 'Tocar el compás' }).click()
+  await expect(compas.locator('.compas-beat.on')).toHaveCount(1, { timeout: 5000 })
+  await page.getByRole('button', { name: 'Parar' }).first().click()
+  expect(errors).toEqual([])
 })
