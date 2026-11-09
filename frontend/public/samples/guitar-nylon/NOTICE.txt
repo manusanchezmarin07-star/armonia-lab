@@ -1,0 +1,3 @@
+Muestras de guitarra de nailon renderizadas con FluidSynth a partir del banco
+FluidR3_GM (Frank Wen), publicado bajo licencia MIT. Programa General MIDI 24
+(Acoustic Guitar, nylon), una nota cada 3 semitonos de Mi2 a Do#6.

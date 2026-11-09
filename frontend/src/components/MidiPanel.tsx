@@ -79,7 +79,7 @@ export default function MidiPanel({ onClose }: { onClose: () => void }) {
             <div className="meter"><span style={{ width: `${st.modulation * 100}%` }} /></div>
             <div className="small text-2">Pitch bend: {Math.round(st.bend * 100)} %</div>
             <div className="meter bend"><span style={{ left: `${50 + Math.min(0, st.bend) * 50}%`, width: `${Math.abs(st.bend) * 50}%` }} /></div>
-            {!st.bendWorks && <div className="small muted">Con el piano de cola el pitch bend no dobla la afinación (un piano real tampoco puede); sí funciona con el sonido de sintetizador.</div>}
+            {!st.bendWorks && <div className="small muted">Con muestras reales (piano de cola o guitarra) el pitch bend no dobla la afinación; sí funciona con el sonido de sintetizador.</div>}
             <div className="small muted">Pedal de sostenido (CC 64): funciona siempre.</div>
           </div>
         </div>
