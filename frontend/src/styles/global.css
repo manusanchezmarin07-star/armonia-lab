@@ -451,3 +451,24 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
 .tab-wrap { overflow-x: auto; }
 .tab { display: block; }
 .card-soft { border: 1px solid var(--line-soft); border-radius: 12px; padding: 12px 14px; background: var(--bg-2); }
+/* Modo canción: progreso por fases, avisos y medidores de nivel del mezclador. */
+.progress { height: 8px; background: var(--bg-2); border-radius: 8px; margin-top: 14px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); transition: width 0.6s; }
+.steps-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 12.5px; color: var(--muted); }
+.steps-row .on { color: var(--accent); font-weight: 600; }
+.steps-row .done { color: var(--teal); }
+.notice { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.meter { height: 3px; margin-top: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.06s linear; }
+.bar-chord.now b { color: var(--accent); }
+/* Acorde actual y siguientes, junto al transporte de la canción. */
+.now-next { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.now-next > div { display: grid; gap: 2px; align-content: start; padding: 10px 16px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line-soft); min-width: 120px; }
+.now-next b { font-family: var(--serif); font-weight: 600; line-height: 1.05; }
+.now-next small { font-size: 12px; color: var(--text-2); }
+.nn-now { flex: 1 1 200px; border-color: var(--accent) !important; }
+.nn-now b { font-size: 46px; }
+.nn-next { cursor: pointer; }
+.nn-next b { font-size: 28px; color: var(--text-2); }
+.nn-bar { height: 4px; border-radius: 4px; background: var(--bg); overflow: hidden; margin-top: 6px; }
+.nn-bar span { display: block; height: 100%; background: var(--accent); }
