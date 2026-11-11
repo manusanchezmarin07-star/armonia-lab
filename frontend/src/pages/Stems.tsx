@@ -9,6 +9,7 @@ import LyricsSheet from '../components/LyricsSheet'
 import SongTutorial from '../components/SongTutorial'
 import GuitarSongTutorial from '../components/GuitarSongTutorial'
 import { useInstrument } from '../lib/instrument'
+import { SongPlayer, trackGains } from '../lib/multitrack'
 import Mixer, { type Instrument, type StemInfo } from '../components/Mixer'
 import ChordChart from '../components/ChordChart'
 import { usePersistentState } from '../lib/prefs'
@@ -16,13 +17,16 @@ import { usePersistentState } from '../lib/prefs'
 interface Segment { start: number; end: number; symbol: string; pcs: number[]; confidence: number; edited: boolean; roman?: string; function?: string | null; kind?: string; alternatives?: string[] }
 interface Job {
   id: string; title: string; status: string; progress: number; message: string; separated: boolean; device: string | null
+  source?: { kind: string; url?: string; uploader?: string }
   stems: StemInfo[]
-  instruments?: Instrument[]; instruments_method?: string
+  instruments?: Instrument[]; instruments_method?: string; instruments_status?: string; instruments_error?: string
+  multitrack?: { file: string; channels: number; layout: { id: string; channels: number[] }[] }
+  warning?: string | null
   analysis: { duration: number; tempo: number; key: string; segments: Segment[]; beats?: number[]; method?: string } | null
   lyrics_status?: string; lyrics_error?: string; validated?: boolean
   lyrics?: { source: string; lines: { start: number; end: number; words: { text: string; start: number; end: number }[] }[]; text?: string }
 }
-interface Caps { demucs: boolean; models: Record<string, string>; device: string | null }
+interface Caps { demucs: boolean; models: Record<string, string>; device: string | null; youtube?: boolean; ffmpeg?: boolean }
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
@@ -42,10 +46,20 @@ export default function Stems() {
 
   // Sondeo mientras el trabajo está en marcha (la separación puede tardar minutos).
   useEffect(() => {
-    if (!job || job.status === 'listo' || job.status === 'error') return
-    const t = setInterval(() => api.get<Job>(`/api/stems/${job.id}`).then((j) => { setJob(j); if (j.status === 'listo') refreshList() }), 2000)
+    if (!job) return
+    const working = job.status !== 'listo' && job.status !== 'error'
+    // La canción ya se puede usar mientras se reconocen los instrumentos: se sigue
+    // consultando (más despacio) para actualizar los nombres de las pistas cuando acabe.
+    const tagging = job.status === 'listo' && job.instruments_status === 'analizando'
+    if (!working && !tagging) return
+    const t = setInterval(() => api.get<Job>(`/api/stems/${job.id}`).then((j) => {
+      // Mientras solo se etiquetan instrumentos no se toca la ficha salvo que cambie algo:
+      // así no se pisan las correcciones que el usuario esté haciendo.
+      if (working || j.instruments_status !== 'analizando') setJob(j)
+      if (working && j.status === 'listo') refreshList()
+    }).catch(() => {}), working ? 1500 : 4000)
     return () => clearInterval(t)
-  }, [job?.id, job?.status])
+  }, [job?.id, job?.status, job?.instruments_status])
 
   const upload = async (file: File) => {
     setErr(null)
@@ -58,6 +72,22 @@ export default function Stems() {
       const r = await fetch('/api/stems', { method: 'POST', body: fd })
       if (!r.ok) throw new Error((await r.json()).detail)
       setJob(await r.json())
+      refreshList()
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const [url, setUrl] = useState('')
+  const importUrl = async () => {
+    if (!url.trim()) return
+    setErr(null)
+    setUploading(true)
+    try {
+      setJob(await api.post<Job>('/api/stems/from-url', { url: url.trim(), model, separate: !!caps?.demucs }))
+      setUrl('')
       refreshList()
     } catch (e) {
       setErr((e as Error).message)
@@ -87,7 +117,7 @@ export default function Stems() {
         <div>
           <div className="eyebrow">Pistas</div>
           <h1>Separa una canción y saca sus acordes</h1>
-          <p className="lead">Sube un audio. Demucs separa voz, bajo, piano, guitarra y batería en tu GPU, y yo detecto el pulso,
+          <p className="lead">Sube un audio o pega un enlace de YouTube. Demucs separa voz, bajo, piano, guitarra y batería en tu GPU, y yo detecto el pulso,
             la tonalidad y los acordes. Si me equivoco en un acorde, aísla la pista, ralentízala y tócalo en tu MIDI para corregirlo.</p>
         </div>
         {caps && (
@@ -106,6 +136,16 @@ export default function Stems() {
             <div style={{ fontFamily: 'var(--serif)', fontSize: 19 }}>{uploading ? 'Subiendo…' : 'Arrastra una canción'}</div>
             <div className="small muted">o haz clic · mp3, wav, m4a, flac</div>
           </label>
+          {caps?.youtube && (
+            <div className="card stack" style={{ gap: 8, padding: 14 }} data-tour="stems-youtube">
+              <label className="small text-2" htmlFor="yt-url">…o pega un enlace de YouTube</label>
+              <input id="yt-url" className="input" placeholder="https://youtu.be/…" value={url} onChange={(e) => setUrl(e.target.value)}
+                     onKeyDown={(e) => e.key === 'Enter' && importUrl()} />
+              <button className="btn" disabled={!url.trim() || uploading} onClick={importUrl}>Importar y analizar</button>
+              <div className="small muted">Solo para tu estudio: el audio se queda en tu disco. Vídeos de hasta 20 min.
+                {caps.ffmpeg === false && ' Necesita ffmpeg instalado.'}</div>
+            </div>
+          )}
           {caps?.demucs && (
             <select className="select" value={model} onChange={(e) => setModel(e.target.value)}>
               {Object.entries(caps.models).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -130,11 +170,26 @@ export default function Stems() {
           {job && job.status !== 'listo' && (
             <div className="card fade-in">
               <h2>{job.title}</h2>
-              {job.status === 'error' ? <div className="error">{job.message}</div> : (
+              {job.status === 'error' ? (
+                <div className="stack">
+                  <div className="error">{job.message}</div>
+                  <div className="row">
+                    <button className="btn primary" onClick={() => api.post<Job>(`/api/stems/${job.id}/retry`, {}).then((j) => { setJob(j); refreshList() }).catch((e) => setErr((e as Error).message))}>Reintentar</button>
+                    <button className="btn ghost" onClick={() => api.del(`/api/stems/${job.id}`).then(() => { setJob(null); refreshList() })}>Borrar</button>
+                  </div>
+                </div>
+              ) : (
                 <>
-                  <div className="row"><span className="pill accent">{job.status}</span><span className="small text-2">{job.message}</span></div>
-                  <div style={{ height: 6, background: 'var(--bg-2)', borderRadius: 6, marginTop: 14, overflow: 'hidden' }}>
-                    <div style={{ width: `${Math.max(5, job.progress * 100)}%`, height: '100%', background: 'var(--accent)', transition: 'width 0.6s' }} />
+                  <div className="row"><span className="pill accent">{job.status}</span><span className="small text-2">{job.message}</span>
+                    <div className="spacer" /><span className="mono small text-2">{Math.round(job.progress * 100)} %</span></div>
+                  <div className="progress" role="progressbar" aria-valuenow={Math.round(job.progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+                    <div style={{ width: `${Math.max(3, job.progress * 100)}%` }} />
+                  </div>
+                  <div className="steps-row">
+                    {[...(job.source?.kind === 'youtube' ? ['descargando'] : []), 'preparando audio', ...(job.separated || job.device ? ['separando pistas'] : []), 'analizando acordes', 'preparando el reproductor'].map((st, i, all) => {
+                      const cur = all.indexOf(job.status)
+                      return <span key={st} className={i < cur ? 'done' : i === cur ? 'on' : ''}>{i < cur ? '✓ ' : ''}{st}</span>
+                    })}
                   </div>
                 </>
               )}
@@ -151,7 +206,9 @@ export default function Stems() {
 
 function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => void; onDelete: () => void }) {
   const { lastChord, pressed } = useInput()
-  const audios = useRef<Record<string, HTMLAudioElement>>({})
+  const player = useRef<SongPlayer | null>(null)
+  const [ready, setReady] = useState(false)
+  const [audioErr, setAudioErr] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [time, setTime] = useState(0)
   const [rate, setRate] = useState(1)
@@ -166,61 +223,72 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
   const { isGuitar } = useInstrument()
   const analysis = job.analysis!
   const segs = analysis.segments
-  // Si hay pistas separadas, la mezcla original arranca silenciada para no duplicar el sonido.
-  // Solo se cargan las pistas con contenido (y la mezcla): menos memoria y menos ruido.
-  const stems = job.stems.filter((st) => st.active !== false)
+  // Con pistas separadas se reproduce el multipista (la «mezcla original» es la suma de
+  // todas, así que no hace falta como pista aparte); sin separar, solo está la mezcla.
+  const stems = useMemo(() => job.stems.filter((st) => (job.separated ? st.id !== 'mezcla' : st.id === 'mezcla')), [job.stems, job.separated])
+  const layoutKey = JSON.stringify(job.multitrack?.layout ?? null)
+
+  // Las canciones separadas con versiones anteriores no tienen multipista: se pide (el
+  // servidor lo crea la primera vez) y se recarga la ficha para saber qué canal es cada pista.
+  useEffect(() => {
+    if (!job.separated || job.multitrack) return
+    let live = true
+    fetch(`/api/stems/${job.id}/multitrack`, { headers: { Range: 'bytes=0-1' } })
+      .then((r) => { if (!r.ok) throw new Error('No se pudieron preparar las pistas de esta canción') })
+      .then(() => api.get<Job>(`/api/stems/${job.id}`)).then((j) => live && onChange(j))
+      .catch((e) => live && setAudioErr((e as Error).message))
+    return () => { live = false }
+  }, [job.id, job.separated, !!job.multitrack])
 
   useEffect(() => {
-    const map: Record<string, HTMLAudioElement> = {}
-    stems.forEach((s) => {
-      const a = new Audio(`/api/stems/${job.id}/audio/${s.id}`)
-      a.preload = 'auto'
-      a.preservesPitch = true // ralentizar sin cambiar el tono
-      map[s.id] = a
-    })
-    audios.current = map
-    const init: Record<string, boolean> = {}
-    stems.forEach((s) => (init[s.id] = job.separated && s.id === 'mezcla'))
-    setMuted(init)
-    return () => Object.values(map).forEach((a) => { a.pause(); a.src = '' })
-  }, [job.id])
+    if (job.separated && !job.multitrack) return
+    const mt = job.multitrack
+    const p = mt
+      ? new SongPlayer(`/api/stems/${job.id}/multitrack`, mt.layout, mt.channels)
+      : new SongPlayer(`/api/stems/${job.id}/audio/mezcla`, [{ id: 'mezcla', channels: [0, 1] }], 2)
+    player.current = p
+    setReady(false); setAudioErr(null); setPlaying(false); setTime(0)
+    const a = p.audio
+    const onReady = () => setReady(true)
+    const onEnd = () => setPlaying(false)
+    const onErr = () => setAudioErr('No se pudo cargar el audio de esta canción. Prueba a pulsar «Reintentar».')
+    a.addEventListener('canplay', onReady); a.addEventListener('ended', onEnd); a.addEventListener('pause', onEnd); a.addEventListener('error', onErr)
+    return () => {
+      a.removeEventListener('canplay', onReady); a.removeEventListener('ended', onEnd); a.removeEventListener('pause', onEnd); a.removeEventListener('error', onErr)
+      p.dispose()
+      player.current = null
+    }
+  }, [job.id, layoutKey])
 
-  const master = () => audios.current[stems[0].id]
-
-  // Bucle de animación: posición, bucle A-B y corrección de desfase entre pistas.
+  // Posición de reproducción. Solo el tutorial (notas que caen) necesita 60 fps; el resto de
+  // la pantalla se repinta 12 veces por segundo, que basta para el cursor y ahorra mucha CPU.
+  const smooth = tab === 'tutorial'
   useEffect(() => {
     let raf = 0
-    const tick = () => {
-      const m = master()
-      if (m) {
-        const t = m.currentTime
-        setTime(t)
-        if (loop && sel !== null && t >= segs[sel].end) seek(segs[sel].start)
-        Object.values(audios.current).forEach((a) => { if (a !== m && Math.abs(a.currentTime - t) > 0.06) a.currentTime = t })
+    let last = 0
+    const tick = (now: number) => {
+      const p = player.current
+      if (p && (smooth || now - last > 80)) {
+        last = now
+        const t = p.time
+        setTime((prev) => (Math.abs(prev - t) > 0.005 ? t : prev))
+        if (loop && sel !== null && t >= segs[sel].end) p.seek(segs[sel].start)
       }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [loop, sel, job.id])
+  }, [loop, sel, job.id, smooth])
 
   useEffect(() => {
-    stems.forEach((s) => {
-      const a = audios.current[s.id]
-      if (!a) return
-      const audible = solo ? solo === s.id : !muted[s.id]
-      a.volume = audible ? (vol[s.id] ?? 1) : 0
-      a.playbackRate = rate
-    })
-  }, [vol, muted, solo, rate, job.id])
+    player.current?.setGains(trackGains(stems.map((s) => s.id), vol, muted, solo))
+    player.current?.setRate(rate)
+  }, [vol, muted, solo, rate, stems, ready])
 
-  const seek = useCallback((t: number) => { Object.values(audios.current).forEach((a) => (a.currentTime = t)); setTime(t) }, [])
-  const pause = useCallback(() => { Object.values(audios.current).forEach((a) => a.pause()); setPlaying(false) }, [])
+  const seek = useCallback((t: number) => { player.current?.seek(t); setTime(t) }, [])
+  const pause = useCallback(() => { player.current?.pause(); setPlaying(false) }, [])
   const play = useCallback(() => {
-    const all = Object.values(audios.current)
-    const t = master().currentTime
-    all.forEach((a) => { a.currentTime = t; a.play() })
-    setPlaying(true)
+    player.current?.play().then(() => setPlaying(true)).catch((e) => setAudioErr(`No se pudo reproducir: ${(e as Error).message}`))
   }, [])
   const toggle = () => (playing ? pause() : play())
 
@@ -256,13 +324,17 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
           <span className="pill accent">{analysis.key.endsWith('m') ? analysis.key.slice(0, -1) + ' menor' : analysis.key + ' mayor'}</span>
           <span className="pill">≈ {Math.round(analysis.tempo)} bpm</span>
           {analysis.method && <span className="pill" title="Método de detección de acordes">{analysis.method}</span>}
+          {job.source?.kind === 'youtube' && job.source.url && (
+            <a className="pill" href={job.source.url} target="_blank" rel="noreferrer" title="Abrir el vídeo original">▶ YouTube{job.source.uploader ? ` · ${job.source.uploader}` : ''}</a>
+          )}
           {(job.instruments ?? []).slice(0, 5).map((i) => <span key={i.name} className="pill violet" title="Instrumento detectado">{i.icon} {i.name}</span>)}
           <div className="spacer" />
           <button className="btn sm" onClick={saveToLibrary}>Guardar progresión</button>
           <button className="btn sm ghost" onClick={() => confirm('¿Borrar esta canción y sus pistas?') && onDelete()}><IconTrash /></button>
         </div>
         <div className="row mt">
-          <button className="btn primary" onClick={toggle}>{playing ? <><IconStop /> Pausa</> : <><IconPlay /> Reproducir</>}</button>
+          <button className="btn primary" onClick={toggle} disabled={!ready}>
+            {!ready ? 'Cargando audio…' : playing ? <><IconStop /> Pausa</> : <><IconPlay /> Reproducir</>}</button>
           <span className="mono small text-2">{fmt(time)} / {fmt(dur)}</span>
           <input type="range" className="range" style={{ flex: 1 }} min={0} max={dur} step={0.1} value={time} onChange={(e) => seek(+e.target.value)} />
           <label className="small text-2 row" style={{ gap: 6 }}>Velocidad {Math.round(rate * 100)}%
@@ -272,6 +344,34 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
             <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} disabled={sel === null} /> Repetir acorde
           </label>
         </div>
+        {(() => {
+          // Acorde que suena y los dos siguientes, siempre a la vista junto al transporte.
+          const cur = curIdx >= 0 ? segs[curIdx] : null
+          const upcoming = segs.slice(Math.max(0, curIdx + 1)).filter((sg, k, arr) => sg.symbol !== 'N' && (k === 0 ? sg.symbol !== cur?.symbol : sg.symbol !== arr[k - 1].symbol)).slice(0, 2)
+          const pct = cur ? Math.min(100, ((time - cur.start) / Math.max(0.1, cur.end - cur.start)) * 100) : 0
+          return (
+            <div className="now-next mt" aria-label="Acorde actual y siguientes">
+              <div className="nn-now">
+                <span className="small muted">Ahora</span>
+                <b style={{ color: cur && cur.symbol !== 'N' ? fnColor(cur.function) : undefined }}>{cur && cur.symbol !== 'N' ? cur.symbol : '—'}</b>
+                {cur?.roman && <small>{cur.roman}</small>}
+                <div className="nn-bar"><span style={{ width: `${pct}%` }} /></div>
+              </div>
+              {upcoming.map((sg, k) => (
+                <div key={sg.start} className="nn-next" onClick={() => seek(sg.start)} title="Saltar a este acorde">
+                  <span className="small muted">{k === 0 ? `Siguiente · en ${Math.max(0, sg.start - time).toFixed(1)} s` : 'Después'}</span>
+                  <b>{sg.symbol}</b>
+                  {sg.roman && <small>{sg.roman}</small>}
+                </div>
+              ))}
+            </div>
+          )
+        })()}
+        {audioErr && (
+          <div className="error mt row">{audioErr}<div className="spacer" />
+            <button className="btn sm" onClick={() => api.post<Job>(`/api/stems/${job.id}/retry`, {}).then(onChange)}>Reintentar</button></div>
+        )}
+        {job.warning && <div className="notice mt">{job.warning}</div>}
         <div className="mt">
           <ChordChart segments={segs} beats={analysis.beats ?? []} duration={dur} time={time} selected={sel}
                       onPick={(i, at) => { setSel(i); seek(at) }} onSeek={seek} />
@@ -300,11 +400,13 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
       )}
 
       {tab === 'acordes' && <div className="grid grid-2">
-        <Mixer stems={job.stems} separated={job.separated} duration={dur} time={time} muted={muted} solo={solo} vol={vol}
-               method={job.instruments_method}
+        <Mixer stems={job.stems.filter((st) => (job.separated ? st.id !== 'mezcla' : st.id === 'mezcla'))} separated={job.separated}
+               duration={dur} time={time} muted={muted} solo={solo} vol={vol}
+               method={job.instruments_method} status={job.instruments_status} statusError={job.instruments_error}
+               level={playing ? (id) => player.current?.level(id) ?? 0 : undefined}
                onMute={(id) => setMuted((m) => ({ ...m, [id]: !m[id] }))} onSolo={(id) => setSolo((x) => (x === id ? null : id))}
                onVol={(id, v) => setVol((x) => ({ ...x, [id]: v }))}
-               onRedetect={() => api.post<Job>(`/api/stems/${job.id}/instruments`, {}).then(() => setTimeout(() => api.get<Job>(`/api/stems/${job.id}`).then(onChange), 4000))} />
+               onRedetect={() => api.post<Job>(`/api/stems/${job.id}/instruments`, {}).then(onChange)} />
 
         <div className="card stack">
           <h3 style={{ margin: 0 }}>{sel !== null ? 'Acorde seleccionado' : 'Sonando ahora'}</h3>

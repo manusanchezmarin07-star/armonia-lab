@@ -83,6 +83,31 @@ def create(filename: str, data: bytes, model: str, separate: bool = True, source
     return meta
 
 
+def create_from_url(url: str, model: str, separate: bool = True) -> dict:
+    """Importa el audio de un vídeo de YouTube y lo procesa como una canción subida."""
+    from app.infrastructure import youtube
+    if not youtube.available():
+        raise ValueError("Falta yt-dlp: ejecuta INSTALAR.bat (o pip install -r backend/requirements-pistas.txt)")
+    url = youtube.check_url(url)
+    job_id = uuid.uuid4().hex[:12]
+    (ROOT / job_id).mkdir(parents=True)
+    do_sep = separate and separation.demucs_available()
+    meta = {"id": job_id, "title": "Vídeo de YouTube", "filename": "", "status": "en cola", "progress": 0.0, "message": "",
+            "model": model if do_sep else None, "separated": False, "stems": [], "analysis": None,
+            "device": separation.gpu_info() if do_sep else None, "want_separation": do_sep, "source": {"kind": "youtube", "url": url}}
+    _save(meta)
+    _pool.submit(_run, job_id)
+    return meta
+
+
+def _download(job_id: str, meta: dict) -> dict:
+    """Baja el audio del enlace (si aún no está en disco) y completa título y datos del vídeo."""
+    from app.infrastructure import youtube
+    _update(job_id, status="descargando", progress=0.01, message="Descargando el audio del vídeo…")
+    path, info = youtube.fetch(meta["source"]["url"], ROOT / job_id, lambda p: _update(job_id, progress=round(0.01 + 0.04 * p, 3)))
+    return _update(job_id, title=info["title"], original=path.name, source={"kind": "youtube", **info})
+
+
 def retry(job_id: str) -> dict:
     """Vuelve a procesar una canción que falló o se quedó a medias (usa el audio ya subido)."""
     meta = load(job_id)
@@ -129,6 +154,8 @@ def _run(job_id: str) -> None:
     try:
         meta = load(job_id)
         folder = ROOT / job_id
+        if (meta.get("source") or {}).get("kind") == "youtube" and not (meta.get("original") and (folder / meta["original"]).exists()):
+            meta = _download(job_id, meta)
         src = _original(meta)
         model = meta.get("model") or "htdemucs_6s"
         _update(job_id, status="preparando audio", progress=0.03, message="Leyendo el archivo…")
@@ -274,8 +301,10 @@ def progression_text(job_id: str) -> str:
 
 
 def capabilities() -> dict:
+    from app.infrastructure import audio_io, youtube
     return {"demucs": separation.demucs_available(), "models": separation.MODELS,
-            "device": separation.gpu_info() if separation.demucs_available() else None}
+            "device": separation.gpu_info() if separation.demucs_available() else None,
+            "youtube": youtube.available(), "ffmpeg": audio_io.ffmpeg() is not None}
 
 
 # ---------------------------------------------------------------------------
@@ -308,6 +337,9 @@ def transcribe_lyrics(job_id: str, language: str | None = None) -> dict:
             segs = lyrics_asr.transcribe(str(src), language)
             lines = lines_from_asr(segs)
             words = [w for line in lines for w in line["words"]]
+            if not words:  # instrumental o voz irreconocible: se dice, en vez de dejar una letra vacía
+                _update(job_id, lyrics_status="sin voz")
+                return
             _update(job_id, lyrics_status="listo", asr_words=words,
                     lyrics={"source": "transcripción automática", "lines": lines})
         except Exception as e:

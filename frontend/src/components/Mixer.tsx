@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export interface Instrument { name: string; family: string; icon: string; spans: number[][]; share: number; confidence: number }
 export interface StemInfo {
@@ -11,6 +11,10 @@ interface Props {
   muted: Record<string, boolean>; solo: string | null; vol: Record<string, number>
   onMute: (id: string) => void; onSolo: (id: string) => void; onVol: (id: string, v: number) => void
   onRedetect?: () => void; method?: string
+  /** Estado del reconocimiento de instrumentos (va después de que la canción esté lista). */
+  status?: string; statusError?: string
+  /** Nivel actual (0–1) de una pista mientras suena; sin él no se pintan medidores. */
+  level?: (id: string) => number
 }
 
 /**
@@ -18,8 +22,21 @@ interface Props {
  * verdad, nombradas por su contenido, con los instrumentos detectados y una
  * franja que indica en qué partes de la canción intervienen.
  */
-export default function Mixer({ stems, separated, duration, time, muted, solo, vol, onMute, onSolo, onVol, onRedetect, method }: Props) {
+export default function Mixer({ stems, separated, duration, time, muted, solo, vol, onMute, onSolo, onVol, onRedetect, method, status, statusError, level }: Props) {
   const [showEmpty, setShowEmpty] = useState(false)
+  // Medidores: se pintan directamente en el DOM (sin estado de React) para no repintar
+  // el mezclador entero 30 veces por segundo.
+  const bars = useRef<Record<string, HTMLElement | null>>({})
+  useEffect(() => {
+    if (!level) { Object.values(bars.current).forEach((b) => b && (b.style.width = '0%')); return }
+    let raf = 0
+    const tick = () => {
+      Object.entries(bars.current).forEach(([id, b]) => { if (b) b.style.width = `${Math.round(level(id) * 100)}%` })
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [level])
   const active = stems.filter((s) => s.active !== false)
   const empty = stems.filter((s) => s.active === false)
   const lane = (spans: number[][] | undefined) => (
@@ -38,6 +55,7 @@ export default function Mixer({ stems, separated, duration, time, muted, solo, v
           </div>
         )}
         {s.id !== 'mezcla' && lane(s.activity?.spans)}
+        <div className="meter" aria-hidden><i ref={(el) => { bars.current[s.id] = el }} /></div>
       </div>
       <div className="mixer-ctrl">
         <button className={`btn sm ${muted[s.id] ? '' : 'ghost'}`} style={{ width: 34, justifyContent: 'center', color: muted[s.id] ? 'var(--coral)' : undefined }}
@@ -54,7 +72,9 @@ export default function Mixer({ stems, separated, duration, time, muted, solo, v
       <div className="row">
         <h3 style={{ margin: 0 }}>Mezclador</h3>
         <div className="spacer" />
-        {method && <span className="small muted">{method}</span>}
+        {status === 'analizando' && <span className="pill accent">reconociendo instrumentos…</span>}
+        {status === 'error' && <span className="pill coral" title={statusError}>no se pudieron reconocer los instrumentos</span>}
+        {method && status !== 'analizando' && <span className="small muted">{method}</span>}
         {separated && onRedetect && <button className="btn sm ghost" onClick={onRedetect} title="Volver a reconocer los instrumentos">↻</button>}
       </div>
       {active.map(row)}

@@ -150,3 +150,51 @@ def test_old_separated_jobs_get_a_multitrack_on_demand(tmp_path, svc):
     (folder / "meta.json").write_text(json.dumps(meta))
     assert svc.multitrack_path("old1").name == "multipista.ogg"
     assert [x["id"] for x in svc.load("old1")["multitrack"]["layout"]] == ["bass", "piano"]
+
+
+@pytest.mark.parametrize("url,ok", [
+    ("https://www.youtube.com/watch?v=dQw4w9WgXcQ", True), ("youtu.be/dQw4w9WgXcQ", True),
+    ("https://music.youtube.com/watch?v=abc&list=xyz", True), ("https://www.youtube.com/shorts/abc123", True),
+    ("https://www.youtube.com/playlist?list=PL123", False), ("https://www.youtube.com/@canal", False),
+    ("https://vimeo.com/123", False), ("http://127.0.0.1:8765/api/health", False), ("file:///etc/passwd", False),
+    ("https://youtube.com.evil.example/watch?v=x", False), ("", False),
+])
+def test_only_youtube_video_links_are_accepted(url, ok):
+    from app.infrastructure import youtube
+    if ok:
+        assert youtube.check_url(url).startswith("http")
+    else:
+        with pytest.raises(ValueError):
+            youtube.check_url(url)
+
+
+def test_youtube_import_runs_the_normal_pipeline(tmp_path, svc, monkeypatch):
+    """La descarga se simula: lo que se comprueba es que el audio bajado sigue el flujo normal."""
+    from app.infrastructure import youtube
+    src = write_progression(tmp_path / "song.wav", CHORDS)
+
+    def fake_fetch(url, folder, on_progress=None):
+        shutil.copy(src, folder / "original.wav")
+        if on_progress:
+            on_progress(1.0)
+        return folder / "original.wav", {"title": "Canción de prueba", "uploader": "Canal", "duration": 8, "url": url}
+    monkeypatch.setattr(youtube, "available", lambda: True)
+    monkeypatch.setattr(youtube, "fetch", fake_fetch)
+    job = svc.create_from_url("https://youtu.be/abc123", "htdemucs_6s", separate=False)
+    meta = _wait(svc, job["id"])
+    assert meta["status"] == "listo" and meta["title"] == "Canción de prueba"
+    assert meta["source"]["kind"] == "youtube" and meta["source"]["uploader"] == "Canal"
+    assert meta["analysis"]["segments"][0]["symbol"].startswith("C")
+
+
+def test_youtube_download_error_is_shown_and_can_be_retried(tmp_path, svc, monkeypatch):
+    from app.infrastructure import youtube
+
+    def boom(url, folder, on_progress=None):
+        raise RuntimeError("No se pudo descargar el vídeo: Video unavailable")
+    monkeypatch.setattr(youtube, "available", lambda: True)
+    monkeypatch.setattr(youtube, "fetch", boom)
+    meta = _wait(svc, svc.create_from_url("https://youtu.be/abc123", "htdemucs_6s", separate=False)["id"])
+    assert meta["status"] == "error" and "Video unavailable" in meta["message"]
+    with pytest.raises(ValueError):
+        svc.create_from_url("https://example.com/video", "htdemucs_6s")

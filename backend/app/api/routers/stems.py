@@ -64,6 +64,18 @@ async def upload(file: UploadFile = File(...), model: str = Form("htdemucs_6s"),
     return svc.create(file.filename or "cancion.mp3", data, model, separate)
 
 
+class UrlIn(BaseModel):
+    url: str
+    model: str = "htdemucs_6s"
+    separate: bool = True
+
+
+@router.post("/from-url")
+def from_url(body: UrlIn):
+    """Importa el audio de un vídeo de YouTube para estudiarlo (se guarda solo en local)."""
+    return _wrap(svc.create_from_url, body.url, body.model, body.separate)
+
+
 @router.get("/{job_id}")
 def get_job(job_id: str):
     return _wrap(svc.load, job_id)
