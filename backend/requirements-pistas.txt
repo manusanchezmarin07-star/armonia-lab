@@ -6,3 +6,6 @@ soundfile>=0.12.1
 openai-whisper>=20240930
 onnxruntime>=1.18
 transformers>=4.44
+# Importar el audio de un vídeo de YouTube para estudiarlo. «default» trae el
+# componente que resuelve los retos JavaScript de YouTube (usa Deno o Node).
+yt-dlp[default]>=2025.10.22
