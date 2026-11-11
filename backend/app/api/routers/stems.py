@@ -64,6 +64,18 @@ async def upload(file: UploadFile = File(...), model: str = Form("htdemucs_6s"),
     return svc.create(file.filename or "cancion.mp3", data, model, separate)
 
 
+class UrlIn(BaseModel):
+    url: str
+    model: str = "htdemucs_6s"
+    separate: bool = True
+
+
+@router.post("/from-url")
+def from_url(body: UrlIn):
+    """Importa el audio de un vídeo de YouTube para estudiarlo (se guarda solo en local)."""
+    return _wrap(svc.create_from_url, body.url, body.model, body.separate)
+
+
 @router.get("/{job_id}")
 def get_job(job_id: str):
     return _wrap(svc.load, job_id)
@@ -72,6 +84,17 @@ def get_job(job_id: str):
 @router.get("/{job_id}/audio/{stem_id}")
 def audio(job_id: str, stem_id: str):
     return FileResponse(_wrap(svc.stem_path, job_id, stem_id))
+
+
+@router.get("/{job_id}/multitrack")
+def multitrack(job_id: str):
+    """Todas las pistas en un único audio multicanal (se reproduce con un solo reloj)."""
+    return FileResponse(_wrap(svc.multitrack_path, job_id), media_type="audio/ogg")
+
+
+@router.post("/{job_id}/retry")
+def retry(job_id: str):
+    return _wrap(svc.retry, job_id)
 
 
 @router.put("/{job_id}/segments/{index}")

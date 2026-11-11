@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildBars } from '../ChordChart'
+import { barGrid, buildBars } from '../ChordChart'
 
 const seg = (start: number, end: number, symbol: string) => ({ start, end, symbol, confidence: 0.9, edited: false })
 
@@ -16,5 +16,20 @@ describe('tabla de acordes por compases', () => {
   })
   it('sin pulso fiable usa bloques de 2 segundos', () => {
     expect(buildBars([seg(0, 6, 'D')], [], 6)).toHaveLength(3)
+  })
+  it('alinea los compases con los cambios de acorde aunque haya anacrusa', () => {
+    // Pulso cada 0,5 s; los acordes cambian cada 4 pulsos pero empiezan en el pulso 2 (anacrusa de 2).
+    const beats = Array.from({ length: 34 }, (_, i) => i * 0.5)
+    const segs = ['C', 'G', 'Am', 'F'].flatMap((sym, k) => [seg(1 + k * 2, 3 + k * 2, sym)])
+    expect(barGrid(segs, beats)).toEqual({ offset: 2, perBar: 4 })
+    const bars = buildBars(segs, beats, 17)
+    expect(bars[0].start).toBe(0) // compás de anacrusa
+    // Cada compás, un solo acorde entero.
+    expect(bars.slice(1, 5).map((b) => b.items.map((x) => x.symbol))).toEqual([['C'], ['G'], ['Am'], ['F']])
+  })
+  it('detecta el compás de 3 (vals, sevillanas)', () => {
+    const beats = Array.from({ length: 40 }, (_, i) => i * 0.5)
+    const segs = ['C', 'F', 'G', 'C', 'Am', 'Dm', 'G', 'C'].map((sym, k) => seg(k * 1.5, (k + 1) * 1.5, sym))
+    expect(barGrid(segs, beats)).toEqual({ offset: 0, perBar: 3 })
   })
 })

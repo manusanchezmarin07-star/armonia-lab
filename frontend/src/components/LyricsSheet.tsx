@@ -78,6 +78,9 @@ export default function LyricsSheet({ job, time, onSeek, onJob }: {
           : <button className="btn sm primary" onClick={() => validate(true)}>✓ Está bien</button>)}
       </div>
       {job.lyrics_status === 'error' && <div className="error">La transcripción falló: {job.lyrics_error}</div>}
+      {job.lyrics_status === 'sin voz' && (
+        <div className="notice">No he encontrado voz cantada que se entienda (¿es instrumental?). Puedes pegar la letra a mano y la reparto por la canción.</div>
+      )}
       {!caps?.whisper && <div className="small muted">Whisper no está instalado: puedes pegar la letra y la coloco según las frases de la voz.</div>}
       {pasting && (
         <div className="stack fade-in">

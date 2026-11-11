@@ -29,6 +29,26 @@ def test_stem_label_names_by_content():
     assert stem_label("guitar", []) == "Guitarra"
 
 
+def test_fixed_stems_keep_their_identity():
+    """La pista de Demucs manda: el clasificador matiza, no contradice salvo que algo domine."""
+    weak_guitar = summarize([win(0, {"Guitar": 0.15, "Plucked string instrument": 0.14})] + [win(6, {"Music": 0.7})] * 5)
+    assert stem_label("piano", weak_guitar) == "Piano"
+    electric = summarize([win(0, {"Electric guitar": 0.6, "Guitar": 0.5})] * 3)
+    assert [e["name"] for e in electric] == ["guitarra eléctrica"] and stem_label("guitar", electric) == "Guitarra: guitarra eléctrica"
+    flute = summarize([win(0, {"Flute": 0.9})] * 4)
+    assert stem_label("vocals", flute) == "Voz (suena a flauta)"
+    assert stem_label("drums", summarize([win(0, {"Drum kit": 0.5, "Snare drum": 0.4})] * 3)) == "Batería"
+
+
+def test_song_instruments_come_from_active_stems():
+    from app.domain.instruments import song_instruments
+    stems = [{"id": "piano", "active": True, "activity": {"spans": [[0, 30]], "active_ratio": 0.9}, "instruments": []},
+             {"id": "guitar", "active": False, "instruments": []},
+             {"id": "other", "active": True, "instruments": summarize([win(0, {"Violin, fiddle": 0.8})] * 2)},
+             {"id": "mezcla", "active": True, "instruments": []}]
+    assert [e["name"] for e in song_instruments(stems)] == ["piano", "violín"]
+
+
 def test_empty_stems_are_hidden_and_others_renamed(tmp_path, monkeypatch):
     """Canción simulada ya separada: «guitar» casi vacía y «other» con cuerdas."""
     import soundfile as sf
