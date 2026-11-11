@@ -51,3 +51,13 @@ class ChordsIn(BaseModel):
 def capo(body: ChordsIn):
     """Cejillas recomendadas para tocar una lista de acordes con formas fáciles."""
     return _safe(guitar.suggest_capo, body.chords)
+
+
+class NotesIn(BaseModel):
+    notes: list[int] = Field(..., max_length=24)
+
+
+@router.post("/voicing")
+def voicing(body: NotesIn):
+    """Posición de guitarra natural para un grupo de notas (un voicing pensado para piano)."""
+    return {"shape": _safe(guitar.voicing_for_notes, body.notes)}

@@ -420,7 +420,7 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
 
 /* ---------- Mástil y diagramas de guitarra ---------- */
 .fretboard-wrap { overflow-x: auto; padding: 4px 0; }
-.fretboard { display: block; user-select: none; touch-action: none; min-width: 560px; }
+.fretboard { display: block; user-select: none; touch-action: none; }
 .chord-diagram { display: block; border-radius: 10px; transition: background 0.15s; }
 .chord-diagram.on { background: var(--accent-soft); }
 .diagram-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
