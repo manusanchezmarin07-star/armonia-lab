@@ -373,7 +373,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
         )}
         {job.warning && <div className="notice mt">{job.warning}</div>}
         <div className="mt">
-          <ChordChart segments={segs} beats={analysis.beats ?? []} duration={dur} time={time} selected={sel}
+          <ChordChart segments={segs} beats={analysis.beats ?? []} duration={dur} time={time} selected={sel} compact={tab !== 'acordes'}
                       onPick={(i, at) => { setSel(i); seek(at) }} onSeek={seek} />
         </div>
       </div>

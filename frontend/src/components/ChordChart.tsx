@@ -58,7 +58,9 @@ export function buildBars(segments: ChartSegment[], beats: number[], duration: n
 }
 
 /** Tabla de acordes por compases + franja de resumen de toda la canción. */
-export default function ChordChart({ segments, beats, duration, time, selected, onPick, onSeek }: {
+export default function ChordChart({ segments, beats, duration, time, selected, onPick, onSeek, compact }: {
+  /** Solo la franja resumen (para las pestañas donde la tabla entera estorba). */
+  compact?: boolean
   segments: ChartSegment[]; beats: number[]; duration: number; time: number; selected: number | null
   onPick: (segment: number, at: number) => void; onSeek: (t: number) => void
 }) {
@@ -88,6 +90,7 @@ export default function ChordChart({ segments, beats, duration, time, selected, 
         ))}
         <i style={{ left: `${(time / duration) * 100}%` }} />
       </div>
+      {!compact && <>
       <div className="chart" ref={ref}>
         {bars.map((b, i) => (
           <div key={i} data-bar={i} className={`bar ${i === current ? 'now' : ''} ${b.items.some((x) => x.seg === selected) ? 'sel' : ''}`}
@@ -105,6 +108,7 @@ export default function ChordChart({ segments, beats, duration, time, selected, 
         ))}
       </div>
       <div className="small muted">Compases de {grid.perBar} pulsos · subrayado tenue = acorde dudoso · turquesa = corregido por ti · clic para escuchar y corregir</div>
+      </>}
     </div>
   )
 }
