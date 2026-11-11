@@ -23,7 +23,17 @@ def transcribe(path: str, language: str | None = None) -> list[dict]:
     import torch
     import whisper
     if _model is None:
-        _model = whisper.load_model(MODEL, device="cuda" if torch.cuda.is_available() else "cpu")
+        # La primera vez se descarga el modelo. Whisper lo baja sin tiempo de espera: con la
+        # red caída se quedaría colgado para siempre y bloquearía la cola de canciones.
+        import socket
+        previous = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(60)
+        try:
+            _model = whisper.load_model(MODEL, device="cuda" if torch.cuda.is_available() else "cpu")
+        except OSError as e:
+            raise RuntimeError(f"No se pudo descargar el modelo de Whisper ({e}). Comprueba la conexión y vuelve a intentarlo.") from e
+        finally:
+            socket.setdefaulttimeout(previous)
     res = _model.transcribe(path, word_timestamps=True, language=language, fp16=torch.cuda.is_available(),
                             # Evita que repita frases cuando hay silencios largos (instrumentales).
                             condition_on_previous_text=False)

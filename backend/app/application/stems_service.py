@@ -18,6 +18,9 @@ ROOT = DATA_DIR / "stems"
 ROOT.mkdir(parents=True, exist_ok=True)
 # Un solo trabajo a la vez: la GPU de 8 GB no da para dos separaciones simultáneas.
 _pool = ThreadPoolExecutor(max_workers=1)
+# Cola aparte para el reconocimiento de instrumentos: es opcional y lento, y no debe
+# retrasar (ni bloquear, si se cuelga una descarga) la separación de la canción siguiente.
+_aux_pool = ThreadPoolExecutor(max_workers=1)
 # RLock: _mutate guarda (y por tanto vuelve a tomar el candado) dentro de su propia sección.
 _lock = threading.RLock()
 HARMONIC_EXCLUDE = {"drums", "vocals"}
@@ -62,7 +65,7 @@ def _update(job_id: str, **kw) -> dict:
     return _mutate(job_id, lambda meta: meta.update(kw))
 
 
-def create(filename: str, data: bytes, model: str, separate: bool = True) -> dict:
+def create(filename: str, data: bytes, model: str, separate: bool = True, source: dict | None = None) -> dict:
     job_id = uuid.uuid4().hex[:12]
     folder = ROOT / job_id
     folder.mkdir(parents=True)
@@ -72,33 +75,130 @@ def create(filename: str, data: bytes, model: str, separate: bool = True) -> dic
     do_sep = separate and separation.demucs_available()
     meta = {"id": job_id, "title": Path(filename).stem, "filename": filename, "status": "en cola", "progress": 0.0,
             "message": "", "model": model if do_sep else None, "separated": False, "stems": [], "analysis": None,
-            "device": separation.gpu_info() if do_sep else None}
+            "device": separation.gpu_info() if do_sep else None, "original": src.name, "want_separation": do_sep}
+    if source:
+        meta["source"] = source
     _save(meta)
-    _pool.submit(_run, job_id, src, model, do_sep)
+    _pool.submit(_run, job_id)
     return meta
 
 
-def _run(job_id: str, src: Path, model: str, do_sep: bool) -> None:
-    from app.infrastructure import audio_analysis
+def retry(job_id: str) -> dict:
+    """Vuelve a procesar una canción que falló o se quedó a medias (usa el audio ya subido)."""
+    meta = load(job_id)
+    if meta["status"] not in ("error", "listo"):
+        raise ValueError("Esta canción ya se está procesando")
+    meta = _update(job_id, status="en cola", progress=0.0, message="", warning=None)
+    _pool.submit(_run, job_id)
+    return meta
+
+
+def recover_interrupted() -> int:
+    """Al arrancar: las canciones que se quedaron a medias (se cerró la app) pasan a
+    «error» con opción de reintentar; si no, se quedarían «en cola» para siempre."""
+    n = 0
+    for p in ROOT.glob("*/meta.json"):
+        try:
+            m = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if m.get("status") not in ("listo", "error"):
+            _update(m["id"], status="error", message="El proceso se interrumpió (se cerró la app). Pulsa «Reintentar».")
+            n += 1
+        elif m.get("instruments_status") == "analizando":
+            _update(m["id"], instruments_status="error", instruments_error="Se interrumpió al cerrar la app.")
+    return n
+
+
+def _original(meta: dict) -> Path:
+    """Audio subido. Las canciones antiguas no guardaban el nombre: es la pista «mezcla»."""
+    folder = ROOT / meta["id"]
+    if meta.get("original"):
+        return folder / meta["original"]
+    mix = next((st["file"] for st in meta.get("stems", []) if st["id"] == "mezcla"), None)
+    if mix:
+        return folder / mix
+    found = sorted(folder.glob("original.*"))
+    if not found:
+        raise ValueError("No se encuentra el audio original de esta canción")
+    return found[0]
+
+
+def _run(job_id: str) -> None:
+    from app.infrastructure import audio_analysis, audio_io
     try:
+        meta = load(job_id)
+        folder = ROOT / job_id
+        src = _original(meta)
+        model = meta.get("model") or "htdemucs_6s"
+        _update(job_id, status="preparando audio", progress=0.03, message="Leyendo el archivo…")
+        audio = audio_io.normalize(src)
         stems: dict[str, Path] = {}
-        if do_sep:
-            _update(job_id, status="separando pistas", progress=0.1,
-                    message="Demucs está separando los instrumentos (con GPU tarda ~1 min por canción).")
-            stems = separation.separate(src, ROOT / job_id / "sep", model)
+        warning = None
+        if meta.get("want_separation", bool(meta.get("model"))) and separation.demucs_available():
+            _update(job_id, status="separando pistas", progress=0.05,
+                    message="Demucs está separando los instrumentos (con GPU, alrededor de 1 min por canción).")
+
+            def on_progress(p: float) -> None:
+                _update(job_id, progress=round(0.05 + 0.6 * p, 3))
+            try:
+                stems = separation.separate(audio, folder / "sep", model, on_progress)
+            except Exception as e:
+                # Sin pistas la canción sigue siendo útil: se sacan los acordes de la mezcla.
+                warning = f"No se pudieron separar las pistas ({str(e)[:300]}). Los acordes se han sacado de la mezcla completa."
         _update(job_id, status="analizando acordes", progress=0.7, message="Detectando pulso, tonalidad y acordes…")
-        harmonic = [str(p) for n, p in stems.items() if n not in HARMONIC_EXCLUDE] or [str(src)]
+        harmonic = [str(p) for n, p in stems.items() if n not in HARMONIC_EXCLUDE] or [str(audio)]
         bass = str(stems["bass"]) if "bass" in stems else None
         analysis = audio_analysis.analyze(harmonic, bass)
         _attach_roman(analysis)
-        stem_list = [{"id": n, "name": STEM_NAMES.get(n, n), "file": str(p.relative_to(ROOT / job_id))} for n, p in stems.items()]
-        stem_list.append({"id": "mezcla", "name": STEM_NAMES["mezcla"], "file": src.name})
-        _update(job_id, status="reconociendo instrumentos", progress=0.85, message="Viendo qué suena en cada pista…",
-                separated=bool(stems), stems=stem_list, analysis=analysis)
-        _detect_instruments(job_id)
+        stem_list = [{"id": n, "name": STEM_NAMES.get(n, n), "file": str(p.relative_to(folder))} for n, p in stems.items()]
+        # La «mezcla» es lo que suena en el navegador si no hay pistas: mejor el fichero
+        # normalizado (FLAC) que un formato que quizá el navegador no sepa reproducir.
+        stem_list.append({"id": "mezcla", "name": STEM_NAMES["mezcla"], "file": audio.name})
+        _update(job_id, status="preparando el reproductor", progress=0.85, message="Midiendo qué suena en cada pista…",
+                separated=bool(stems), stems=stem_list, analysis=analysis, warning=warning)
+        _stem_activity(job_id)
+        if stems:
+            _update(job_id, progress=0.92, message="Empaquetando las pistas para que suenen sincronizadas…")
+            _build_multitrack(job_id)
         _update(job_id, status="listo", progress=1.0, message="")
+        # El reconocimiento de instrumentos es un extra lento: va después y en otra cola.
+        _start_tagging(job_id)
     except Exception as e:  # se guarda el error para mostrarlo en la interfaz
         _update(job_id, status="error", message=str(e)[:1000])
+
+
+# ---------------------------------------------------------------------------
+# Fichero multipista (todas las pistas en un solo audio multicanal)
+# ---------------------------------------------------------------------------
+
+_mt_lock = threading.Lock()
+
+
+def _build_multitrack(job_id: str) -> dict:
+    from app.infrastructure import audio_io
+    meta = load(job_id)
+    folder = ROOT / job_id
+    tracks = [st for st in meta["stems"] if st["id"] != "mezcla"]
+    if not tracks:
+        raise ValueError("Esta canción no tiene pistas separadas")
+    info = audio_io.write_multitrack([folder / st["file"] for st in tracks], folder / "multipista.ogg")
+    layout = [{"id": st["id"], "channels": [2 * k, 2 * k + 1]} for k, st in enumerate(tracks)]
+    return _update(job_id, multitrack={"file": "multipista.ogg", "channels": info["channels"], "layout": layout})
+
+
+def multitrack_path(job_id: str) -> Path:
+    """Ruta del multipista; se crea la primera vez para canciones separadas con versiones antiguas."""
+    meta = load(job_id)
+    if not meta.get("separated"):
+        raise KeyError("Esta canción no tiene pistas separadas")
+    with _mt_lock:
+        meta = load(job_id)
+        path = ROOT / job_id / (meta.get("multitrack") or {}).get("file", "multipista.ogg")
+        if not meta.get("multitrack") or not path.exists():
+            _build_multitrack(job_id)
+            path = ROOT / job_id / "multipista.ogg"
+    return path
 
 
 def _attach_roman(analysis: dict) -> None:
@@ -276,60 +376,76 @@ def arrangement(job_id: str, style: str = "basico") -> list[dict]:
 # Instrumentos
 # ---------------------------------------------------------------------------
 
-def _detect_instruments(job_id: str) -> dict:
-    """Marca qué pistas tienen contenido y, si el clasificador está instalado, qué instrumentos suenan.
-
-    Las pistas vacías se ocultan en el mezclador y las demás se renombran por su
-    contenido real («Otros» → «Cuerdas frotadas: violín, chelo»).
-    """
+def _stem_activity(job_id: str) -> dict:
+    """Marca qué pistas tienen contenido (rápido, sin modelos): las vacías se ocultan en el mezclador."""
     import librosa
 
-    from app.domain.instruments import stem_label, summarize
-    from app.infrastructure import audio_analysis, instrument_tagger
+    from app.domain.instruments import song_instruments, stem_label
+    from app.infrastructure import audio_analysis
     meta = load(job_id)
     folder = ROOT / job_id
-    mix = folder / meta["stems"][-1]["file"]
+    mix = folder / next(st["file"] for st in meta["stems"] if st["id"] == "mezcla")
     y = audio_analysis.load_mono([str(mix)])
     ref = float(librosa.feature.rms(y=y, hop_length=2048)[0].max()) if len(y) else 1.0
-    tagger = instrument_tagger.available()
-    song_windows: list[dict] = []
+    results = {}
     for st in meta["stems"]:
-        path = folder / st["file"]
-        act = audio_analysis.stem_activity(str(path), ref_peak=ref)
-        st["activity"] = act
-        st["active"] = act["has_content"] or st["id"] == "mezcla"
-        st["instruments"] = []
-        if tagger and st["active"]:
-            try:
-                windows = instrument_tagger.tag_windows(str(path))
-                st["instruments"] = summarize(windows)
-                if st["id"] == "mezcla":
-                    song_windows = windows
-            except Exception as e:  # el modelo puede no estar descargado o fallar: no bloquea el resto
-                meta["instruments_error"] = str(e)[:300]
-                tagger = False
-        st["name"] = stem_label(st["id"], st["instruments"])
-    results = {st["id"]: {k: st[k] for k in ("activity", "active", "instruments", "name")} for st in meta["stems"]}
-    error = meta.get("instruments_error")
+        act = audio_analysis.stem_activity(str(folder / st["file"]), ref_peak=ref)
+        active = act["has_content"] or st["id"] == "mezcla"
+        results[st["id"]] = {"activity": act, "active": active, "name": stem_label(st["id"], st.get("instruments") or [])}
 
-    # El análisis ha tardado: se aplican solo sus campos sobre la versión actual del
-    # fichero, para no pisar lo que el usuario haya cambiado mientras tanto.
     def apply(current: dict) -> None:
         for st in current["stems"]:
             st.update(results.get(st["id"], {}))
         # Pistas con contenido primero; la mezcla original al final.
         current["stems"].sort(key=lambda st: (st["id"] == "mezcla", not st.get("active", True)))
-        current["instruments"] = summarize(song_windows) if song_windows else []
-        current["instruments_method"] = "AST (AudioSet)" if tagger else "actividad de las pistas"
-        if error:
-            current["instruments_error"] = error
+        current.setdefault("instruments_method", "actividad de las pistas")
+        if len(current["stems"]) > 1 and not current.get("instruments"):
+            current["instruments"] = song_instruments(current["stems"])
     return _mutate(job_id, apply)
+
+
+def _tag_instruments(job_id: str) -> dict:
+    """Reconoce los instrumentos de cada pista con el clasificador (lento; en proceso aparte)."""
+    from app.domain.instruments import song_instruments, stem_label, summarize
+    from app.infrastructure import instrument_tagger
+    if not instrument_tagger.available():
+        return _update(job_id, instruments_status="no disponible")
+    meta = _update(job_id, instruments_status="analizando", instruments_error=None)
+    folder = ROOT / job_id
+    paths = {st["id"]: str(folder / st["file"]) for st in meta["stems"] if st.get("active", True)}
+    try:
+        tagged = instrument_tagger.tag_many(list(paths.values()))
+    except Exception as e:  # modelo sin descargar, sin red, tiempo agotado…: la canción sigue siendo usable
+        return _update(job_id, instruments_status="error", instruments_error=str(e)[:300])
+    windows = {sid: tagged.get(p, []) for sid, p in paths.items()}
+
+    # El análisis ha tardado: se aplican solo sus campos sobre la versión actual del
+    # fichero, para no pisar lo que el usuario haya cambiado mientras tanto.
+    def apply(current: dict) -> None:
+        for st in current["stems"]:
+            if st["id"] in windows:
+                st["instruments"] = summarize(windows[st["id"]])
+                st["name"] = stem_label(st["id"], st["instruments"])
+        current["instruments"] = song_instruments(current["stems"]) if current.get("separated", True) else summarize(windows.get("mezcla", []))
+        current["instruments_method"] = "AST (AudioSet)"
+        current["instruments_status"] = "listo"
+    return _mutate(job_id, apply)
+
+
+def _start_tagging(job_id: str) -> None:
+    _aux_pool.submit(_tag_instruments, job_id)
+
+
+def _detect_instruments(job_id: str) -> dict:
+    """Actividad de las pistas + instrumentos, de una vez (botón ↻ y tests)."""
+    _stem_activity(job_id)
+    return _tag_instruments(job_id)
 
 
 def detect_instruments(job_id: str) -> dict:
     """Vuelve a analizar los instrumentos de una canción ya procesada (en segundo plano)."""
-    meta = load(job_id)
-    _pool.submit(_detect_instruments, job_id)
+    meta = _update(job_id, instruments_status="analizando", instruments_error=None)
+    _aux_pool.submit(_detect_instruments, job_id)
     return meta
 
 

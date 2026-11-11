@@ -129,6 +129,14 @@ def analyze(harmonic_paths: list[str], bass_path: str | None = None) -> dict:
         # Sin pulso claro (música rubato): segmentos fijos de medio segundo.
         step = max(1, int(0.5 * SR / HOP))
         beats = np.arange(0, n_frames, step)
+    else:
+        # El detector de pulso no marca nada antes del primer golpe ni después del último:
+        # esos extremos quedarían como un único tramo larguísimo (intro, final que se apaga)
+        # con un solo acorde. Se prolonga la rejilla con el mismo periodo hasta los bordes.
+        period = max(1, int(round(float(np.median(np.diff(beats))))))
+        before = np.arange(beats[0] - period, 0, -period)[::-1]
+        after = np.arange(beats[-1] + period, n_frames, period)
+        beats = np.concatenate([before, beats, after]).astype(int)
     bounds = np.unique(np.concatenate([[0], beats, [n_frames]])).astype(int)
     # Media (no mediana) por pulso: en un arpegio cada nota suena solo parte del pulso
     # y la mediana la descartaría.
@@ -156,6 +164,17 @@ def analyze(harmonic_paths: list[str], bass_path: str | None = None) -> dict:
     key_tonic, key_mode = estimate_key(chroma.mean(axis=1))
     sims = _similarities(seg_chroma, bass, _key_pcs(key_tonic, key_mode), npc if notes_used else None)
     labels = _viterbi(sims)
+    # Silencios y tramos sin armonía (intro en blanco, solo de batería, voz a capela): el
+    # cromagrama está normalizado y siempre «ve» algún acorde aunque solo haya ruido de
+    # fondo. Se mide el volumen real de la parte armónica en cada pulso y, si está más de
+    # 40 dB por debajo de lo normal en la canción, no hay acorde (N).
+    rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=HOP)[0]
+    # Mediana y no media: si el tramo acaba justo donde entra el primer acorde, ese ataque
+    # dispararía la media aunque casi todo el tramo sea silencio.
+    seg_rms = np.array([np.median(rms[a:b]) if b > a else rms[min(a, len(rms) - 1)] for a, b in zip(bounds[:-1], bounds[1:])])
+    ref = float(np.percentile(rms, 95)) if len(rms) else 0.0
+    silent = 20 * np.log10(seg_rms / (ref + 1e-12) + 1e-9) < -40 if ref > 0 else np.ones(len(seg_rms), bool)
+    labels = [-1 if silent[k] else int(lab) for k, lab in enumerate(labels)]
 
     segments = []
     i = 0
@@ -163,6 +182,11 @@ def analyze(harmonic_paths: list[str], bass_path: str | None = None) -> dict:
         j = i
         while j + 1 < len(labels) and labels[j + 1] == labels[i]:
             j += 1
+        if labels[i] < 0:
+            segments.append({"start": float(times[i]), "end": float(times[j + 1]), "symbol": "N", "pcs": [],
+                             "confidence": 1.0, "edited": False, "alternatives": []})
+            i = j + 1
+            continue
         t = TEMPLATES[labels[i]]
         energy = float(seg_chroma[:, i:j + 1].sum())
         block = sims[:, i:j + 1].mean(axis=1)
@@ -266,7 +290,14 @@ def _merge_short(segments: list[dict], min_len: float) -> list[dict]:
     """Funde segmentos más cortos que un pulso con el vecino: suelen ser notas de paso."""
     out: list[dict] = []
     for s in segments:
-        if out and (s["end"] - s["start"] < min_len) and s["symbol"] != "N":
+        short = s["end"] - s["start"] < min_len
+        # Un acorde corto se funde con el acorde anterior, pero no con un silencio: tras
+        # una pausa, ese «acorde corto» es la entrada del siguiente.
+        if out and short and s["symbol"] != "N" and out[-1]["symbol"] != "N":
+            out[-1]["end"] = s["end"]
+            continue
+        # Un respiro de menos de dos pulsos entre acordes no merece una casilla propia.
+        if out and s["symbol"] == "N" and s["end"] - s["start"] < 2 * min_len and out[-1]["symbol"] != "N":
             out[-1]["end"] = s["end"]
             continue
         if out and out[-1]["symbol"] == s["symbol"]:

@@ -74,6 +74,17 @@ def audio(job_id: str, stem_id: str):
     return FileResponse(_wrap(svc.stem_path, job_id, stem_id))
 
 
+@router.get("/{job_id}/multitrack")
+def multitrack(job_id: str):
+    """Todas las pistas en un único audio multicanal (se reproduce con un solo reloj)."""
+    return FileResponse(_wrap(svc.multitrack_path, job_id), media_type="audio/ogg")
+
+
+@router.post("/{job_id}/retry")
+def retry(job_id: str):
+    return _wrap(svc.retry, job_id)
+
+
 @router.put("/{job_id}/segments/{index}")
 def correct(job_id: str, index: int, body: Correction):
     return _wrap(svc.correct_segment, job_id, index, body.symbol, body.notes)

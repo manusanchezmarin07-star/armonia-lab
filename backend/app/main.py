@@ -27,7 +27,10 @@ try:  # Pistas: requiere librosa (requirements-pistas.txt). Sin ella la app arra
     import librosa  # noqa: F401
 
     from app.api.routers import stems
+    from app.application import stems_service
     app.include_router(stems.router)
+    # Canciones que se quedaron a medias al cerrar la app: se marcan para reintentar.
+    stems_service.recover_interrupted()
 except ImportError:
     pass
 
