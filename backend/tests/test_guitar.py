@@ -85,3 +85,12 @@ def test_capo_shapes_sound_as_the_real_chord():
     assert sh["shape_of"] == "G" and sh["diagram"] == "320003"
     assert {n["midi"] % 12 for n in sh["notes"]} == {10, 2, 5}  # Si♭, Re, Fa
     assert chord_shapes("A", capo=2)[0]["shape_of"] == "G"
+
+
+def test_piano_voicing_becomes_a_natural_guitar_shape():
+    """Un Cmaj7 cerrado de piano (Do4 Mi4 Sol4 Si4) se enseña como x32000, no en el traste 8."""
+    from app.domain.guitar import voicing_for_notes
+    assert voicing_for_notes([60, 64, 67, 71])["diagram"] == "x32000"
+    assert voicing_for_notes([36, 64, 67, 72])["diagram"] == "x32010"       # Do con el bajo muy grave
+    assert voicing_for_notes([40, 60, 64, 67])["symbol"].startswith("C")    # 1ª inversión: sigue siendo Do
+    assert voicing_for_notes([60, 62]) is None and voicing_for_notes([]) is None

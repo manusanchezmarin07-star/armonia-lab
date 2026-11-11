@@ -123,3 +123,9 @@ def test_guitar_capo(chords):
 def test_flamenco(palo, tono, style, capo):
     ok(client.get("/api/flamenco"))
     ok(client.get("/api/flamenco/compas", params={"palo": palo, "tono": tono, "style": style, "capo": capo}))
+
+
+@SETTINGS
+@given(notes)
+def test_guitar_voicing(ns):
+    ok(client.post("/api/guitar/voicing", json={"notes": ns[:24]}))

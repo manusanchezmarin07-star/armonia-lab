@@ -247,3 +247,32 @@ test('guitarra flamenca: compás con golpes, tablatura y bulería contando desde
   await page.getByRole('button', { name: 'Parar' }).first().click()
   expect(errors).toEqual([])
 })
+
+test('laboratorio en guitarra: se monta un acorde con el ratón y lo reconoce', async ({ page }) => {
+  const errors = watchErrors(page)
+  await asGuitar(page)
+  await open(page, '/laboratorio')
+  // Casillas del mástil: por cuerda (1ª arriba), la cuerda al aire y luego cada traste visible.
+  const perString = await page.locator('svg.fretboard rect[fill="transparent"]').count() / 6
+  const cell = (string: number, fret: number) => page.locator('svg.fretboard rect[fill="transparent"]').nth((string - 1) * perString + fret)
+  // Do mayor de manual: x32010
+  for (const [s, f] of [[5, 3], [4, 2], [3, 0], [2, 1], [1, 0]]) await cell(s, f).dispatchEvent('pointerdown')
+  await expect(page.locator('.chord-big').first()).toHaveText('C')
+  await expect(page.locator('[data-tour="lab-chord"] svg.chord-diagram')).toBeVisible() // «así se toca», junto al nombre
+  // Otra casilla en la misma cuerda la sustituye (una nota por cuerda): 2ª al aire = Si → Cmaj7.
+  await cell(2, 0).dispatchEvent('pointerdown')
+  await expect(page.locator('.chord-big').first()).toHaveText('Cmaj7')
+  await page.getByRole('button', { name: 'Soltar todo' }).click()
+  expect(errors).toEqual([])
+})
+
+test('en guitarra los acordes se dibujan con su posición de guitarra y caben en columnas estrechas', async ({ page }) => {
+  await asGuitar(page)
+  await open(page, '/analizador')
+  await page.getByRole('button', { name: 'Analizar' }).click()
+  const fb = page.locator('svg.fretboard').first()
+  await expect(fb.locator('text', { hasText: '×' }).first()).toBeVisible() // cuerda apagada: es una posición, no notas sueltas
+  // El mástil no se sale de su tarjeta (antes tenía un ancho mínimo y se cortaba).
+  const fits = await fb.evaluate((el) => el.getBoundingClientRect().right <= el.closest('.card')!.getBoundingClientRect().right + 1)
+  expect(fits).toBe(true)
+})

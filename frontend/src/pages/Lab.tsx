@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import Keys from '../components/Keys'
 import type { Mark } from '../components/Piano'
 import Staff from '../components/Staff'
+import GuitarPad from '../components/GuitarPad'
 import HowToPlay from '../components/HowToPlay'
+import MiniShape from '../components/MiniShape'
 import RecorderCard from '../components/RecorderCard'
 import KeySelect from '../components/KeySelect'
 import { IconPlay } from '../components/Icons'
@@ -29,7 +31,9 @@ export default function Lab() {
   const [scales, setScales] = useState<ChordScale[]>([])
   const [tutor, setTutor] = useState<string | null>(null)
 
-  const notes = pressed.size ? [...pressed].sort((a, b) => a - b) : lastChord
+  // En guitarra, el acorde montado con el ratón en el mástil (ver GuitarPad).
+  const [fretted, setFretted] = useState<number[]>([])
+  const notes = pressed.size ? [...pressed].sort((a, b) => a - b) : isGuitar && fretted.length ? [...fretted].sort((a, b) => a - b) : lastChord
 
   useEffect(() => {
     if (notes.length < 2) { setResult(null); return }
@@ -71,7 +75,7 @@ export default function Lab() {
           <div className="eyebrow">Laboratorio</div>
           <h1>Toca y entiende cada acorde</h1>
           <p className="lead">{isGuitar
-            ? 'Toca en el mástil de abajo (cada casilla suena), en tu teclado MIDI o con el teclado del ordenador.'
+            ? 'Monta un acorde en el mástil haciendo clic en sus casillas, o tócalo en tu teclado MIDI.'
             : 'Toca en tu piano o en el Alesis, con el ratón o con el teclado del ordenador.'} Te digo qué acorde es,
             qué función tiene en la tonalidad y cómo conecta con el siguiente.</p>
         </div>
@@ -93,7 +97,9 @@ export default function Lab() {
           <div className="spacer" />
           <span className="small muted">{notes.map(midiName).join(' · ') || 'Sin notas'}</span>
         </div>
-        <Keys from={36} to={96} pressed={pressed} marks={marks} onDown={press} onUp={release} height={170} showNames />
+        {isGuitar
+          ? <GuitarPad pressed={pressed} onNotes={setFretted} />
+          : <Keys from={36} to={96} pressed={pressed} marks={marks} onDown={press} onUp={release} height={170} showNames />}
       </div>
 
       <div className="grid grid-side mt">
@@ -101,7 +107,11 @@ export default function Lab() {
           <div className="row" style={{ alignItems: 'flex-start', gap: 26 }}>
             <div style={{ flex: 1, minWidth: 260 }}>
               <h3>Acorde</h3>
-              <div className={`chord-big ${best ? '' : 'empty'}`}>{best?.symbol ?? '—'}</div>
+              <div className="row" style={{ alignItems: 'center', gap: 18 }}>
+                <div className={`chord-big ${best ? '' : 'empty'}`}>{best?.symbol ?? '—'}</div>
+                {/* En guitarra, al lado del nombre va la posición con que se suele tocar ese acorde. */}
+                {isGuitar && best && <MiniShape symbol={best.symbol} size={0.85} onClick={() => setTutor(best.symbol)} />}
+              </div>
               {best && (
                 <div className="stack fade-in" style={{ marginTop: 14 }}>
                   <div className="row">

@@ -7,6 +7,7 @@ import { IconPlay } from '../components/Icons'
 import { api, type NegativeResult } from '../lib/api'
 import { playChord, playSequence } from '../lib/audio'
 import { fnColor } from '../lib/music'
+import { useInstrument } from '../lib/instrument'
 
 const EXAMPLES = [
   { label: 'ii – V – I', text: 'Dm7 G7 Cmaj7', key: 'C' },
@@ -21,6 +22,7 @@ export default function Negative() {
   const [data, setData] = useState<NegativeResult | null>(null)
   const [sel, setSel] = useState(0)
   const [err, setErr] = useState<string | null>(null)
+  const { isGuitar } = useInstrument()
 
   const run = (t = text, k = key) => {
     setErr(null)
@@ -99,7 +101,17 @@ export default function Negative() {
               </div>
             </div>
             <div className="card">
-              <Keys from={36} to={84} marks={marks} height={140} showNames />
+              {isGuitar ? (
+                // En guitarra, dos mástiles: mezclados en uno, original y reflejo no se distinguen.
+                <div className="grid grid-2">
+                  {([['target', pair.original, pair.original_voicing], ['neg', pair.negative, pair.negative_voicing]] as const).map(([mark, name, v]) => (
+                    <div key={mark} style={{ minWidth: 0 }}>
+                      <div className="small text-2" style={{ marginBottom: 4 }}>{name}</div>
+                      <Keys marks={Object.fromEntries([v.bass, ...v.upper].map((m) => [m, mark]))} height={150} />
+                    </div>
+                  ))}
+                </div>
+              ) : <Keys from={36} to={84} marks={marks} height={140} showNames />}
               <div className="row small text-2" style={{ marginTop: 10, gap: 16 }}>
                 <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: 'var(--accent)' }} /> {pair.original}</span>
                 <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: 'var(--violet)' }} /> {pair.negative} (reflejo exacto, en espejo)</span>
