@@ -119,6 +119,13 @@ def chord_hands(symbol: str, style: str = "basico", inversion: int = 0):
     return _safe(two_hands, symbol, style, inversion)
 
 
+@router.get("/chords/catalog")
+def chord_catalog(root: str = "C"):
+    """Diccionario de acordes sobre una fundamental: notas, fórmula, piano y guitarra."""
+    from app.domain.chord_catalog import catalog
+    return _safe(catalog, root)
+
+
 @router.get("/chords/hand-styles")
 def hand_styles():
     from app.domain.hands import INVERSIONS, STYLES

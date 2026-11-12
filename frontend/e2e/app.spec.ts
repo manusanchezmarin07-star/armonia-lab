@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 const PAGES = ['/', '/laboratorio', '/puentes', '/rearmonizar', '/escalas', '/negativa', '/analizador', '/ritmo', '/oido',
-  '/lectura', '/pistas', '/bach', '/biblioteca', '/asistente', '/flamenco']
+  '/lectura', '/pistas', '/bach', '/biblioteca', '/asistente', '/flamenco', '/acordes']
 
 /** Falla el test si la página escribe errores en consola o lanza excepciones. */
 function watchErrors(page: Page) {
@@ -275,4 +275,33 @@ test('en guitarra los acordes se dibujan con su posición de guitarra y caben en
   // El mástil no se sale de su tarjeta (antes tenía un ancho mínimo y se cortaba).
   const fits = await fb.evaluate((el) => el.getBoundingClientRect().right <= el.closest('.card')!.getBoundingClientRect().right + 1)
   expect(fits).toBe(true)
+})
+
+test('diccionario de acordes: todos los tipos, búsqueda y tutor en piano y en guitarra', async ({ page }) => {
+  const errors = watchErrors(page)
+  await open(page, '/acordes')
+  await expect(page.locator('.dict-card').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('article', { name: 'C', exact: true })).toBeVisible()
+  // Otra fundamental y todos los niveles: 63 tipos de acorde.
+  await page.getByRole('radio', { name: 'F#' }).click()
+  await page.getByRole('radio', { name: 'Todos' }).click()
+  await expect(page.locator('.dict-card')).toHaveCount(63, { timeout: 20_000 })
+  await expect(page.getByRole('article', { name: 'F#m7b5', exact: true })).toBeVisible()
+  // Buscar por cifrado cambia de fundamental y filtra.
+  await page.getByLabel('Buscar acorde').fill('Bb13')
+  const card = page.getByRole('article', { name: 'Bb13', exact: true })
+  await expect(card).toBeVisible({ timeout: 20_000 })
+  await expect(card.locator('svg.chord-diagram')).toBeVisible()
+  await expect(card.locator('svg.piano')).toBeVisible()
+  // El tutor se abre en el instrumento pedido, sea cual sea el modo actual.
+  await card.getByRole('button', { name: /En guitarra/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Cómo tocar Bb13 en guitarra' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await card.getByRole('button', { name: /Enséñame en piano/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Cómo tocar Bb13', exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  // Búsqueda por nombre (en minúsculas no cambia de fundamental).
+  await page.getByLabel('Buscar acorde').fill('semidisminuido')
+  await expect(page.getByRole('article', { name: 'Bbm7b5', exact: true })).toBeVisible()
+  expect(errors).toEqual([])
 })
