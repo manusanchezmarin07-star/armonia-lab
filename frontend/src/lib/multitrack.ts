@@ -31,12 +31,18 @@ export class SongPlayer implements Engine {
    * @param total   canales del fichero (el separador necesita una salida por canal)
    */
   constructor(url: string, private layout: TrackLayout[], private total: number) {
-    this.audio = new Audio(url)
+    this.audio = new Audio()
     this.audio.preload = 'auto'
     this.audio.preservesPitch = true // ralentizar sin cambiar el tono
+    // El elemento se conecta a Web Audio ANTES de darle el audio. Si se carga primero, el
+    // navegador prepara la salida directa a la tarjeta de sonido con los 12 canales del
+    // multipista, y en un equipo real (tarjeta estéreo) esa preparación puede fallar y dejar
+    // la canción sin cargar. Conectado de antemano, el audio solo pasa por nuestro mezclador.
+    try { this.graph() } catch { /* sin Web Audio todavía: se montará al pulsar Reproducir */ }
+    this.audio.src = url
   }
 
-  /** El grafo se monta en el primer Play: un AudioContext creado sin gesto del usuario nace suspendido. */
+  /** Reparte los canales del fichero a un volumen y un medidor por pista. El contexto nace suspendido (aún no hay gesto del usuario) y se reanuda en play(). */
   private graph() {
     if (this.ctx) return
     const ctx = new AudioContext()
