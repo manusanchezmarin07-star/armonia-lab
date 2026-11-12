@@ -1,17 +1,26 @@
-/* Sistema de diseño: tonos de club de jazz nocturno. Ámbar = lo que tocas,
-   turquesa = notas que se mantienen, coral = tensión / notas que se mueven. */
+/* Sistema de diseño «taller de guitarras de noche»:
+   - fondo oscuro cálido (madera y carbón), no azulado;
+   - AÑIL de azulejo (--brand) para la interfaz: botones, menú, enlaces, foco;
+   - ALBERO (--accent) solo para la música: lo que tocas y lo que suena ahora;
+   - turquesa = notas que se mantienen, coral = tensión / notas que se mueven.
+   Separar marca y música evita que un botón y una nota pulsada parezcan lo mismo. */
 :root {
-  --bg: #0d0e13;
-  --bg-2: #12141b;
-  --surface: #171a23;
-  --surface-2: #1e2230;
-  --line: #2a2f3f;
-  --line-soft: #222634;
-  --text: #f1ece3;
-  --text-2: #b9b4ab;
-  --muted: #7d7a74;
+  --bg: #0f0d0b;
+  --bg-2: #161310;
+  --surface: #1d1915;
+  --surface-2: #29231d;
+  --line: #40372e;
+  --line-soft: #2c2620;
+  --text: #f6f0e6;
+  --text-2: #c7bcad;
+  --muted: #8f8375;
+  --brand: #3d6df2;
+  --brand-hi: #8eadff;      /* añil aclarado: texto y trazos sobre fondo oscuro */
+  --brand-deep: #2346b8;    /* canto inferior de los botones, como el de una tecla */
+  --brand-soft: rgba(61, 109, 242, 0.18);
   --accent: #e8b04b;
-  --accent-soft: rgba(232, 176, 75, 0.14);
+  --accent-rgb: 232, 176, 75;
+  --accent-soft: rgba(var(--accent-rgb), 0.14);
   --teal: #4fd1c5;
   --teal-soft: rgba(79, 209, 197, 0.14);
   --coral: #ff7a6b;
@@ -21,11 +30,13 @@
   --fn-t: #4fd1c5;
   --fn-s: #e8b04b;
   --fn-d: #ff7a6b;
-  --radius: 14px;
-  --radius-sm: 9px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --font: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --serif: 'Fraunces', Georgia, serif;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  --font: 'Instrument Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Tipografía de títulos y cifrados. Se sigue llamando --serif por compatibilidad con
+     los estilos existentes, pero ya no es una serifa: es una grotesca con carácter. */
+  --serif: 'Bricolage Grotesque Variable', 'Instrument Sans Variable', system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -33,8 +44,8 @@
 html, body, #root { height: 100%; }
 body {
   margin: 0;
-  background: radial-gradient(1200px 600px at 80% -10%, rgba(232, 176, 75, 0.06), transparent 60%),
-              radial-gradient(900px 500px at -10% 110%, rgba(79, 209, 197, 0.05), transparent 60%), var(--bg);
+  background: radial-gradient(1100px 620px at 85% -15%, rgba(61, 109, 242, 0.13), transparent 62%),
+              radial-gradient(900px 520px at -12% 112%, rgba(var(--accent-rgb), 0.07), transparent 60%), var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;
@@ -93,7 +104,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
   display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; cursor: pointer;
   border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font-weight: 500; transition: all 0.15s;
 }
-.btn:hover { border-color: #3a4054; background: #252a3a; }
+.btn:hover { border-color: var(--muted); background: #332b24; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #1a1408; font-weight: 600; }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.ghost { background: transparent; }
@@ -116,7 +127,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 /* ---------- Chips y etiquetas ---------- */
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-size: 12px;
   border: 1px solid var(--line); color: var(--text-2); background: var(--bg-2); }
-.pill.accent { color: var(--accent); border-color: rgba(232,176,75,0.35); background: var(--accent-soft); }
+.pill.accent { color: var(--accent); border-color: rgba(var(--accent-rgb), 0.35); background: var(--accent-soft); }
 .pill.teal { color: var(--teal); border-color: rgba(79,209,197,0.35); background: var(--teal-soft); }
 .pill.coral { color: var(--coral); border-color: rgba(255,122,107,0.35); background: var(--coral-soft); }
 .pill.violet { color: var(--violet); border-color: rgba(167,139,250,0.35); background: var(--violet-soft); }
@@ -135,8 +146,8 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .seq { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
 .seq-item { min-width: 92px; padding: 12px 14px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line);
   cursor: pointer; transition: all 0.15s; position: relative; }
-.seq-item:hover { border-color: #3a4054; }
-.seq-item.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px rgba(232,176,75,0.08); }
+.seq-item:hover { border-color: var(--muted); }
+.seq-item.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.08); }
 .seq-item .sym { font-family: var(--serif); font-size: 22px; font-weight: 600; }
 .seq-item .rn { font-size: 13px; color: var(--text-2); margin-top: 2px; }
 .seq-item .fn { position: absolute; top: 0; left: 12px; right: 12px; height: 3px; border-radius: 0 0 3px 3px; }
@@ -187,7 +198,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .stat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 .mode-card { cursor: pointer; padding: 14px 16px; transition: border-color 0.15s, background 0.15s; }
 .mode-card:hover { border-color: var(--line); }
-.mode-card.on { border-color: rgba(232, 176, 75, 0.5); background: linear-gradient(180deg, var(--accent-soft), transparent 140%); }
+.mode-card.on { border-color: rgba(var(--accent-rgb), 0.5); background: linear-gradient(180deg, var(--accent-soft), transparent 140%); }
 .ear-stage { display: flex; flex-direction: column; gap: 16px; min-height: 260px; }
 .answers { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .answer { position: relative; padding: 14px 12px 14px 34px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg-2);
@@ -214,7 +225,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .practice-bar .beats { display: flex; gap: 5px; }
 .practice-bar .beats span { width: 10px; height: 10px; border-radius: 50%; background: var(--line); transition: background 0.05s; }
 .practice-bar .beats span:first-child { width: 12px; height: 12px; }
-.practice-bar .beats span.on { background: var(--accent); box-shadow: 0 0 10px rgba(232, 176, 75, 0.6); }
+.practice-bar .beats span.on { background: var(--accent); box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.6); }
 
 /* ---------- Barra superior (móvil/tablet) y cajón ---------- */
 .topbar { display: none; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line-soft);
@@ -227,8 +238,8 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .hero-title { font-size: 52px; line-height: 1.04; background: linear-gradient(100deg, var(--text) 30%, var(--accent));
   -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 4px; }
 .tip-card { display: block; color: inherit; transition: border-color 0.15s, transform 0.15s;
-  background: linear-gradient(160deg, rgba(232, 176, 75, 0.1), var(--surface) 60%); }
-.tip-card:hover { border-color: rgba(232, 176, 75, 0.45); transform: translateY(-2px); }
+  background: linear-gradient(160deg, rgba(var(--accent-rgb), 0.1), var(--surface) 60%); }
+.tip-card:hover { border-color: rgba(var(--accent-rgb), 0.45); transform: translateY(-2px); }
 .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .module-card { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: var(--radius); color: inherit;
   background: var(--surface); border: 1px solid var(--line-soft); transition: all 0.15s; }
@@ -265,7 +276,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 
 /* Aviso de audio en pausa (política de autoplay del navegador) */
 .audio-banner { position: sticky; top: 0; z-index: 25; display: flex; gap: 12px; align-items: center; width: 100%; text-align: left;
-  padding: 11px 40px; border: 0; border-bottom: 1px solid rgba(232, 176, 75, 0.35); background: #2a2216; color: var(--text);
+  padding: 11px 40px; border: 0; border-bottom: 1px solid rgba(var(--accent-rgb), 0.35); background: #241d12; color: var(--text);
   cursor: pointer; font-size: 14px; }
 .audio-banner:hover { background: #33291a; }
 .audio-banner.urgent { background: #3a1f1b; border-bottom-color: rgba(255, 122, 107, 0.5); animation: pulse 1.6s ease-in-out infinite; }
@@ -306,16 +317,16 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 
 /* ---------- Tour guiado ---------- */
 .tour-layer { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
-.tour-spot { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(5, 6, 9, 0.68), 0 0 0 2px var(--accent), 0 0 30px rgba(232, 176, 75, 0.35);
+.tour-spot { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(5, 6, 9, 0.68), 0 0 0 2px var(--accent), 0 0 30px rgba(var(--accent-rgb), 0.35);
   transition: all 0.3s ease; }
 .tour-dim { position: fixed; inset: 0; background: rgba(5, 6, 9, 0.68); }
-.tour-card { position: fixed; pointer-events: auto; background: var(--surface); border: 1px solid rgba(232, 176, 75, 0.5); border-radius: 14px;
+.tour-card { position: fixed; pointer-events: auto; background: var(--surface); border: 1px solid rgba(var(--accent-rgb), 0.5); border-radius: 14px;
   padding: 14px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 9px; animation: fade 0.25s ease both;
   transition: top 0.3s ease, left 0.3s ease; }
 .tour-card::before { content: ''; position: absolute; width: 14px; height: 14px; background: var(--surface); transform: rotate(45deg); display: none; }
-.tour-card.arrow-up::before { display: block; top: -8px; left: calc(var(--ax) - 7px); border-left: 1px solid rgba(232,176,75,0.5); border-top: 1px solid rgba(232,176,75,0.5); }
-.tour-card.arrow-down::before { display: block; bottom: -8px; left: calc(var(--ax) - 7px); border-right: 1px solid rgba(232,176,75,0.5); border-bottom: 1px solid rgba(232,176,75,0.5); }
-.tour-card.arrow-left::before { display: block; left: -8px; top: 26px; border-left: 1px solid rgba(232,176,75,0.5); border-bottom: 1px solid rgba(232,176,75,0.5); }
+.tour-card.arrow-up::before { display: block; top: -8px; left: calc(var(--ax) - 7px); border-left: 1px solid rgba(var(--accent-rgb), 0.5); border-top: 1px solid rgba(var(--accent-rgb), 0.5); }
+.tour-card.arrow-down::before { display: block; bottom: -8px; left: calc(var(--ax) - 7px); border-right: 1px solid rgba(var(--accent-rgb), 0.5); border-bottom: 1px solid rgba(var(--accent-rgb), 0.5); }
+.tour-card.arrow-left::before { display: block; left: -8px; top: 26px; border-left: 1px solid rgba(var(--accent-rgb), 0.5); border-bottom: 1px solid rgba(var(--accent-rgb), 0.5); }
 .tour-title { font-family: var(--serif); font-size: 21px; font-weight: 600; }
 .tour-progress { height: 3px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .tour-progress span { display: block; height: 100%; background: var(--accent); transition: width 0.3s; }
@@ -342,7 +353,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
 .sheet-row.instrumental { align-items: center; gap: 8px; padding: 10px; }
 .sheet-words { display: flex; flex-wrap: wrap; column-gap: 0.35em; row-gap: 6px; flex: 1; }
 .sheet-word { display: inline-flex; flex-direction: column; cursor: pointer; border-radius: 4px; }
-.sheet-word.now { color: var(--accent); text-shadow: 0 0 12px rgba(232, 176, 75, 0.4); }
+.sheet-word.now { color: var(--accent); text-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4); }
 .sheet-chord-slot { height: 1.25em; font-size: 0.82em; }
 .sheet-chord { font: inherit; font-family: var(--serif); font-weight: 700; color: var(--teal); background: none; border: 0; padding: 0;
   cursor: pointer; white-space: nowrap; }
@@ -481,3 +492,115 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
 .dict-views { display: flex; gap: 10px; align-items: center; }
 .dict-piano { flex: 1; min-width: 0; }
 @media (max-width: 420px) { .dict-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================================
+   Identidad: marca en añil, tipografía grotesca, botones con relieve de tecla.
+   Va al final para imponerse a las reglas anteriores sin reescribirlas una a una.
+   ============================================================================ */
+a { color: var(--brand-hi); }
+::selection { background: var(--brand-soft); }
+:focus-visible { outline: 2px solid var(--brand-hi); outline-offset: 2px; }
+h1 { font-weight: 800; font-size: 44px; letter-spacing: -0.035em; line-height: 1.02; }
+h2 { font-weight: 700; letter-spacing: -0.02em; }
+/* Rombo de azulejo delante de los rótulos de sección. */
+h3 { color: var(--text-2); letter-spacing: 0.09em; }
+h3::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 9px; background: var(--brand); transform: rotate(45deg) translateY(-1px); }
+.eyebrow { display: inline-block; font-family: var(--serif); font-weight: 700; font-size: 11.5px; letter-spacing: 0.16em; color: var(--brand-hi);
+  background: var(--brand-soft); padding: 4px 10px; border-radius: 4px; margin-bottom: 12px; }
+.chord-big { font-weight: 800; letter-spacing: -0.045em; }
+
+.sidebar { background: #12100d; border-right: 1px solid var(--line-soft); }
+.brand-name { font-weight: 800; letter-spacing: -0.03em; font-size: 22px; }
+.brand-name em { color: var(--accent); font-style: normal; font-weight: 800; }
+.nav-section { font-family: var(--serif); font-weight: 700; letter-spacing: 0.16em; }
+.nav-link { border-radius: 6px; font-weight: 500; }
+.nav-link.active { background: var(--brand-soft); color: #fff; box-shadow: inset 3px 0 0 var(--brand); }
+.nav-link.active svg { color: var(--brand-hi); }
+
+.card { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035); }
+/* Botones como teclas: canto inferior que se hunde al pulsar. */
+.btn { border-radius: 8px; font-weight: 600; box-shadow: 0 2px 0 #0a0807; transition: transform 0.06s, box-shadow 0.06s, background 0.15s, border-color 0.15s, filter 0.15s; }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 #0a0807; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 3px 0 var(--brand-deep); }
+.btn.primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--brand-deep); }
+.btn.ghost { box-shadow: none; }
+.btn.sm { border-radius: 7px; }
+.input, .select, textarea.input { border-radius: 8px; }
+.input:focus, .select:focus { border-color: var(--brand-hi); }
+.range { accent-color: var(--brand); }
+.pill { border-radius: 6px; font-weight: 500; }
+.seg { border-radius: 9px; }
+.seg button { border-radius: 6px; font-weight: 600; }
+.seg button.on { background: var(--brand); color: #fff; box-shadow: none; }
+.list-item.on { background: var(--brand-soft); box-shadow: inset 3px 0 0 var(--brand); }
+.mode-card.on { border-color: var(--brand); background: linear-gradient(180deg, var(--brand-soft), transparent 140%); }
+.answer:hover:not(:disabled) { border-color: var(--brand-hi); }
+.palette-item svg { color: var(--brand-hi); }
+.palette-item.on { background: var(--brand-soft); }
+.module-icon { background: var(--brand-soft); color: var(--brand-hi); }
+.instrument-switch button.on { background: var(--brand); color: #fff; }
+.progress > div { background: var(--brand); }
+.steps-row .on { color: var(--brand-hi); }
+.dict-symbol:hover { color: var(--brand-hi); }
+.root-btn { font-weight: 700; }
+.tour-spot { box-shadow: 0 0 0 9999px rgba(8, 6, 5, 0.72), 0 0 0 2px var(--brand-hi), 0 0 30px rgba(61, 109, 242, 0.45); }
+.tour-card { border-color: var(--brand); }
+.tour-card.arrow-up::before, .tour-card.arrow-down::before, .tour-card.arrow-left::before { border-color: var(--brand); }
+.tour-progress span { background: var(--brand); }
+.tour-help { color: var(--brand-hi); font-weight: 800; }
+.tour-help:hover { border-color: var(--brand-hi); }
+
+/* ---------- Portada: instrumentos flotando y anatomía con las funciones ---------- */
+.app.cover-mode { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.app.cover-mode .sidebar, .app.cover-mode .topbar, .app.cover-mode .tour-help { display: none; }
+.cover { min-height: 100%; display: flex; flex-direction: column; padding: 18px 34px 26px; max-width: 1500px; margin: 0 auto; }
+.cover-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cover-head .brand { padding: 0; }
+.cover-title { text-align: center; margin: 2vh auto 0; max-width: 1000px; }
+.cover-title h1 { font-size: clamp(34px, 5vw, 62px); }
+.cover-title .lead { margin: 10px auto 0; font-size: 16px; }
+.cover-title.compact { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 8px; max-width: none; }
+.cover-title.compact h1 { font-size: clamp(26px, 3.4vw, 40px); }
+.cover-choose { flex: 1; display: flex; justify-content: center; align-items: center; gap: clamp(20px, 8vw, 130px); padding: 1vh 0; }
+.cover-pick { background: none; border: 0; cursor: pointer; display: grid; justify-items: center; gap: 6px; padding: 18px 26px 22px; border-radius: 22px;
+  color: var(--text); transition: background 0.2s, transform 0.25s; }
+.cover-pick:hover, .cover-pick:focus-visible { background: var(--brand-soft); transform: scale(1.04); }
+.cover-art { height: min(44vh, 440px); width: auto; filter: drop-shadow(0 26px 30px rgba(0, 0, 0, 0.55)); animation: flotar 6s ease-in-out infinite; }
+.cover-pick.guitarra .cover-art { animation-delay: -3s; transform-origin: 50% 60%; }
+.cover-pick-name { font-family: var(--serif); font-weight: 800; font-size: 30px; letter-spacing: -0.03em; margin-top: 8px; }
+@keyframes flotar { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-16px) rotate(2.5deg); } }
+
+.anatomy { position: relative; width: min(100%, calc((100vh - 230px) * 1200 / 740)); margin: 6px auto 0; animation: ampliar 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+@keyframes ampliar { from { opacity: 0; transform: scale(0.55); } to { opacity: 1; transform: none; } }
+.anatomy-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.anatomy-art { filter: drop-shadow(0 20px 26px rgba(0, 0, 0, 0.55)); }
+.anatomy-lines polyline { stroke: #5a4d40; stroke-width: 1.4; transition: stroke 0.15s; }
+.anatomy-lines polyline.on { stroke: var(--accent); stroke-width: 2.4; }
+.anatomy-dots circle { fill: var(--brand); stroke: #fff; stroke-width: 2; transition: r 0.15s, fill 0.15s; }
+.anatomy-dots circle.on { fill: var(--accent); }
+.part-label { position: absolute; width: 27%; transform: translateY(-50%); display: grid; gap: 0; padding: 6px 12px; border-radius: 8px; color: var(--text);
+  line-height: 1.2; transition: background 0.15s; }
+.part-label.left { left: 0; text-align: right; }
+.part-label.right { right: 0; text-align: left; }
+.part-label:hover, .part-label.on { background: var(--brand-soft); }
+.part-name { font-family: var(--serif); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--brand-hi); }
+.part-label b { font-family: var(--serif); font-size: clamp(14px, 1.35vw, 19px); font-weight: 700; letter-spacing: -0.02em; }
+.part-label small { color: var(--text-2); font-size: clamp(11px, 0.95vw, 13px); }
+.cover-foot { display: grid; gap: 10px; justify-items: center; margin-top: 14px; }
+.cover-tip { color: var(--text-2); font-size: 14px; text-align: center; }
+.cover-tip b { color: var(--text); }
+
+/* Móvil y tablet: el instrumento arriba y las funciones en lista (sin líneas). */
+@media (max-width: 900px) {
+  .cover { padding: 14px 16px 30px; }
+  .cover-choose { flex-direction: row; gap: 6px; align-items: flex-start; }
+  .cover-pick { padding: 10px 6px 14px; flex: 1; min-width: 0; }
+  .cover-art { height: min(38vh, 300px); max-width: 100%; }
+  .cover-pick-name { font-size: 22px; }
+  .anatomy { width: 100%; aspect-ratio: auto !important; animation: none; }
+  .anatomy-svg { position: static; height: 300px; }
+  .anatomy-lines, .anatomy-dots { display: none; }
+  .anatomy-labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; }
+  .part-label { position: static; width: auto; transform: none; text-align: left !important; background: var(--surface); border: 1px solid var(--line-soft); padding: 10px 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .cover-art, .anatomy { animation: none; } }

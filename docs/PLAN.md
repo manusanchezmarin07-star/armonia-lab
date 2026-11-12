@@ -108,8 +108,12 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] Buscador de posiciones 8 veces más rápido y con caché
 - [x] PR develop → main (Sprint 12)
 
-## Sprint 13 — Nueva imagen (pendiente)
-- [ ] Identidad visual propia y portada de bienvenida con el piano y la guitarra: al elegir uno se amplía y las funciones aparecen como partes del instrumento
+## Sprint 13 — Nueva imagen y portada ✅
+- [x] Identidad propia «taller de guitarras de noche»: fondo oscuro cálido, añil de azulejo para la interfaz, albero solo para la música, tipografía grotesca (Bricolage Grotesque + Instrument Sans), botones con relieve de tecla y rombos de azulejo
+- [x] Portada a pantalla completa: piano y guitarra flotando; al elegir uno se amplía y cada función cuelga de una de sus partes (puente → Puentes y modulaciones, atril → Lectura, golpeador → Guitarra flamenca…)
+- [x] En móvil, las funciones del instrumento en lista; tour guiado adaptado
+- [x] Botón «Reanalizar» para canciones antiguas y pentagrama de guitarra (clave de Sol con 8) en el Laboratorio
+- [x] PR develop → main (Sprint 13)
 
 ## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll

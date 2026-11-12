@@ -29,7 +29,8 @@ export default function App() {
   useEffect(() => setMenuOpen(false), [location.pathname])
 
   return (
-    <div className="app">
+    // La portada ocupa toda la pantalla: sin menú lateral (ella misma es el menú).
+    <div className={`app ${location.pathname === '/' ? 'cover-mode' : ''}`}>
       <header className="topbar">
         <button className="btn ghost sm" aria-label="Menú" onClick={() => setMenuOpen((o) => !o)}>☰</button>
         <NavLink to="/" className="brand-name" style={{ color: 'inherit' }}>Armonía <em>Lab</em></NavLink>

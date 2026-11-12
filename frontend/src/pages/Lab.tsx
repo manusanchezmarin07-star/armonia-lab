@@ -143,7 +143,7 @@ export default function Lab() {
               {!best && notes.length < 2 && <p className="muted">Toca al menos dos notas a la vez.</p>}
             </div>
             <div style={{ background: 'var(--bg-2)', borderRadius: 12, padding: 6 }}>
-              <Staff notes={notes} spell={spell} width={250} />
+              <Staff notes={notes} spell={spell} width={250} guitar={isGuitar} />
             </div>
           </div>
 

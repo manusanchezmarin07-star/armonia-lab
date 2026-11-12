@@ -330,6 +330,9 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
           {(job.instruments ?? []).slice(0, 5).map((i) => <span key={i.name} className="pill violet" title="Instrumento detectado">{i.icon} {i.name}</span>)}
           <div className="spacer" />
           <button className="btn sm" onClick={saveToLibrary}>Guardar progresión</button>
+          <button className="btn sm ghost" title="Volver a separar y analizar esta canción con la versión actual"
+                  onClick={() => confirm('Se volverá a separar y analizar la canción desde cero. Se perderán los acordes que hayas corregido a mano. ¿Seguir?')
+                    && api.post<Job>(`/api/stems/${job.id}/retry`, {}).then(onChange).catch((e) => setMsg((e as Error).message))}>↻ Reanalizar</button>
           <button className="btn sm ghost" onClick={() => confirm('¿Borrar esta canción y sus pistas?') && onDelete()}><IconTrash /></button>
         </div>
         <div className="row mt">
