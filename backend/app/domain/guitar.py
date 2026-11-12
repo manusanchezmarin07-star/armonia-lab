@@ -12,7 +12,9 @@ cuerdas apagadas en medio) y ordena por facilidad y sonoridad.
 """
 from __future__ import annotations
 
+import functools
 import itertools
+import json
 from dataclasses import dataclass
 
 from .chords import TONE_NAMES_ES, TONES, ParsedChord, parse_symbol
@@ -161,11 +163,26 @@ def chord_shapes(symbol: str, capo: int = 0, limit: int = 8, tuning: tuple[int, 
     `capo` (cejilla mecánica) sube todas las cuerdas: los trastes devueltos son
     relativos a la cejilla, como se leen en un cancionero con «cejilla en II».
     """
+    # La búsqueda prueba miles de combinaciones (décimas de segundo) y la app pide las
+    # mismas posiciones una y otra vez (cada mástil, cada tarjeta): se guarda en caché.
+    # Se cachea como JSON para devolver siempre una copia que el llamante pueda modificar.
+    return json.loads(_shapes_json(symbol, capo, limit, tuning, max_fret))
+
+
+@functools.lru_cache(maxsize=4096)
+def _shapes_json(symbol: str, capo: int, limit: int, tuning: tuple[int, ...], max_fret: int) -> str:
+    return json.dumps(_search_shapes(symbol, capo, limit, tuning, max_fret))
+
+
+def _search_shapes(symbol: str, capo: int, limit: int, tuning: tuple[int, ...], max_fret: int) -> list[dict]:
     if not 0 <= capo <= 12:
         raise ValueError("La cejilla debe estar entre el traste 0 y el 12")
     chord = parse_symbol(symbol)
     open_tuning = tuple(t + capo for t in tuning)
     pcs = set(chord.pcs) | {chord.bass_pc}
+    # Notas que no pueden faltar (las mismas que exige _score): todo menos la 5ª y las tensiones.
+    tension_pcs = {(chord.root.pc + TONES[t][0]) % 12 for t in chord.tensions}
+    essential = {(chord.root.pc + TONES[t][0]) % 12 for t in chord.labels if t not in ("5",)} - tension_pcs
     found: dict[tuple[int, ...], Shape] = {}
     for start in range(0, max_fret - capo - 2):
         window = range(max(1, start), start + 4)
@@ -178,6 +195,13 @@ def chord_shapes(symbol: str, capo: int = 0, limit: int = 8, tuning: tuple[int, 
             options.append(opts)
         for frets in itertools.product(*options):
             if frets in found:
+                continue
+            # Descartes baratos antes de calcular la digitación (lo más caro): la gran mayoría
+            # de las combinaciones no tiene las notas imprescindibles o el bajo correcto.
+            sounding = [open_tuning[st] + f for st, f in enumerate(frets) if f >= 0]
+            if len(sounding) < 3 or min(sounding) % 12 != chord.bass_pc:
+                continue
+            if essential - {n % 12 for n in sounding}:
                 continue
             fing = assign_fingers(frets)
             if fing is None:
@@ -315,3 +339,27 @@ def arrange_song(symbols: list[str], capo: int = 0) -> list[dict]:
         prev_pos = best["position"]
         result.append(best)
     return result
+
+
+def voicing_for_notes(notes: list[int]) -> dict | None:
+    """Cómo se toca en guitarra un acorde dado como notas (p. ej. un voicing de piano).
+
+    Las mismas notas en las mismas octavas rara vez son cómodas en el mástil: un
+    Cmaj7 cerrado de piano queda en diagonal por el traste 8. Aquí se reconoce el
+    acorde y se devuelve su posición de guitarra más natural, respetando el bajo
+    si eso no la complica demasiado. None si las notas no forman un acorde.
+    """
+    from .chords import identify
+    if len({n % 12 for n in notes}) < 3:
+        return None
+    for reading in identify(notes)[:3]:
+        try:
+            with_bass = chord_shapes(reading.symbol, limit=1)
+            plain = chord_shapes(reading.symbol.split("/")[0], limit=1) if "/" in reading.symbol else []
+        except ValueError:
+            continue
+        # La inversión exacta solo si no cuesta mucho más que la posición fundamental.
+        best = with_bass[0] if with_bass and (not plain or with_bass[0]["score"] >= plain[0]["score"] - 3) else (plain[0] if plain else None)
+        if best:
+            return best
+    return None

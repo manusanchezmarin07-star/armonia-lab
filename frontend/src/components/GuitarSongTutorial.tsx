@@ -139,8 +139,7 @@ export default function GuitarSongTutorial({ jobId, validated, lines, time, play
           <div className="small muted">Siguiente{next ? ` · en ${Math.max(0, next.start - time).toFixed(1)} s` : ''}</div>
           {next?.shape ? <ChordDiagram shape={next.shape} size={0.9} /> : <div style={{ fontSize: 30 }}>—</div>}
         </div>
-        <div className="stack" style={{ minWidth: 0, flex: 1 }}>
-          <Fretboard dots={dots} muted={muted} capo={usedCapo} frets={12} height={160} onDown={(m) => press(m)} onUp={(m) => release(m)} />
+        <div className="stack" style={{ minWidth: 0, flex: 1, justifyContent: 'center' }}>
           <div className="karaoke">
             {line ? line.words.map((w, k) => (
               <span key={k} className={time >= w.start ? 'sung' : ''} onClick={() => onSeek(w.start)}>{w.text} </span>
@@ -149,6 +148,8 @@ export default function GuitarSongTutorial({ jobId, validated, lines, time, play
           </div>
         </div>
       </div>
+      {/* El mástil, a todo lo ancho: en una columna estrecha los dedos no se distinguían. */}
+      <Fretboard dots={dots} muted={muted} capo={usedCapo} frets={12} height={190} onDown={(m) => press(m)} onUp={(m) => release(m)} />
       {usedCapo > 0 && <div className="small text-2">Cejilla en el traste {usedCapo}: los diagramas muestran la forma que haces; entre paréntesis, si cambia, el nombre de esa forma.</div>}
     </div>
   )

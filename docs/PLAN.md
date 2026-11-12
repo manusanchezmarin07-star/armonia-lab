@@ -89,6 +89,28 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] Arreglos: el «?» del tour abría el de la pantalla anterior durante la carga; palma y golpe a la vez rompían el audio
 - [x] PR develop → main (Sprint 10)
 
+## Sprint 11 — Modo canción fiable ✅
+- [x] Flujo probado con Demucs, Whisper y el reconocedor de instrumentos reales (antes solo con simulados)
+- [x] Separación en proceso propio (sin ffmpeg ni torchaudio), con progreso real, límite de tiempo y reintento en CPU; si falla, acordes de la mezcla
+- [x] Canción lista en cuanto hay acordes; instrumentos en segundo plano, en otra cola y con límite de tiempo (una descarga colgada bloqueaba todas las canciones)
+- [x] Reconocedor multietiqueta (sigmoide): con softmax no reconocía nada
+- [x] Reproductor multipista con un solo reloj (Ogg Vorbis multicanal + Web Audio), medidores, estados de carga y error
+- [x] Silencios como «sin acorde», compases alineados con los cambios de acorde, detección de 3/4, acorde actual y siguientes
+- [x] Reintentar, y recuperación de trabajos interrumpidos al arrancar
+- [x] Importar el audio de un enlace de YouTube (yt-dlp)
+- [x] PR develop → main (Sprint 11)
+
+## Sprint 12 — Guitarra de verdad y diccionario de acordes ✅
+- [x] En guitarra, los acordes se muestran con su posición de guitarra (no con las octavas exactas del piano)
+- [x] Mástil adaptable al hueco, con ventana para posiciones altas; el punto sale en la casilla pulsada
+- [x] Laboratorio: montar acordes con el ratón (una nota por cuerda) y rasguear
+- [x] Diccionario de acordes: 63 tipos × 12 fundamentales con fórmula, notas, piano, guitarra y tutor en los dos instrumentos
+- [x] Buscador de posiciones 8 veces más rápido y con caché
+- [x] PR develop → main (Sprint 12)
+
+## Sprint 13 — Nueva imagen (pendiente)
+- [ ] Identidad visual propia y portada de bienvenida con el piano y la guitarra: al elegir uno se amplía y las funciones aparecen como partes del instrumento
+
 ## Ideas futuras
 - Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
 - Exportar a MusicXML lo transcrito

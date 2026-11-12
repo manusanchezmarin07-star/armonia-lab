@@ -420,7 +420,7 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
 
 /* ---------- Mástil y diagramas de guitarra ---------- */
 .fretboard-wrap { overflow-x: auto; padding: 4px 0; }
-.fretboard { display: block; user-select: none; touch-action: none; min-width: 560px; }
+.fretboard { display: block; user-select: none; touch-action: none; }
 .chord-diagram { display: block; border-radius: 10px; transition: background 0.15s; }
 .chord-diagram.on { background: var(--accent-soft); }
 .diagram-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
@@ -472,3 +472,12 @@ h1, h2, .chord-big { overflow-wrap: anywhere; }
 .nn-next b { font-size: 28px; color: var(--text-2); }
 .nn-bar { height: 4px; border-radius: 4px; background: var(--bg); overflow: hidden; margin-top: 6px; }
 .nn-bar span { display: block; height: 100%; background: var(--accent); }
+/* Diccionario de acordes */
+.root-btn { min-width: 46px; justify-content: center; font-family: var(--serif); font-size: 16px; }
+.dict-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.dict-card { display: grid; gap: 10px; align-content: start; padding: 16px; }
+.dict-symbol { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1; background: none; border: 0; color: var(--text); cursor: pointer; padding: 0; white-space: nowrap; }
+.dict-symbol:hover { color: var(--accent); }
+.dict-views { display: flex; gap: 10px; align-items: center; }
+.dict-piano { flex: 1; min-width: 0; }
+@media (max-width: 420px) { .dict-grid { grid-template-columns: 1fr; } }
