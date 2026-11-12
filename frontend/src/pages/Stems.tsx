@@ -9,7 +9,7 @@ import LyricsSheet from '../components/LyricsSheet'
 import SongTutorial from '../components/SongTutorial'
 import GuitarSongTutorial from '../components/GuitarSongTutorial'
 import { useInstrument } from '../lib/instrument'
-import { SongPlayer, trackGains } from '../lib/multitrack'
+import { SeparatePlayer, SongPlayer, mediaErrorText, trackGains, type Engine } from '../lib/multitrack'
 import Mixer, { type Instrument, type StemInfo } from '../components/Mixer'
 import ChordChart from '../components/ChordChart'
 import { usePersistentState } from '../lib/prefs'
@@ -206,7 +206,9 @@ export default function Stems() {
 
 function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => void; onDelete: () => void }) {
   const { lastChord, pressed } = useInput()
-  const player = useRef<SongPlayer | null>(null)
+  const player = useRef<Engine | null>(null)
+  // Motivo por el que no se pudo usar el multipista (entonces suenan las pistas sueltas).
+  const [fallback, setFallback] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [audioErr, setAudioErr] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
@@ -243,22 +245,31 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
   useEffect(() => {
     if (job.separated && !job.multitrack) return
     const mt = job.multitrack
-    const p = mt
-      ? new SongPlayer(`/api/stems/${job.id}/multitrack`, mt.layout, mt.channels)
-      : new SongPlayer(`/api/stems/${job.id}/audio/mezcla`, [{ id: 'mezcla', channels: [0, 1] }], 2)
+    const p: Engine = mt && fallback
+      ? new SeparatePlayer(Object.fromEntries(mt.layout.map((t) => [t.id, `/api/stems/${job.id}/audio/${t.id}`])))
+      : mt
+        ? new SongPlayer(`/api/stems/${job.id}/multitrack`, mt.layout, mt.channels)
+        : new SongPlayer(`/api/stems/${job.id}/audio/mezcla`, [{ id: 'mezcla', channels: [0, 1] }], 2)
     player.current = p
-    setReady(false); setAudioErr(null); setPlaying(false); setTime(0)
+    setReady(false); setAudioErr(null); setPlaying(false)
     const a = p.audio
     const onReady = () => setReady(true)
     const onEnd = () => setPlaying(false)
-    const onErr = () => setAudioErr('No se pudo cargar el audio de esta canción. Prueba a pulsar «Reintentar».')
+    const onErr = () => {
+      const why = mediaErrorText(a)
+      // El multipista no carga (navegador que no admite 12 canales, fichero dañado…): en vez de
+      // dejar la canción muda, se pasa a las pistas sueltas, que suenan en cualquier navegador.
+      if (mt && !fallback) setFallback(why)
+      else setAudioErr(`No se pudo cargar el audio de esta canción: ${why}. Prueba «↻ Reanalizar».`)
+    }
     a.addEventListener('canplay', onReady); a.addEventListener('ended', onEnd); a.addEventListener('pause', onEnd); a.addEventListener('error', onErr)
     return () => {
       a.removeEventListener('canplay', onReady); a.removeEventListener('ended', onEnd); a.removeEventListener('pause', onEnd); a.removeEventListener('error', onErr)
       p.dispose()
       player.current = null
     }
-  }, [job.id, layoutKey])
+  }, [job.id, layoutKey, fallback])
+  useEffect(() => { setFallback(null); setTime(0) }, [job.id])
 
   // Posición de reproducción. Solo el tutorial (notas que caen) necesita 60 fps; el resto de
   // la pantalla se repinta 12 veces por segundo, que basta para el cursor y ahorra mucha CPU.
@@ -337,7 +348,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
         </div>
         <div className="row mt">
           <button className="btn primary" onClick={toggle} disabled={!ready}>
-            {!ready ? 'Cargando audio…' : playing ? <><IconStop /> Pausa</> : <><IconPlay /> Reproducir</>}</button>
+            {!ready ? (job.separated && !job.multitrack ? 'Preparando pistas…' : 'Cargando audio…') : playing ? <><IconStop /> Pausa</> : <><IconPlay /> Reproducir</>}</button>
           <span className="mono small text-2">{fmt(time)} / {fmt(dur)}</span>
           <input type="range" className="range" style={{ flex: 1 }} min={0} max={dur} step={0.1} value={time} onChange={(e) => seek(+e.target.value)} />
           <label className="small text-2 row" style={{ gap: 6 }}>Velocidad {Math.round(rate * 100)}%
@@ -375,6 +386,13 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
             <button className="btn sm" onClick={() => api.post<Job>(`/api/stems/${job.id}/retry`, {}).then(onChange)}>Reintentar</button></div>
         )}
         {job.warning && <div className="notice mt">{job.warning}</div>}
+        {fallback && (
+          <div className="notice mt">
+            Tu navegador no ha podido cargar las pistas en un solo audio sincronizado, así que suenan como pistas sueltas (pueden desajustarse un poco).
+            {!/Chrome|Edg/.test(navigator.userAgent) && <> Abre la app en <b>Chrome o Edge</b> para oírlas perfectamente sincronizadas.</>}
+            <div className="small muted" style={{ marginTop: 4 }}>Detalle técnico: {fallback}</div>
+          </div>
+        )}
         <div className="mt">
           <ChordChart segments={segs} beats={analysis.beats ?? []} duration={dur} time={time} selected={sel} compact={tab !== 'acordes'}
                       onPick={(i, at) => { setSel(i); seek(at) }} onSeek={seek} />

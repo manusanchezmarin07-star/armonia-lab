@@ -107,7 +107,7 @@ export default function ChordChart({ segments, beats, duration, time, selected, 
           </div>
         ))}
       </div>
-      <div className="small muted">Compases de {grid.perBar} pulsos · subrayado tenue = acorde dudoso · turquesa = corregido por ti · clic para escuchar y corregir</div>
+      <div className="small muted">Compases de {grid.perBar} pulsos · borde azul = acorde seleccionado · subrayado tenue = dudoso · turquesa = corregido por ti · clic para escuchar y corregir</div>
       </>}
     </div>
   )

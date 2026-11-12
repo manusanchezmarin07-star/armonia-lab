@@ -17,7 +17,7 @@ export function trackGains(ids: string[], vol: Record<string, number>, muted: Re
   return out
 }
 
-export class SongPlayer {
+export class SongPlayer implements Engine {
   readonly audio: HTMLAudioElement
   private ctx: AudioContext | null = null
   private gains: Record<string, GainNode> = {}
@@ -94,5 +94,69 @@ export class SongPlayer {
     this.audio.load()
     this.ctx?.close().catch(() => {})
     this.ctx = null
+  }
+}
+
+/** Lo que el reproductor de canciones necesita de un motor de audio (multipista o pistas sueltas). */
+export interface Engine {
+  readonly audio: HTMLAudioElement
+  play(): Promise<void>
+  pause(): void
+  seek(t: number): void
+  readonly time: number
+  setRate(r: number): void
+  setGains(g: Record<string, number>): void
+  level(id: string): number
+  dispose(): void
+}
+
+/** Texto del error de carga de un <audio>, con el detalle que da el navegador (sirve para diagnosticar). */
+export function mediaErrorText(a: HTMLAudioElement): string {
+  const e = a.error
+  if (!e) return 'error desconocido'
+  const kind = ['', 'carga cancelada', 'error de red', 'no se pudo decodificar', 'formato no admitido por este navegador'][e.code] ?? `código ${e.code}`
+  return e.message ? `${kind} (${e.message})` : kind
+}
+
+/**
+ * Motor de reserva: un <audio> por pista, como en las primeras versiones. Se usa solo
+ * si el navegador no puede con el multipista (un audio de 12 canales no se decodifica
+ * fuera de Chrome y Edge). Funciona en cualquier navegador, pero las pistas no
+ * comparten reloj: se vigila el desfase y se recoloca la que se separe demasiado.
+ */
+export class SeparatePlayer implements Engine {
+  readonly audio: HTMLAudioElement
+  private els: Record<string, HTMLAudioElement> = {}
+  private timer = 0
+
+  constructor(urls: Record<string, string>) {
+    Object.entries(urls).forEach(([id, url]) => {
+      const a = new Audio(url)
+      a.preload = 'auto'
+      a.preservesPitch = true
+      this.els[id] = a
+    })
+    this.audio = Object.values(this.els)[0] // la primera pista hace de reloj
+  }
+
+  async play() {
+    const t = this.audio.currentTime
+    await Promise.all(Object.values(this.els).map((a) => { a.currentTime = t; return a.play() }))
+    // Solo se corrige un desfase que ya se oye (más de 80 ms): recolocar a cada momento produce cortes.
+    this.timer = window.setInterval(() => {
+      const ref = this.audio.currentTime
+      Object.values(this.els).forEach((a) => { if (a !== this.audio && Math.abs(a.currentTime - ref) > 0.08) a.currentTime = ref })
+    }, 500)
+  }
+
+  pause() { window.clearInterval(this.timer); Object.values(this.els).forEach((a) => a.pause()) }
+  seek(t: number) { Object.values(this.els).forEach((a) => { a.currentTime = Math.max(0, t) }) }
+  get time() { return this.audio.currentTime }
+  setRate(r: number) { Object.values(this.els).forEach((a) => { a.playbackRate = r }) }
+  setGains(g: Record<string, number>) { Object.entries(g).forEach(([id, v]) => { if (this.els[id]) this.els[id].volume = Math.max(0, Math.min(1, v)) }) }
+  level() { return 0 } // sin Web Audio no hay medidores
+  dispose() {
+    this.pause()
+    Object.values(this.els).forEach((a) => { a.removeAttribute('src'); a.load() })
   }
 }

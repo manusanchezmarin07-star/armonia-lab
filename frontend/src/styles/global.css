@@ -397,7 +397,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: v
   display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; cursor: pointer; transition: border-color 0.12s, background 0.12s; min-width: 0; }
 .bar:hover { border-color: var(--line); }
 .bar.now { border-color: var(--accent); background: var(--accent-soft); }
-.bar.sel { box-shadow: 0 0 0 2px var(--teal) inset; }
+.bar.sel { box-shadow: 0 0 0 2px var(--brand-hi) inset; } /* añil: el turquesa se reserva para «corregido por ti» */
 .bar-n { position: absolute; top: 3px; left: 7px; font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .bar-chord { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
 .bar-chord b { font-family: var(--serif); font-size: 17px; font-weight: 600; border-bottom: 2px solid; padding-bottom: 1px;
