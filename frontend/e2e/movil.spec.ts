@@ -50,3 +50,14 @@ test('en el móvil y en modo guitarra tampoco se sale nada (mástil y tutor incl
     expect(await overflowing(page), `desborde en ${path}`).toEqual([])
   }
 })
+
+test('la portada en móvil: elegir instrumento y ver sus funciones en lista, sin desbordes', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'networkidle' })
+  expect(await overflowing(page), 'desborde al elegir').toEqual([])
+  await page.getByRole('button', { name: 'Estudiar con piano' }).click()
+  await expect(page.getByRole('navigation', { name: 'Funciones de la app' }).getByRole('link')).toHaveCount(14)
+  await page.waitForTimeout(300)
+  expect(await overflowing(page), 'desborde en la anatomía').toEqual([])
+  await page.getByRole('link', { name: /Atril.*Lectura/ }).click()
+  await expect(page).toHaveURL(/\/lectura$/)
+})

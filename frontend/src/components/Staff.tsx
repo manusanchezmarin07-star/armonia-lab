@@ -23,7 +23,11 @@ function toKey(m: number, spelled?: string) {
  * Pentagrama doble (clave de sol + fa) con un acorde: las notas >= Do4 van arriba.
  * `spell` permite pasar el nombre correcto de cada pitch class (Eb en vez de D#).
  */
-export default function Staff({ notes, spell = {}, width = 300 }: { notes: number[]; spell?: Record<number, string>; width?: number }) {
+export default function Staff({ notes, spell = {}, width = 300, guitar }: {
+  notes: number[]; spell?: Record<number, string>; width?: number
+  /** Notación de guitarra: un solo pentagrama en clave de Sol con 8 (se escribe una octava más alta de lo que suena). */
+  guitar?: boolean
+}) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = ref.current
@@ -34,6 +38,21 @@ export default function Staff({ notes, spell = {}, width = 300 }: { notes: numbe
     const ctx = renderer.getContext()
     ctx.setFillStyle('#e9e4da')
     ctx.setStrokeStyle('#e9e4da')
+    if (guitar) {
+      renderer.resize(width, 190)
+      const stave = new Stave(10, 40, width - 20).addClef('treble', 'default', '8vb').setContext(ctx).draw()
+      const list = [...notes].sort((a, b) => a - b)
+      if (list.length) {
+        // Se escribe una octava por encima del sonido real: Mi2 (6ª al aire) va bajo el pentagrama, no en clave de Fa.
+        const ks = list.map((m) => toKey(m + 12, spell[m % 12]))
+        const n = new StaveNote({ keys: ks.map((k) => k.key), duration: 'w', clef: 'treble' })
+        ks.forEach((k, i) => { if (k.acc) n.addModifier(new Accidental(k.acc), i) })
+        const v = new Voice({ num_beats: 4, beat_value: 4 }).addTickables([n])
+        new Formatter().joinVoices([v]).format([v], width - 90)
+        v.draw(ctx, stave)
+      }
+      return
+    }
     const treble = new Stave(10, 0, width - 20).addClef('treble').setContext(ctx).draw()
     const bass = new Stave(10, 110, width - 20).addClef('bass').setContext(ctx).draw()
     new StaveConnector(treble, bass).setType('brace').setContext(ctx).draw()
@@ -55,6 +74,6 @@ export default function Staff({ notes, spell = {}, width = 300 }: { notes: numbe
     }
     draw(treble, hi, 'treble')
     draw(bass, lo, 'bass')
-  }, [notes, spell, width])
+  }, [notes, spell, width, guitar])
   return <div ref={ref} className="staff" style={{ filter: 'drop-shadow(0 0 0 transparent)' }} />
 }

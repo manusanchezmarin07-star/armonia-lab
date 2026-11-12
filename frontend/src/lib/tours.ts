@@ -9,12 +9,14 @@ export interface TourStep {
   text: string
   /** Solo aparece en el tour de esa pantalla (no en el general). */
   detail?: boolean
+  /** Solo aparece en el tour general (no en el de esa pantalla). */
+  onlyGeneral?: boolean
 }
 
 export const TOUR_STEPS: TourStep[] = [
   { route: '/', title: 'Bienvenido a Armonía Lab', text: 'Te enseño en un par de minutos qué puedes hacer aquí. Puedes avanzar con los botones o con las flechas ← → del teclado, y salir cuando quieras con Esc.' },
-  { route: '/', target: 'sidebar', title: 'El menú', text: 'Todas las herramientas están agrupadas en Armonía, Ritmo, Entrenamiento y Estudio. Con Ctrl+K puedes saltar a cualquiera escribiendo su nombre.' },
-  { route: '/', target: 'home-modules', title: 'Los módulos', text: 'Cada tarjeta abre una herramienta. Vamos a recorrer las principales.' },
+  { route: '/', target: 'cover-instruments', title: 'Elige tu instrumento', text: 'Piano o guitarra. Al pulsar uno se amplía y cada función de la app aparece colgada de una de sus partes: el puente lleva a «Puentes y modulaciones», el atril a «Lectura»… La app entera (sonido, acordes y tutores) se adapta al que elijas.' },
+  { route: '/laboratorio', target: 'sidebar', onlyGeneral: true, title: 'El menú', text: 'Dentro de cada pantalla tienes todas las herramientas a la izquierda, agrupadas en Armonía, Ritmo, Entrenamiento y Estudio, y el interruptor de piano o guitarra. Con Ctrl+K saltas a cualquiera escribiendo su nombre.' },
 
   { route: '/laboratorio', target: 'lab-piano', title: 'Laboratorio: toca', text: 'Toca en tu teclado MIDI, con el ratón o con el teclado del ordenador (fila A S D F… = teclas blancas; W E T Y U = negras; Z/X cambian de octava).' },
   { route: '/laboratorio', target: 'lab-chord', title: '…y entiende lo que tocas', text: 'Aquí aparece el nombre del acorde, sus notas, el pentagrama, su función en la tonalidad y las escalas para improvisar encima. El botón «Cómo se toca» abre el tutor con dedos para las dos manos.' },
@@ -22,6 +24,7 @@ export const TOUR_STEPS: TourStep[] = [
   { route: '/laboratorio', target: 'lab-transition', title: 'Conectar dos acordes', text: 'Guarda un acorde como A y otro como B: te explico por qué uno lleva al otro y cómo moverte con el menor movimiento de dedos.', detail: true },
 
   { route: '/laboratorio', target: 'lab-recorder', title: 'Grabadora', text: 'Graba lo que tocas, escúchalo, expórtalo a MIDI o pulsa «Sacar acordes» para convertir tu toma en una progresión que puedes analizar.', detail: true },
+  { route: '/acordes', target: 'dict-controls', title: 'Diccionario de acordes', text: 'Elige una nota y un nivel, o busca por cifrado (Bb13) o por nombre (semidisminuido). Cada tarjeta enseña la fórmula, el teclado y el diagrama de guitarra; «Enséñame» abre el tutor en el instrumento que quieras.', detail: true },
   { route: '/puentes', target: 'bridges-circle', title: 'Puentes: el círculo de quintas', text: 'Clic en una tonalidad = destino; Mayús+clic = origen. Cuanto más lejos en el círculo, más brusco es el cambio.' },
   { route: '/puentes', target: 'bridges-routes', title: 'Siete caminos', text: 'Pivote, ii–V–I, bisagra disminuida, sustituto tritonal… ordenados de más suave a más brusco según cuánto se mueven las voces.' },
   { route: '/puentes', target: 'bridges-detail', title: 'Míralo en el teclado', text: 'Pulsa Reproducir: en turquesa las notas que se mantienen (las que disimulan el cambio) y en coral las que se mueven.', detail: true },
@@ -51,5 +54,5 @@ export const TOUR_STEPS: TourStep[] = [
 /** Tour general (sin pasos de detalle) o el de una pantalla concreta. */
 export function stepsFor(scope: 'general' | string): TourStep[] {
   if (scope === 'general') return TOUR_STEPS.filter((s) => !s.detail)
-  return TOUR_STEPS.filter((s) => s.route === scope && s.target)
+  return TOUR_STEPS.filter((s) => s.route === scope && s.target && !s.onlyGeneral)
 }

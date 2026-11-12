@@ -5,6 +5,8 @@ de tonalidad suena suave, ver las notas que se mantienen y las que se mueven, re
 **armonía negativa**, explorar modos y **escalas simétricas**, y practicar **compás flamenco** y amalgamas.
 Funciona con tu teclado MIDI (Alesis Q49, piano digital por USB), con el ratón o con el teclado del ordenador.
 
+**Portada**: al abrir la app eliges instrumento entre un piano y una guitarra que flotan; el elegido se amplía y cada función de la app aparece colgada de una de sus partes (el puente lleva a «Puentes y modulaciones», el atril a «Lectura», el golpeador a «Guitarra flamenca»…).
+
 **Piano o guitarra**: el interruptor 🎹 Piano / 🎸 Guitarra de la pantalla de inicio (y del menú) cambia toda la app
 a guitarra clásica/flamenca: suena una guitarra de nylon, los teclados pasan a ser un mástil interactivo, los acordes
 se muestran con diagramas y digitación de mano izquierda, y aparece la pantalla de **Guitarra flamenca**.
