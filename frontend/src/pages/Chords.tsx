@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ChordDiagram from '../components/ChordDiagram'
 import HowToPlay from '../components/HowToPlay'
 import Piano, { type Mark } from '../components/Piano'
@@ -31,7 +31,9 @@ export default function Chords() {
   const [data, setData] = useState<Catalog | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [tutor, setTutor] = useState<string | null>(null)
-  const { isGuitar, setInstrument } = useInstrument()
+  const { isGuitar, instrument, setInstrument } = useInstrument()
+  // Instrumento que había antes de abrir un tutor «en el otro instrumento», para volver a él al cerrar.
+  const before = useRef<typeof instrument | null>(null)
 
   useEffect(() => {
     setErr(null)
@@ -59,7 +61,18 @@ export default function Chords() {
     if (isGuitar && c.guitar) strum([...c.guitar.notes].sort((a, b) => a.midi - b.midi).map((n) => n.midi), 'down', 22, 2.2)
     else playChord(c.notes, 1.8, 0.03)
   }
-  const teach = (symbol: string, kind: 'piano' | 'guitarra') => { setInstrument(kind); setTutor(symbol) }
+  // El tutor usa el sonido y la vista del instrumento activo, así que se cambia mientras dura;
+  // al cerrarlo se vuelve al que tenías (antes la app entera se quedaba en el otro instrumento).
+  const teach = (symbol: string, kind: 'piano' | 'guitarra') => {
+    if (before.current === null) before.current = instrument
+    setInstrument(kind)
+    setTutor(symbol)
+  }
+  const closeTutor = () => {
+    setTutor(null)
+    if (before.current !== null) setInstrument(before.current)
+    before.current = null
+  }
 
   return (
     <div className="page fade-in">
@@ -133,7 +146,7 @@ export default function Chords() {
           </div>
         </section>
       ))}
-      {tutor && <HowToPlay symbol={tutor} onClose={() => setTutor(null)} />}
+      {tutor && <HowToPlay symbol={tutor} onClose={closeTutor} />}
     </div>
   )
 }

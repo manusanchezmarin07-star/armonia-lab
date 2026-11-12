@@ -232,6 +232,9 @@ test('lectura en guitarra: clave de Sol octavada y se responde una octava más g
   await asGuitar(page)
   await open(page, '/lectura')
   await expect(page.getByText('1 · Cuerdas 1ª a 3ª (primera posición)')).toBeVisible()
+  // La ayuda de nombres escribe cada nota en su casilla de primera posición.
+  await page.getByLabel('Mostrar nombres en el mástil (ayuda)').check()
+  await expect(page.locator('svg.fretboard text', { hasText: 'Sol' }).first()).toBeVisible()
   await page.getByLabel('Exigir la octava exacta').check()
   await page.keyboard.press('Space')
   // Pulsar cualquier casilla del mástil cuenta como respuesta (acierto o fallo).
@@ -314,6 +317,8 @@ test('diccionario de acordes: todos los tipos, búsqueda y tutor en piano y en g
   await card.getByRole('button', { name: /En guitarra/ }).click()
   await expect(page.getByRole('dialog', { name: 'Cómo tocar Bb13 en guitarra' })).toBeVisible()
   await page.keyboard.press('Escape')
+  // Al cerrar el tutor de guitarra, la app sigue en piano (que es como estaba).
+  await expect(page.locator('.sidebar .instrument-switch').getByRole('radio', { name: /Piano/ })).toHaveAttribute('aria-checked', 'true')
   await card.getByRole('button', { name: /Enséñame en piano/ }).click()
   await expect(page.getByRole('dialog', { name: 'Cómo tocar Bb13', exact: true })).toBeVisible()
   await page.keyboard.press('Escape')

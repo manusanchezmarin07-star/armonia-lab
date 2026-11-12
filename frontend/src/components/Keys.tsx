@@ -77,6 +77,14 @@ export default function Keys(props: Props) {
       if (p && !dots.some((d) => d.string === p.string && d.fret === p.fret)) dots.push({ ...p, mark: 'ghost' })
     })
   }
+  // Ayuda de nombres sin nada marcado (Lectura): el nombre de cada nota en primera posición,
+  // que es donde se aprende a leer. En el piano los nombres van sobre las teclas.
+  if (!isMap && !entries.length && Object.keys(labels).length) {
+    for (let m = 40; m <= 68; m++) {
+      const p = labels[m] ? positionsOf(m).filter((x) => x.fret <= 4).sort((a, b) => a.fret - b.fret)[0] : undefined
+      if (p) dots.push({ ...p, mark: 'scale', label: labels[m] })
+    }
+  }
   // Lo que se está tocando: lo pulsado en el mástil, en su casilla; lo que llega del MIDI
   // o del teclado, junto en la posición más compacta (una nota por cuerda).
   if (pressed?.size) {
