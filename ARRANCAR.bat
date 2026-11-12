@@ -7,8 +7,9 @@ if not exist ".venv\Scripts\python.exe" (
   pause
   exit /b 1
 )
-rem Se abre el navegador cuando el servidor ya responde; Edge y Chrome soportan MIDI.
-start "" /b powershell -NoProfile -Command "for($i=0;$i -lt 60;$i++){try{Invoke-WebRequest http://127.0.0.1:8765/api/health -UseBasicParsing|Out-Null;Start-Process http://127.0.0.1:8765;break}catch{Start-Sleep -Milliseconds 500}}"
+rem Se abre el navegador cuando el servidor ya responde. Se prefiere Chrome y, si no esta, Edge
+rem (no el navegador por defecto): son los que admiten MIDI y el audio multipista de las canciones.
+start "" /b powershell -NoProfile -Command "for($i=0;$i -lt 60;$i++){try{Invoke-WebRequest http://127.0.0.1:8765/api/health -UseBasicParsing|Out-Null;$u='http://127.0.0.1:8765';try{Start-Process chrome $u}catch{try{Start-Process msedge $u}catch{Start-Process $u}};break}catch{Start-Sleep -Milliseconds 500}}"
 cd backend
 "..\.venv\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port 8765
 pause
