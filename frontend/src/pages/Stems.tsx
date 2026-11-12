@@ -383,7 +383,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
         })()}
         {audioErr && (
           <div className="error mt row">{audioErr}<div className="spacer" />
-            <button className="btn sm" onClick={() => api.post<Job>(`/api/stems/${job.id}/retry`, {}).then(onChange)}>Reintentar</button></div>
+            <button className="btn sm" onClick={() => api.post<Job>(`/api/stems/${job.id}/retry`, {}).then(onChange)}>↻ Reanalizar</button></div>
         )}
         {job.warning && <div className="notice mt">{job.warning}</div>}
         {fallback && (
