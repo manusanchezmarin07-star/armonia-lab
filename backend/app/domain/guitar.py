@@ -180,6 +180,9 @@ def _search_shapes(symbol: str, capo: int, limit: int, tuning: tuple[int, ...], 
     chord = parse_symbol(symbol)
     open_tuning = tuple(t + capo for t in tuning)
     pcs = set(chord.pcs) | {chord.bass_pc}
+    # Notas que no pueden faltar (las mismas que exige _score): todo menos la 5ª y las tensiones.
+    tension_pcs = {(chord.root.pc + TONES[t][0]) % 12 for t in chord.tensions}
+    essential = {(chord.root.pc + TONES[t][0]) % 12 for t in chord.labels if t not in ("5",)} - tension_pcs
     found: dict[tuple[int, ...], Shape] = {}
     for start in range(0, max_fret - capo - 2):
         window = range(max(1, start), start + 4)
@@ -192,6 +195,13 @@ def _search_shapes(symbol: str, capo: int, limit: int, tuning: tuple[int, ...], 
             options.append(opts)
         for frets in itertools.product(*options):
             if frets in found:
+                continue
+            # Descartes baratos antes de calcular la digitación (lo más caro): la gran mayoría
+            # de las combinaciones no tiene las notas imprescindibles o el bajo correcto.
+            sounding = [open_tuning[st] + f for st, f in enumerate(frets) if f >= 0]
+            if len(sounding) < 3 or min(sounding) % 12 != chord.bass_pc:
+                continue
+            if essential - {n % 12 for n in sounding}:
                 continue
             fing = assign_fingers(frets)
             if fing is None:

@@ -14,6 +14,7 @@ const Assistant = lazy(() => import('./pages/Assistant'))
 const Ear = lazy(() => import('./pages/Ear'))
 const Reading = lazy(() => import('./pages/Reading'))
 const Flamenco = lazy(() => import('./pages/Flamenco'))
+const Chords = lazy(() => import('./pages/Chords'))
 
 export interface Module {
   path: string
@@ -31,6 +32,7 @@ export interface Module {
 // a partir de esta lista, así añadir un módulo es tocar un solo sitio.
 export const MODULES: Module[] = [
   { section: 'Armonía', path: '/laboratorio', label: 'Laboratorio', icon: I.IconLab, element: Lab, blurb: 'Toca un acorde y descubre qué es y qué función tiene.' },
+  { section: 'Armonía', path: '/acordes', label: 'Diccionario de acordes', icon: I.IconBook, element: Chords, blurb: 'Todos los acordes en piano y en guitarra, con un tutor para aprender a tocar cada uno.' },
   { section: 'Armonía', path: '/puentes', label: 'Puentes y modulaciones', icon: I.IconBridge, element: Bridges, blurb: 'Siete caminos para cambiar de tonalidad, del más suave al más brusco.' },
   { section: 'Armonía', path: '/rearmonizar', label: 'Rearmonizar', icon: I.IconSpark, element: Reharm, blurb: 'Sustitutos para cualquier acorde o nota de la melodía, al estilo Collier.' },
   { section: 'Armonía', path: '/escalas', label: 'Escalas y simetría', icon: I.IconScale, element: Scales, blurb: 'Modos, escalas simétricas y Messiaen en el reloj de 12 notas.' },

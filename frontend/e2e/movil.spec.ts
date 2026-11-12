@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 const PAGES = ['/', '/laboratorio', '/puentes', '/rearmonizar', '/escalas', '/negativa', '/analizador', '/ritmo', '/oido',
-  '/lectura', '/pistas', '/bach', '/biblioteca', '/asistente', '/flamenco']
+  '/lectura', '/pistas', '/bach', '/biblioteca', '/asistente', '/flamenco', '/acordes']
 
 /** Elementos que se salen por la derecha sin que ningún contenedor los recorte con scroll. */
 async function overflowing(page: Page) {
