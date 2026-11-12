@@ -113,7 +113,8 @@ def retry(job_id: str) -> dict:
     meta = load(job_id)
     if meta["status"] not in ("error", "listo"):
         raise ValueError("Esta canción ya se está procesando")
-    meta = _update(job_id, status="en cola", progress=0.0, message="", warning=None)
+    # Se reanaliza desde cero: los acordes cambian, así que la validación anterior deja de valer.
+    meta = _update(job_id, status="en cola", progress=0.0, message="", warning=None, validated=False)
     _pool.submit(_run, job_id)
     return meta
 

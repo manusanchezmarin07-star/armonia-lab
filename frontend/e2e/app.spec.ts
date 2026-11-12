@@ -170,17 +170,34 @@ test('teclado del ordenador: cambiar de octava o de ventana no deja notas colgad
   await page.keyboard.up('g')
 })
 
-test('interruptor piano/guitarra: cambia el instrumento en toda la app y se recuerda', async ({ page }) => {
+test('portada: se elige instrumento, se amplía con las funciones en sus partes y se recuerda', async ({ page }) => {
+  const errors = watchErrors(page)
   await open(page, '/')
-  await page.locator('.instrument-switch.big').getByRole('radio', { name: /Guitarra/ }).click()
-  await page.getByRole('link', { name: 'Laboratorio', exact: true }).first().click()
+  await expect(page.locator('.sidebar')).toBeHidden() // la portada es a pantalla completa
+  await page.getByRole('button', { name: 'Estudiar con guitarra' }).click()
+  await expect(page.getByRole('heading', { name: 'Tu guitarra, pieza a pieza' })).toBeVisible()
+  const nav = page.getByRole('navigation', { name: 'Funciones de la app' })
+  await expect(nav.getByRole('link')).toHaveCount(15)
+  await expect(nav.getByRole('link', { name: /Puente.*Puentes y modulaciones/ })).toBeVisible()
+  await expect(nav.getByRole('link', { name: /Golpeador.*Guitarra flamenca/ })).toBeVisible()
+  // Cada parte lleva a su pantalla, ya en modo guitarra.
+  await nav.getByRole('link', { name: /Cuerdas.*Laboratorio/ }).click()
+  await expect(page).toHaveURL(/\/laboratorio$/)
   await expect(page.locator('svg.fretboard')).toBeVisible()
-  await playChord(page, ['a', 'd', 'g'])
-  await expect(page.locator('.chord-big').first()).toHaveText('C')
   await page.reload({ waitUntil: 'networkidle' })
-  await expect(page.locator('svg.fretboard')).toBeVisible() // se recuerda
-  await page.locator('.sidebar .instrument-switch').getByRole('radio', { name: /Piano/ }).click()
-  await expect(page.locator('svg.piano')).toBeVisible()
+  await expect(page.locator('svg.fretboard')).toBeVisible() // el instrumento se recuerda
+  // Al volver a Inicio en la misma sesión se va directo al instrumento elegido; se puede cambiar.
+  await page.locator('.sidebar').getByRole('link', { name: 'Inicio' }).click()
+  await expect(page.getByRole('heading', { name: 'Tu guitarra, pieza a pieza' })).toBeVisible()
+  await page.getByRole('button', { name: /Elegir otro instrumento/ }).click()
+  await page.getByRole('button', { name: 'Estudiar con piano' }).click()
+  await expect(nav.getByRole('link', { name: /Atril.*Lectura/ })).toBeVisible()
+  await nav.getByRole('link', { name: /Teclado.*Laboratorio/ }).click()
+  await expect(page.locator('svg.piano').first()).toBeVisible()
+  // El interruptor del menú lateral sigue cambiando de instrumento en cualquier pantalla.
+  await page.locator('.sidebar .instrument-switch').getByRole('radio', { name: /Guitarra/ }).click()
+  await expect(page.locator('svg.fretboard')).toBeVisible()
+  expect(errors).toEqual([])
 })
 
 /** Arranca la app directamente en modo guitarra (como si el usuario ya lo hubiera elegido). */

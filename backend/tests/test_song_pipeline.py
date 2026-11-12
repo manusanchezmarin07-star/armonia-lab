@@ -198,3 +198,16 @@ def test_youtube_download_error_is_shown_and_can_be_retried(tmp_path, svc, monke
     assert meta["status"] == "error" and "Video unavailable" in meta["message"]
     with pytest.raises(ValueError):
         svc.create_from_url("https://example.com/video", "htdemucs_6s")
+
+
+def test_finished_song_can_be_reanalysed(tmp_path, svc):
+    """Botón «Reanalizar»: una canción lista se vuelve a procesar con el análisis actual."""
+    src = write_progression(tmp_path / "song.wav", CHORDS)
+    job = svc.create("song.wav", open(src, "rb").read(), "htdemucs_6s", separate=False)
+    first = _wait(svc, job["id"])
+    svc.correct_segment(job["id"], 0, "F#m7", None)
+    svc.set_validated(job["id"], True)
+    assert svc.retry(job["id"])["status"] == "en cola"
+    again = _wait(svc, job["id"])
+    assert again["status"] == "listo" and again["validated"] is False
+    assert again["analysis"]["segments"][0]["symbol"] == first["analysis"]["segments"][0]["symbol"]  # la corrección manual se pierde (se avisa)
