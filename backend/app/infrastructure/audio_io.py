@@ -77,19 +77,39 @@ def write_multitrack(stems: list[Path], out: Path) -> dict:
 
     Devuelve {"channels": n, "duration": s}. Todas las pistas se igualan a la más
     larga (los mp3 pueden diferir en unas pocas muestras).
+
+    Se lee y se escribe a trozos de 5 s: cargar seis pistas enteras de una canción de
+    8 minutos ocupaba más de 2 GB de memoria. (Además libsndfile se cae con escrituras
+    Vorbis muy grandes de una sola vez.)
     """
     import soundfile as sf
-    tracks = [read_stereo(p) for p in stems]
-    n = max(len(t) for t in tracks)
-    channels = max(MIN_CHANNELS, 2 * len(tracks))
-    data = np.zeros((n, channels), dtype="float32")
-    for k, t in enumerate(tracks):
-        data[:len(t), 2 * k:2 * k + 2] = t
-    np.clip(data, -1.0, 1.0, out=data)
+    channels = max(MIN_CHANNELS, 2 * len(stems))
     tmp = out.with_suffix(".tmp.ogg")
-    with sf.SoundFile(str(tmp), "w", samplerate=SR, channels=channels, format="OGG", subtype="VORBIS") as f:
-        # A trozos de 5 s: libsndfile se cae con escrituras Vorbis muy grandes de una vez.
-        for i in range(0, n, SR * 5):
-            f.write(data[i:i + SR * 5])
+    block = SR * 5
+    files = [sf.SoundFile(str(p)) for p in stems]
+    try:
+        if any(f.samplerate != SR for f in files):
+            # Pistas a otra frecuencia (canciones separadas con versiones antiguas): hay que
+            # remuestrearlas enteras; es el camino lento, pero solo ocurre una vez por canción.
+            tracks = [read_stereo(p) for p in stems]
+            total = max(len(t) for t in tracks)
+            read = lambda k, start: tracks[k][start:start + block]  # noqa: E731
+        else:
+            total = max(f.frames for f in files)
+
+            def read(k: int, start: int) -> np.ndarray:
+                y = files[k].read(block, dtype="float32", always_2d=True)
+                return np.repeat(y, 2, axis=1) if y.shape[1] == 1 else y[:, :2]
+        with sf.SoundFile(str(tmp), "w", samplerate=SR, channels=channels, format="OGG", subtype="VORBIS") as dst:
+            for start in range(0, total, block):
+                chunk = np.zeros((min(block, total - start), channels), dtype="float32")
+                for k in range(len(stems)):
+                    y = read(k, start)
+                    chunk[:len(y), 2 * k:2 * k + 2] = y
+                np.clip(chunk, -1.0, 1.0, out=chunk)
+                dst.write(chunk)
+    finally:
+        for f in files:
+            f.close()
     tmp.replace(out)
-    return {"channels": channels, "duration": round(n / SR, 3)}
+    return {"channels": channels, "duration": round(total / SR, 3)}

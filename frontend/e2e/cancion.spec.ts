@@ -116,3 +116,48 @@ test('pistas separadas: se reproducen juntas, con medidores, solo y salto sin er
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+// Si el navegador no puede con el multipista (p. ej. no es Chrome ni Edge), la canción no puede
+// quedarse muda: se pasa a las pistas sueltas y se explica el motivo.
+test('si el multipista no carga, suenan las pistas sueltas y se avisa del motivo', async ({ page, request }) => {
+  const caps = await request.get('/api/stems/capabilities')
+  test.skip(!caps.ok(), 'El módulo de pistas no está instalado en este entorno')
+  const { mkdirSync, copyFileSync, writeFileSync, rmSync } = await import('node:fs')
+  const { fileURLToPath } = await import('node:url')
+  const wav = fileURLToPath(new URL('./fixtures/progresion.wav', import.meta.url))
+  const up = await request.post('/api/stems', { multipart: { file: { name: 'base2.wav', mimeType: 'audio/wav', buffer: readFileSync(wav) }, separate: 'false' } })
+  const base = await up.json()
+  await expect.poll(async () => (await (await request.get(`/api/stems/${base.id}`)).json()).status, { timeout: 30_000 }).toBe('listo')
+  const analysis = (await (await request.get(`/api/stems/${base.id}`)).json()).analysis
+  const id = `e2ereserva${Date.now()}`
+  const dir = fileURLToPath(new URL(`../../.e2e-data/stems/${id}/`, import.meta.url))
+  mkdirSync(dir + 'sep', { recursive: true })
+  for (const f of ['original.wav', 'sep/piano.wav', 'sep/bass.wav']) copyFileSync(wav, dir + f)
+  writeFileSync(dir + 'meta.json', JSON.stringify({
+    id, title: `Reserva ${id}`, status: 'listo', progress: 1, message: '', separated: true, device: 'CPU', analysis,
+    stems: [{ id: 'bass', name: 'Bajo', file: 'sep/bass.wav', active: true }, { id: 'piano', name: 'Piano', file: 'sep/piano.wav', active: true },
+      { id: 'mezcla', name: 'Mezcla original', file: 'original.wav', active: true }],
+  }))
+  try {
+    // El multipista se crea, pero el navegador recibe algo que no sabe decodificar.
+    let broken = false
+    await page.route('**/api/stems/*/multitrack', (route) => (broken ? route.fulfill({ status: 200, contentType: 'audio/ogg', body: 'esto no es audio' }) : route.continue()))
+    await page.goto('/pistas', { waitUntil: 'networkidle' })
+    await page.locator('.list-item', { hasText: `Reserva ${id}` }).click()
+    await expect(page.getByRole('button', { name: 'Reproducir' }).first()).toBeEnabled({ timeout: 20_000 })
+    broken = true
+    await page.reload({ waitUntil: 'networkidle' })
+    await page.locator('.list-item', { hasText: `Reserva ${id}` }).click()
+    await expect(page.getByText(/suenan como pistas sueltas/)).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText(/Detalle técnico:/)).toBeVisible()
+    const play = page.getByRole('button', { name: 'Reproducir' }).first()
+    await expect(play).toBeEnabled({ timeout: 15_000 })
+    await play.click()
+    await expect.poll(async () => page.locator('.mono.small').first().textContent(), { timeout: 8000 }).toMatch(/0:0[1-9]/)
+    await page.getByRole('button', { name: 'Solo Bajo' }).click()
+    await page.getByRole('button', { name: 'Pausa' }).first().click()
+  } finally {
+    await request.delete(`/api/stems/${base.id}`)
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
