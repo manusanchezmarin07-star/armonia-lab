@@ -6,6 +6,7 @@ import { api } from '../lib/api'
 import { useInput } from '../lib/input'
 import { fnColor } from '../lib/music'
 import LyricsSheet from '../components/LyricsSheet'
+import MelodyView, { type MelodyNote } from '../components/MelodyView'
 import SongTutorial from '../components/SongTutorial'
 import GuitarSongTutorial from '../components/GuitarSongTutorial'
 import { useInstrument } from '../lib/instrument'
@@ -22,6 +23,8 @@ interface Job {
   instruments?: Instrument[]; instruments_method?: string; instruments_status?: string; instruments_error?: string
   multitrack?: { file: string; channels: number; layout: { id: string; channels: number[] }[] }
   warning?: string | null
+  melody?: { stem: string; notes: MelodyNote[]; low: number | null; high: number | null; count: number }
+  melody_status?: string; melody_error?: string
   analysis: { duration: number; tempo: number; key: string; segments: Segment[]; beats?: number[]; method?: string } | null
   lyrics_status?: string; lyrics_error?: string; validated?: boolean
   lyrics?: { source: string; lines: { start: number; end: number; words: { text: string; start: number; end: number }[] }[]; text?: string }
@@ -221,7 +224,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
   const [loop, setLoop] = useState(false)
   const [fix, setFix] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
-  const [tab, setTab] = usePersistentState<'acordes' | 'letra' | 'tutorial'>('stems.tab', 'acordes')
+  const [tab, setTab] = usePersistentState<'acordes' | 'letra' | 'tutorial' | 'melodia'>('stems.tab', 'acordes')
   const { isGuitar } = useInstrument()
   const analysis = job.analysis!
   const segs = analysis.segments
@@ -273,7 +276,7 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
 
   // Posición de reproducción. Solo el tutorial (notas que caen) necesita 60 fps; el resto de
   // la pantalla se repinta 12 veces por segundo, que basta para el cursor y ahorra mucha CPU.
-  const smooth = tab === 'tutorial'
+  const smooth = tab === 'tutorial' || tab === 'melodia'
   useEffect(() => {
     let raf = 0
     let last = 0
@@ -403,9 +406,11 @@ function Player({ job, onChange, onDelete }: { job: Job; onChange: (j: Job) => v
         <button className={tab === 'acordes' ? 'on' : ''} onClick={() => setTab('acordes')}>1 · Acordes y pistas</button>
         <button className={tab === 'letra' ? 'on' : ''} onClick={() => setTab('letra')}>2 · Letra y acordes</button>
         <button className={tab === 'tutorial' ? 'on' : ''} onClick={() => setTab('tutorial')}>3 · Tutorial de {isGuitar ? 'guitarra' : 'piano'} {job.validated ? '✓' : ''}</button>
+        <button className={tab === 'melodia' ? 'on' : ''} onClick={() => setTab('melodia')}>4 · Melodía {job.melody?.count ? '✓' : ''}</button>
       </div>
 
       {tab === 'letra' && <LyricsSheet job={job} time={time} onSeek={seek} onJob={(j) => onChange(j)} />}
+      {tab === 'melodia' && <MelodyView job={job} time={time} playing={playing} onSeek={seek} onJob={(j) => onChange(j)} />}
       {tab === 'tutorial' && (
         (() => {
           // Al silenciar «el instrumento original» se apaga su pista; sin separar, la mezcla entera.
