@@ -133,6 +133,8 @@ def recover_interrupted() -> int:
             n += 1
         elif m.get("instruments_status") == "analizando":
             _update(m["id"], instruments_status="error", instruments_error="Se interrumpió al cerrar la app.")
+        if m.get("melody_status") == "analizando":
+            _update(m["id"], melody_status="error", melody_error="Se interrumpió al cerrar la app.")
     return n
 
 
@@ -501,3 +503,45 @@ def guitar_arrangement(job_id: str, capo: int | None = None) -> dict:
     items = [{"index": i, "start": s["start"], "end": s["end"], "symbol": s["symbol"], "shape": sh or None}
              for i, (s, sh) in enumerate(zip(segs, shapes))]
     return {"capo": capo, "suggestions": suggestions, "items": items}
+
+
+# ---------------------------------------------------------------------------
+# Melodía
+# ---------------------------------------------------------------------------
+
+# De qué pista sacar la melodía si no se indica: la voz y, si la canción es instrumental,
+# lo que Demucs deja en «otros» (vientos, violines…), después guitarra y piano.
+MELODY_ORDER = ("vocals", "other", "guitar", "piano", "mezcla")
+
+
+def melody_sources(job_id: str) -> list[dict]:
+    meta = load(job_id)
+    stems = {st["id"]: st for st in meta.get("stems", []) if st.get("active", True) and st["id"] not in ("drums", "bass")}
+    return [{"id": sid, "name": stems[sid]["name"]} for sid in MELODY_ORDER if sid in stems]
+
+
+def detect_melody(job_id: str, stem: str | None = None) -> dict:
+    """Lanza la detección de la melodía de una pista (en segundo plano)."""
+    sources = [s["id"] for s in melody_sources(job_id)]
+    if not sources:
+        raise ValueError("Esta canción no tiene ninguna pista de la que sacar una melodía")
+    stem = stem or sources[0]
+    if stem not in sources:
+        raise ValueError(f"Pista no disponible para la melodía: {stem}")
+    path = stem_path(job_id, stem)
+    meta = _update(job_id, melody_status="analizando", melody_error=None)
+
+    def run() -> None:
+        from app.domain.chords import parse_symbol
+        from app.domain.melody import summarize
+        from app.infrastructure import melody
+        try:
+            ref = melody.peak_level(str(stem_path(job_id, "mezcla"))) if stem != "mezcla" else None
+            notes = melody.detect(str(path), ref)
+            key = (load(job_id).get("analysis") or {}).get("key")
+            tonic = parse_symbol(key.rstrip("m")).root.pc if key else None
+            _update(job_id, melody_status="listo", melody={"stem": stem, "notes": notes, **summarize(notes, tonic)})
+        except Exception as e:
+            _update(job_id, melody_status="error", melody_error=str(e)[:300])
+    _aux_pool.submit(run)
+    return meta

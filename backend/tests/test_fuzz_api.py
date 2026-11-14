@@ -135,3 +135,11 @@ def test_guitar_voicing(ns):
 @given(st.one_of(st.sampled_from(["C", "Db", "F#", "bb", "", "H", "C7"]), st.text(max_size=6)))
 def test_chord_catalog(root):
     ok(client.get("/api/chords/catalog", params={"root": root}))
+
+
+@SETTINGS
+@given(st.text(max_size=12), st.one_of(st.none(), st.text(max_size=10)))
+def test_melody_endpoints(job_id, stem):
+    from urllib.parse import quote
+    ok(client.get(f"/api/stems/{quote(job_id, safe='') or 'x'}/melody/sources"))
+    ok(client.post(f"/api/stems/{quote(job_id, safe='') or 'x'}/melody", params={"stem": stem} if stem is not None else {}))

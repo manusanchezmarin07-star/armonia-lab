@@ -151,3 +151,15 @@ def instruments(job_id: str):
 @router.get("/{job_id}/guitar-arrangement")
 def guitar_arrangement(job_id: str, capo: int | None = None):
     return _wrap(svc.guitar_arrangement, job_id, capo)
+
+
+@router.get("/{job_id}/melody/sources")
+def melody_sources(job_id: str):
+    """Pistas de las que se puede sacar la melodía, de la más a la menos adecuada."""
+    return _wrap(svc.melody_sources, job_id)
+
+
+@router.post("/{job_id}/melody")
+def melody(job_id: str, stem: str | None = None):
+    """Detecta la melodía (una nota a la vez) de la voz o de la pista indicada."""
+    return _wrap(svc.detect_melody, job_id, stem)
