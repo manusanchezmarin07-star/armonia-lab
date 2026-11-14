@@ -161,3 +161,29 @@ test('si el multipista no carga, suenan las pistas sueltas y se avisa del motivo
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('melodía: se detecta bajo demanda y se ve en el rollo con la nota actual', async ({ page, request }) => {
+  const caps = await request.get('/api/stems/capabilities')
+  test.skip(!caps.ok(), 'El módulo de pistas no está instalado en este entorno')
+  const title = `Melodía e2e ${Date.now()}`
+  const up = await request.post('/api/stems', {
+    multipart: { file: { name: `${title}.wav`, mimeType: 'audio/wav', buffer: readFileSync(new URL('./fixtures/progresion.wav', import.meta.url)) }, separate: 'false' },
+  })
+  const job = await up.json()
+  try {
+    await expect.poll(async () => (await (await request.get(`/api/stems/${job.id}`)).json()).status, { timeout: 30_000 }).toBe('listo')
+    await page.goto('/pistas', { waitUntil: 'networkidle' })
+    await page.locator('.list-item', { hasText: title }).click()
+    await page.getByRole('button', { name: /4 · Melodía/ }).click()
+    await expect(page.getByLabel('Pista de la melodía')).toHaveValue('mezcla')
+    await page.getByRole('button', { name: 'Detectar melodía' }).click()
+    // Termina y enseña el resultado: el rollo con las notas o el aviso de que no hay melodía clara.
+    await expect(page.getByRole('button', { name: 'Volver a detectar' })).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('.melody-roll').or(page.getByText(/No he encontrado una melodía clara/))).toBeVisible()
+    const saved = await (await request.get(`/api/stems/${job.id}`)).json()
+    expect(saved.melody_status).toBe('listo')
+    expect(saved.melody.stem).toBe('mezcla')
+  } finally {
+    await request.delete(`/api/stems/${job.id}`)
+  }
+})

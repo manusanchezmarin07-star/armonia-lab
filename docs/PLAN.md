@@ -115,6 +115,13 @@ Gitflow: `main` (estable) ← PR por sprint ← `develop` ← `feature/*` (una p
 - [x] Botón «Reanalizar» para canciones antiguas y pentagrama de guitarra (clave de Sol con 8) en el Laboratorio
 - [x] PR develop → main (Sprint 13)
 
+## Sprint 14 — Melodía ✅
+- [x] Detección de la melodía nota a nota (pYIN) de la voz o de la pista que se elija, bajo demanda y en segundo plano
+- [x] Pestaña «4 · Melodía»: rollo que avanza con la música, nota actual y siguiente, nota en el teclado o el mástil, tocar la melodía encima y exportar a MIDI
+- [x] Se descartan los restos de otros instrumentos (por volumen y por registro); 89 % de notas exactas sobre una pista real separada con Demucs
+- [x] Arreglos de reproducción: motor de reserva con pistas sueltas, detalle técnico del error, multipista conectado a Web Audio antes de cargarse
+- [x] PR develop → main (Sprint 14)
+
 ## Ideas futuras
-- Transcripción nota a nota (basic-pitch) para ver la melodía y los voicings en piano roll
+- Transcripción polifónica (varias notas a la vez) para ver los voicings en piano roll
 - Exportar a MusicXML lo transcrito

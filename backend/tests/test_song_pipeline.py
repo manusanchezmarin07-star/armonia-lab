@@ -211,3 +211,25 @@ def test_finished_song_can_be_reanalysed(tmp_path, svc):
     again = _wait(svc, job["id"])
     assert again["status"] == "listo" and again["validated"] is False
     assert again["analysis"]["segments"][0]["symbol"] == first["analysis"]["segments"][0]["symbol"]  # la corrección manual se pierde (se avisa)
+
+
+def test_melody_is_detected_on_demand_from_the_best_stem(tmp_path, svc, monkeypatch):
+    """La melodía se pide aparte (no retrasa la canción) y sale de la voz o, si no hay, de otra pista."""
+    from app.infrastructure import melody
+    src = write_progression(tmp_path / "song.wav", CHORDS)
+    job = svc.create("song.wav", open(src, "rb").read(), "htdemucs_6s", separate=False)
+    _wait(svc, job["id"])
+    assert [s["id"] for s in svc.melody_sources(job["id"])] == ["mezcla"]  # sin pistas separadas, solo la mezcla
+    fake = [{"start": 0.0, "end": 0.5, "midi": 64, "name": "E4"}, {"start": 0.5, "end": 1.0, "midi": 67, "name": "G4"}]
+    monkeypatch.setattr(melody, "detect", lambda path, ref_peak=None: fake)
+    assert svc.detect_melody(job["id"])["melody_status"] == "analizando"
+    for _ in range(100):
+        meta = svc.load(job["id"])
+        if meta.get("melody_status") != "analizando":
+            break
+        time.sleep(0.05)
+    assert meta["melody_status"] == "listo" and meta["melody"]["stem"] == "mezcla"
+    assert meta["melody"]["count"] == 2 and meta["melody"]["low"] == 64
+    assert [n["degree"] for n in meta["melody"]["notes"]] == [4, 7]  # Mi y Sol sobre Do: 3ª y 5ª
+    with pytest.raises(ValueError):
+        svc.detect_melody(job["id"], "drums")
