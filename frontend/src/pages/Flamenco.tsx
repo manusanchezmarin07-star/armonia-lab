@@ -8,6 +8,7 @@ import { api } from '../lib/api'
 import { Tone, click, ensureAudio } from '../lib/audio'
 import { type CompasBeat, leadIn, scheduleBeat, type Stroke, strokeText } from '../lib/flamenco'
 import type { Shape } from '../lib/guitar'
+import { useInstrument } from '../lib/instrument'
 import { usePersistentState } from '../lib/prefs'
 
 interface Rasgueo { id: string; name: string; description: string; strokes: Stroke[] }
@@ -28,6 +29,7 @@ const notesOf = (s: Shape | null | undefined) => (s ? [...s.notes].sort((a, b) =
  */
 export default function Flamenco() {
   const [cat, setCat] = useState<Catalog | null>(null)
+  const { isGuitar, setInstrument } = useInstrument()
   const [palo, setPalo] = usePersistentState('flam.palo', 'solea')
   const [tono, setTono] = usePersistentState('flam.tono', 'arriba')
   const [style, setStyle] = usePersistentState('flam.style', 'basico')
@@ -120,6 +122,10 @@ export default function Flamenco() {
             : <button className="btn primary" disabled={!data} onClick={() => data && run('compas', data.beats, data.shapes, tempo, true)}><IconPlay /> Tocar el compás</button>}
         </div>
       </div>
+      {!isGuitar && (
+        <div className="notice mt row">Esta pantalla es de guitarra y ahora estás en modo piano.
+          <div className="spacer" /><button className="btn sm primary" onClick={() => setInstrument('guitarra')}>Cambiar a guitarra</button></div>
+      )}
       {err && <div className="error mt">{err}</div>}
 
       {data && (

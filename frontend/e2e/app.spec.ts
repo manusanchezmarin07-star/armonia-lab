@@ -192,6 +192,7 @@ test('portada: se elige instrumento, se amplía con las funciones en sus partes 
   await page.getByRole('button', { name: /Elegir otro instrumento/ }).click()
   await page.getByRole('button', { name: 'Estudiar con piano' }).click()
   await expect(nav.getByRole('link', { name: /Atril.*Lectura/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Guitarra flamenca' })).toHaveCount(0) // en piano no se ofrece
   await nav.getByRole('link', { name: /Teclado.*Laboratorio/ }).click()
   await expect(page.locator('svg.piano').first()).toBeVisible()
   // El interruptor del menú lateral sigue cambiando de instrumento en cualquier pantalla.
@@ -311,19 +312,46 @@ test('diccionario de acordes: todos los tipos, búsqueda y tutor en piano y en g
   await page.getByLabel('Buscar acorde').fill('Bb13')
   const card = page.getByRole('article', { name: 'Bb13', exact: true })
   await expect(card).toBeVisible({ timeout: 20_000 })
-  await expect(card.locator('svg.chord-diagram')).toBeVisible()
+  // En piano la tarjeta enseña el teclado (y no el diagrama de guitarra) y abre el tutor de piano.
   await expect(card.locator('svg.piano')).toBeVisible()
-  // El tutor se abre en el instrumento pedido, sea cual sea el modo actual.
-  await card.getByRole('button', { name: /En guitarra/ }).click()
-  await expect(page.getByRole('dialog', { name: 'Cómo tocar Bb13 en guitarra' })).toBeVisible()
-  await page.keyboard.press('Escape')
-  // Al cerrar el tutor de guitarra, la app sigue en piano (que es como estaba).
-  await expect(page.locator('.sidebar .instrument-switch').getByRole('radio', { name: /Piano/ })).toHaveAttribute('aria-checked', 'true')
-  await card.getByRole('button', { name: /Enséñame en piano/ }).click()
+  await expect(card.locator('svg.chord-diagram')).toHaveCount(0)
+  await card.getByRole('button', { name: /Enséñame a tocarlo/ }).click()
   await expect(page.getByRole('dialog', { name: 'Cómo tocar Bb13', exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  // Al cambiar a guitarra, la misma tarjeta enseña solo el diagrama y abre el tutor de guitarra.
+  await page.locator('.sidebar .instrument-switch').getByRole('radio', { name: /Guitarra/ }).click()
+  await expect(card.locator('svg.chord-diagram')).toBeVisible()
+  await expect(card.locator('svg.piano')).toHaveCount(0)
+  await card.getByRole('button', { name: /Enséñame a tocarlo/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Cómo tocar Bb13 en guitarra' })).toBeVisible()
   await page.keyboard.press('Escape')
   // Búsqueda por nombre (en minúsculas no cambia de fundamental).
   await page.getByLabel('Buscar acorde').fill('semidisminuido')
   await expect(page.getByRole('article', { name: 'Bbm7b5', exact: true })).toBeVisible()
   expect(errors).toEqual([])
+})
+
+test('cada modo enseña solo lo de su instrumento', async ({ page }) => {
+  await open(page, '/laboratorio')
+  const menu = page.locator('.sidebar')
+  // Piano: la guitarra flamenca no está en el menú ni en el buscador.
+  await expect(menu.getByRole('link', { name: 'Guitarra flamenca' })).toHaveCount(0)
+  await page.keyboard.press('Control+k')
+  await expect(page.getByPlaceholder(/Ir a/)).toBeFocused()
+  await page.keyboard.type('guitarra flamenca')
+  await expect(page.locator('.palette-item', { hasText: 'Guitarra flamenca' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  // Si se llega por la dirección, la pantalla avisa y ofrece cambiar.
+  await page.goto('/flamenco', { waitUntil: 'networkidle' })
+  await page.getByRole('button', { name: 'Cambiar a guitarra' }).click()
+  await expect(menu.getByRole('link', { name: 'Guitarra flamenca' })).toBeVisible()
+  await expect(page.getByText('Esta pantalla es de guitarra')).toHaveCount(0)
+  // El tour habla del mástil en guitarra y del teclado en piano.
+  await menu.getByRole('link', { name: 'Laboratorio' }).click()
+  await page.getByRole('button', { name: 'Tour de esta pantalla' }).click()
+  await expect(page.locator('.tour-card')).toContainText('mástil')
+  await page.keyboard.press('Escape')
+  await menu.locator('.instrument-switch').getByRole('radio', { name: /Piano/ }).click()
+  await page.getByRole('button', { name: 'Tour de esta pantalla' }).click()
+  await expect(page.locator('.tour-card')).toContainText('teclas blancas')
 })
