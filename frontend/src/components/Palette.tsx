@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MODULES } from '../routes'
+import { modulesFor } from '../routes'
+import { useInstrument } from '../lib/instrument'
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -22,7 +23,8 @@ export default function Palette() {
   }, [])
   useEffect(() => { if (open) setTimeout(() => input.current?.focus(), 10) }, [open])
 
-  const results = useMemo(() => MODULES.filter((m) => norm(m.label + ' ' + m.blurb + ' ' + m.section).includes(norm(q))), [q])
+  const { instrument } = useInstrument()
+  const results = useMemo(() => modulesFor(instrument).filter((m) => norm(m.label + ' ' + m.blurb + ' ' + m.section).includes(norm(q))), [q, instrument])
   if (!open) return null
   const go = (path: string) => { nav(path); setOpen(false) }
   return (

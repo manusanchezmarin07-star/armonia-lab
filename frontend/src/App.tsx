@@ -9,7 +9,8 @@ import { startMidiControls, useControls } from './lib/midiControls'
 import { IconHome } from './components/Icons'
 import { useInput } from './lib/input'
 import Home from './pages/Home'
-import { MODULES } from './routes'
+import { MODULES, modulesFor } from './routes'
+import { useInstrument } from './lib/instrument'
 
 export default function App() {
   const { midi, octave } = useInput()
@@ -24,7 +25,9 @@ export default function App() {
     return () => window.removeEventListener('armonia:midi-panel', open)
   }, [])
   const location = useLocation()
-  const sections = [...new Set(MODULES.map((m) => m.section))]
+  const { instrument } = useInstrument()
+  const menu = modulesFor(instrument)
+  const sections = [...new Set(menu.map((m) => m.section))]
   // En móvil/tablet el menú es un cajón: se cierra al navegar.
   useEffect(() => setMenuOpen(false), [location.pathname])
 
@@ -48,7 +51,7 @@ export default function App() {
         {sections.map((s) => (
           <div key={s}>
             <div className="nav-section">{s}</div>
-            {MODULES.filter((m) => m.section === s).map((m) => (
+            {menu.filter((m) => m.section === s).map((m) => (
               <NavLink key={m.path} to={m.path} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
                 <m.icon /> {m.label}
               </NavLink>

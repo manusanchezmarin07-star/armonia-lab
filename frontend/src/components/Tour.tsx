@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { stepsFor, type TourStep } from '../lib/tours'
+import { useInstrument } from '../lib/instrument'
 
 interface TourCtx { start: (scope: 'general' | string) => void; active: boolean }
 const Ctx = createContext<TourCtx>({ start: () => {}, active: false })
@@ -21,7 +22,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const step = steps[i]
 
-  const start = useCallback((scope: 'general' | string) => { setSteps(stepsFor(scope)); setI(0) }, [])
+  const { isGuitar } = useInstrument()
+  const start = useCallback((scope: 'general' | string) => { setSteps(stepsFor(scope, isGuitar)); setI(0) }, [isGuitar])
   const stop = useCallback(() => { setSteps([]); setRect(null) }, [])
   const next = useCallback(() => (i + 1 < steps.length ? setI(i + 1) : stop()), [i, steps.length, stop])
   const prev = useCallback(() => setI((x) => Math.max(0, x - 1)), [])

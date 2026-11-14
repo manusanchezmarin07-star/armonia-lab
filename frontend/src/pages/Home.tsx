@@ -6,7 +6,7 @@ import { useInstrument } from '../lib/instrument'
 import GuitarArt, { GUITAR } from '../components/cover/GuitarArt'
 import PianoArt, { PIANO } from '../components/cover/PianoArt'
 import { GUITAR_PARTS, PIANO_PARTS, STAGE, labelRows, type Part } from '../components/cover/anatomy'
-import { MODULES } from '../routes'
+import { MODULES, modulesFor } from '../routes'
 
 // Una idea de estudio por día: recursos concretos que se pueden probar en la app.
 const TIPS = [
@@ -88,7 +88,7 @@ export default function Home() {
   const at = (p: Part) => ({ x: ox + p.x * scale, y: oy + p.y * scale })
   const rows = [...labelRows(parts, 'L'), ...labelRows(parts, 'R')]
   const moduleOf = (path: string) => MODULES.find((m) => m.path === path)
-  const others = MODULES.filter((m) => !parts.some((p) => p.path === m.path))
+  const others = modulesFor(view).filter((m) => !parts.some((p) => p.path === m.path))
 
   return (
     <div className="cover">
