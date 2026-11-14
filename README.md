@@ -26,7 +26,7 @@ se muestran con diagramas y digitación de mano izquierda, y aparece la pantalla
 | Módulo | Qué hace |
 |---|---|
 | **Laboratorio** | Tocas y te dice el acorde (incluidos voicings densos tipo `Cmaj9(#11)`), su inversión, sus notas, su grado y función en la tonalidad, y cómo conecta con otro acorde. |
-| **Diccionario de acordes** | Todos los acordes sobre la nota que elijas (63 tipos: tríadas, sextas, séptimas, novenas, oncenas, trecenas y dominantes alterados) con su fórmula, sus notas, el teclado y el diagrama de guitarra. Búsqueda por cifrado o por nombre y botón **«Enséñame»** que abre el tutor en piano o en guitarra. |
+| **Diccionario de acordes** | Todos los acordes sobre la nota que elijas (63 tipos: tríadas, sextas, séptimas, novenas, oncenas, trecenas y dominantes alterados) con su fórmula, sus notas y cómo queda en el instrumento elegido (teclado en piano, diagrama en guitarra). Búsqueda por cifrado o por nombre y botón **«Enséñame»** que abre el tutor. |
 | **Puentes y modulaciones** | De una tonalidad a otra por 7 caminos (pivote, ii–V–I, bisagra disminuida, sustituto tritonal, cadena de dominantes, dominante negativa, nota común), ordenados por suavidad, con conducción de voces animada. |
 | **Escalas y simetría** | Modos de la mayor y de la menor melódica, menor armónica, frigio dominante, pentatónicas, tonos enteros, disminuida, aumentada y los 7 modos de Messiaen, con el reloj de 12 notas que revela la simetría. |
 | **Armonía negativa** | Refleja cualquier progresión sobre el eje de la tónica, en espejo nota a nota, y explica por qué conserva la función. |

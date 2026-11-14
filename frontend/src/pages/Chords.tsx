@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ChordDiagram from '../components/ChordDiagram'
 import HowToPlay from '../components/HowToPlay'
 import Piano, { type Mark } from '../components/Piano'
@@ -21,8 +21,8 @@ const pcOf = (root: string) => (PC[root[0]?.toUpperCase()] + (root.includes('#')
 
 /**
  * Diccionario de acordes: todos los tipos sobre la fundamental que elijas, cada uno
- * con su fórmula, sus notas, cómo queda en el piano y en la guitarra, y un botón
- * que abre el tutor para aprender a tocarlo en uno u otro instrumento.
+ * con su fórmula, sus notas, cómo queda en el instrumento elegido (teclado o diagrama
+ * de guitarra, nunca los dos) y un botón que abre su tutor.
  */
 export default function Chords() {
   const [root, setRoot] = usePersistentState('dict.root', 'C')
@@ -31,10 +31,7 @@ export default function Chords() {
   const [data, setData] = useState<Catalog | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [tutor, setTutor] = useState<string | null>(null)
-  const { isGuitar, instrument, setInstrument } = useInstrument()
-  // Instrumento que había antes de abrir un tutor «en el otro instrumento», para volver a él al cerrar.
-  const before = useRef<typeof instrument | null>(null)
-
+  const { isGuitar, icon } = useInstrument()
   useEffect(() => {
     setErr(null)
     let live = true
@@ -61,19 +58,6 @@ export default function Chords() {
     if (isGuitar && c.guitar) strum([...c.guitar.notes].sort((a, b) => a.midi - b.midi).map((n) => n.midi), 'down', 22, 2.2)
     else playChord(c.notes, 1.8, 0.03)
   }
-  // El tutor usa el sonido y la vista del instrumento activo, así que se cambia mientras dura;
-  // al cerrarlo se vuelve al que tenías (antes la app entera se quedaba en el otro instrumento).
-  const teach = (symbol: string, kind: 'piano' | 'guitarra') => {
-    if (before.current === null) before.current = instrument
-    setInstrument(kind)
-    setTutor(symbol)
-  }
-  const closeTutor = () => {
-    setTutor(null)
-    if (before.current !== null) setInstrument(before.current)
-    before.current = null
-  }
-
   return (
     <div className="page fade-in">
       <div className="page-head">
@@ -81,7 +65,7 @@ export default function Chords() {
           <div className="eyebrow">Diccionario</div>
           <h1>Todos los acordes</h1>
           <p className="lead">Elige una nota y verás todos sus acordes, de las tríadas a los dominantes alterados: de qué notas se
-            compone cada uno, cómo queda en el piano y en la guitarra, y un botón para que te enseñe a tocarlo paso a paso.</p>
+            compone cada uno, cómo se toca en {isGuitar ? 'la guitarra' : 'el piano'} y un botón para que te lo enseñe paso a paso.</p>
         </div>
         {data && <div className="stat"><div className="stat-n">{data.total * 12}</div><div className="stat-l">acordes</div></div>}
       </div>
@@ -109,8 +93,7 @@ export default function Chords() {
         <div className="card mt stack">
           <div>«{q}» no está en el diccionario, pero si es un cifrado válido puedo enseñarte a tocarlo igualmente:</div>
           <div className="row">
-            <button className="btn" onClick={() => teach(q, 'piano')}>🎹 Enséñame en piano</button>
-            <button className="btn" onClick={() => teach(q, 'guitarra')}>🎸 Enséñame en guitarra</button>
+            <button className="btn primary" onClick={() => setTutor(q)}>{icon} Enséñame a tocarlo</button>
           </div>
         </div>
       )}
@@ -133,12 +116,13 @@ export default function Chords() {
                     {c.tones.map((t) => <span key={t.label} className="pill" title={t.name}><b>{t.label}</b>&nbsp;{t.note}</span>)}
                   </div>
                   <div className="dict-views">
-                    <div className="dict-piano"><Piano from={48} to={83} marks={marks} height={58} /></div>
-                    {c.guitar && <ChordDiagram shape={c.guitar} size={0.72} />}
+                    {/* Solo el instrumento elegido: el otro se ve cambiando el interruptor del menú. */}
+                    {isGuitar
+                      ? c.guitar && <ChordDiagram shape={c.guitar} size={0.9} />
+                      : <div className="dict-piano"><Piano from={48} to={83} marks={marks} height={58} /></div>}
                   </div>
                   <div className="row" style={{ gap: 6 }}>
-                    <button className="btn sm" onClick={() => teach(c.symbol, 'piano')}>🎹 Enséñame en piano</button>
-                    <button className="btn sm" onClick={() => teach(c.symbol, 'guitarra')}>🎸 En guitarra</button>
+                    <button className="btn sm" onClick={() => setTutor(c.symbol)}>{icon} Enséñame a tocarlo</button>
                   </div>
                 </article>
               )
@@ -146,7 +130,7 @@ export default function Chords() {
           </div>
         </section>
       ))}
-      {tutor && <HowToPlay symbol={tutor} onClose={closeTutor} />}
+      {tutor && <HowToPlay symbol={tutor} onClose={() => setTutor(null)} />}
     </div>
   )
 }
