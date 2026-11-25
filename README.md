@@ -123,3 +123,4 @@ cd frontend && npm run dev
 ```
 
 Créditos de audio: Salamander Grand Piano de Alexander Holm (CC-BY 3.0).
+Esta app ha sido creada por Manuel Sánchez Marín mediante el uso de la inteligencia artificial de Claude. Derechos de autor reservados.
